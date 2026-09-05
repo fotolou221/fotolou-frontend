@@ -1,0 +1,45 @@
+:host {
+  display: inline-block;
+}
+
+.admin-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-secondary, #f1f5f9);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.admin-view-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #64748b);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  &:hover:not(.active) {
+    color: var(--text-primary, #0f172a);
+  }
+
+  &.active {
+    background: var(--bg-card, #ffffff);
+    color: var(--primary, #1E5AF0);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+}

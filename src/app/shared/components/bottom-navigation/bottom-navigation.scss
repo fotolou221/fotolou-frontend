@@ -1,0 +1,81 @@
+:host {
+  display: block;
+}
+
+.bottom-navigation {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--border-color, #eef1f6);
+  background: var(--bg-surface, rgba(255, 255, 255, 0.98));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-navigation__item {
+  display: grid;
+  min-height: 64px;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  color: var(--text-secondary, #647084);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.bottom-navigation__item--active {
+  color: var(--primary, #1E5AF0);
+}
+
+.bottom-navigation__icon {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+  }
+}
+
+.bottom-navigation__item--active .bottom-navigation__icon svg {
+  fill: currentColor;
+}
+
+.bottom-navigation__item--active .bottom-navigation__icon[data-icon='profile'] svg,
+.bottom-navigation__item--active .bottom-navigation__icon[data-icon='tickets'] svg,
+.bottom-navigation__item--active .bottom-navigation__icon[data-icon='shop'] svg {
+  fill: none;
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .bottom-navigation {
+    background: rgba(28, 37, 65, 0.96) !important;
+    border-top-color: #334155 !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .bottom-navigation__item {
+    color: #94a3b8;
+  }
+
+  .bottom-navigation__item--active {
+    color: #1E5AF0 !important;
+  }
+}

@@ -1,0 +1,21 @@
+:host {
+  display: inline-block;
+}
+
+.status-badge {
+  display: inline-flex;
+  min-height: 18px;
+  align-items: center;
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--success, #16a34a);
+  background: var(--success-light, #dcfce7);
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.status-badge--closed {
+  color: var(--danger, #dc2626);
+  background: var(--danger-light, #fee2e2);
+}

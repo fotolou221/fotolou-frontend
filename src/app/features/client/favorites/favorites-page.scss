@@ -1,0 +1,87 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.favorites-page {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px 40px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (min-width: 640px) {
+    padding: 24px 24px 50px;
+  }
+}
+
+.favorites-page__search {
+  margin-bottom: 16px;
+}
+
+.favorites-page__content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.favorites-page__info-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: #fdf2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 14px;
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.favorites-page__count-badge {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #ef4444;
+}
+
+.favorites-page__hint {
+  font-size: 0.8125rem;
+  color: #991b1b;
+  margin: 0;
+}
+
+.favorites-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  @media (min-width: 640px) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+}
+
+.favorites-page__empty {
+  padding: 40px 16px;
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .favorites-page__info-bar {
+    background: rgba(239, 68, 68, 0.12) !important;
+    border-color: rgba(239, 68, 68, 0.25) !important;
+  }
+
+  .favorites-page__count-badge {
+    color: #f87171 !important;
+  }
+
+  .favorites-page__hint {
+    color: #fca5a5 !important;
+  }
+}

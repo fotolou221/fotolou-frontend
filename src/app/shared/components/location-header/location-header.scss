@@ -1,0 +1,150 @@
+:host {
+  display: block;
+}
+
+.location-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-surface, #ffffff);
+
+  @media (min-width: 640px) {
+    padding: 12px 24px;
+  }
+}
+
+.location-header__selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--text-primary, #111827);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.location-header__pin-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: #ef4444;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.location-header__text {
+  color: var(--text-primary, #111827);
+}
+
+.location-header__chevron {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  color: var(--text-secondary, #6b7280);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.location-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.location-header__action-btn {
+  position: relative;
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: var(--bg-card-hover, #f3f4f6);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Heart icon in header: neutral text-primary, NOT red
+.location-header__fav-btn {
+  color: var(--text-primary, #111827);
+}
+
+// Badge in header: primary brand or accent amber
+.location-header__fav-badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 9999px;
+  background: var(--accent, #f59e0b);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-surface, #ffffff);
+}
+
+.location-header__unread-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--bg-surface, #ffffff);
+  border-radius: 50%;
+  background: var(--accent, #f59e0b);
+}
+
+.location-header__spacer {
+  height: 1px;
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .location-header {
+    background: #1c2541 !important;
+  }
+
+  .location-header__action-btn {
+    color: #f8fafc !important;
+  }
+
+  .location-header__fav-badge {
+    background: #f59e0b !important;
+    border-color: #1c2541 !important;
+  }
+
+  .location-header__unread-dot {
+    background: #f59e0b !important;
+    border-color: #1c2541 !important;
+  }
+}

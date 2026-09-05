@@ -1,0 +1,64 @@
+:host {
+  display: block;
+}
+
+.splash-loader {
+  width: 96px;
+  height: 4.5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e2e8f0;
+  position: relative;
+}
+
+.splash-loader__bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1E5AF0 0%, #3b82f6 100%);
+  box-shadow: 0 0 8px rgba(30, 90, 240, 0.4);
+  transform: scaleX(0.04);
+  transform-origin: left center;
+  animation: splash-loader-fill 2.3s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.85) 50%,
+      transparent 100%
+    );
+    animation: splash-shimmer 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes splash-loader-fill {
+  0% {
+    transform: scaleX(0.04);
+  }
+  45% {
+    transform: scaleX(0.55);
+  }
+  80% {
+    transform: scaleX(0.88);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes splash-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+

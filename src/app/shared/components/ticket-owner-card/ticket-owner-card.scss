@@ -1,0 +1,140 @@
+:host {
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.ticket-owner-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  border-radius: 16px;
+  padding: 16px 18px;
+  background: var(--bg-card, #ffffff);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    border-color: var(--primary, #1E5AF0);
+  }
+
+  &:active {
+    transform: scale(0.985);
+  }
+}
+
+.ticket-owner-card--pressing {
+  transform: scale(0.97);
+  background: var(--bg-card-hover, #f8fafc);
+  border-color: var(--primary, #1E5AF0);
+}
+
+.ticket-owner-card--selected {
+  border-color: var(--primary, #1E5AF0);
+  background: var(--primary-light, #eef2ff);
+  box-shadow: 0 4px 16px rgba(30, 90, 240, 0.12);
+}
+
+.ticket-owner-card__content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ticket-owner-card__avatar {
+  display: inline-grid;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--border-subtle, #f1f5f9);
+  color: var(--text-secondary, #64748b);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.ticket-owner-card__avatar--blue,
+.ticket-owner-card__avatar--primary {
+  background: var(--primary, #1E5AF0);
+  color: #ffffff;
+}
+
+.ticket-owner-card__avatar svg {
+  width: 22px;
+  height: 22px;
+}
+
+.ticket-owner-card__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ticket-owner-card__name {
+  color: var(--text-primary, #0f172a);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.ticket-owner-card__subtitle {
+  color: var(--text-secondary, #64748b);
+  font-size: 0.84rem;
+  font-weight: 400;
+}
+
+.ticket-owner-card__checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: #ffffff;
+  }
+
+  &--checked {
+    border-color: var(--primary, #1E5AF0);
+    background: var(--primary, #1E5AF0);
+    transform: scale(1.08);
+  }
+}
+
+.ticket-owner-card__input-wrapper {
+  margin-top: 4px;
+  animation: expand-input 0.2s ease-out;
+}
+
+@keyframes expand-input {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ticket-owner-card__input {
+  width: 100%;
+  min-height: 44px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 0 14px;
+  outline: none;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #0f172a);
+  font-size: 0.88rem;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: var(--primary, #1E5AF0);
+    box-shadow: 0 0 0 3px rgba(30, 90, 240, 0.15);
+  }
+}

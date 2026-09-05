@@ -1,0 +1,116 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--bg-card, #ffffff);
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 0 0 16px 16px;
+}
+
+.admin-pagination__info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #64748b);
+
+  strong {
+    color: var(--text-primary, #0f172a);
+    font-weight: 700;
+  }
+}
+
+.admin-pagination__page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary, #64748b);
+  }
+
+  select {
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-page, #f8fafc);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary, #1E5AF0);
+    }
+  }
+}
+
+.admin-pagination__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-pagination__btn {
+  height: 34px;
+  min-width: 34px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #64748b);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--bg-page, #f8fafc);
+    border-color: var(--border-color, #e2e8f0);
+    color: var(--text-primary, #0f172a);
+  }
+
+  &.active {
+    background: var(--primary, #1E5AF0);
+    border-color: var(--primary, #1E5AF0);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(30, 90, 240, 0.25);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.admin-pagination__ellipsis {
+  padding: 0 6px;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 700;
+}

@@ -1,0 +1,544 @@
+{
+  "salons": [
+    {
+      "id": "king-barber",
+      "name": "King Barber",
+      "location": "Mermoz, Dakar",
+      "district": "Mermoz",
+      "status": "open",
+      "peopleWaiting": 5,
+      "estimatedWaitMinutes": 35,
+      "avatarUrl": "images/salons/king-barber-avatar.png",
+      "coverUrl": "images/salons/king-barber-cover.png",
+      "galleryImages": [
+        "images/salons/king-barber-cover.png",
+        "images/salons/king-barber-cover.png",
+        "images/salons/king-barber-cover.png",
+        "images/salons/king-barber-cover.png"
+      ],
+      "phone": "+221 77 862 70 52",
+      "address": "Route de Ouakam, Mermoz",
+      "openingHours": "09:00 - 21:00",
+      "actions": [
+        {
+          "label": "Site Web",
+          "icon": "globe",
+          "href": "https://kingbarber.sn"
+        },
+        {
+          "label": "Appeler",
+          "icon": "phone",
+          "href": "tel:+221778627052"
+        },
+        {
+          "label": "Direction",
+          "icon": "navigation",
+          "href": "https://maps.google.com"
+        },
+        {
+          "label": "Partager",
+          "icon": "share",
+          "href": "#"
+        }
+      ]
+    },
+    {
+      "id": "king-barber-2",
+      "name": "King Barber Almadies",
+      "location": "Almadies, Dakar",
+      "district": "Almadies",
+      "status": "open",
+      "peopleWaiting": 12,
+      "estimatedWaitMinutes": 60,
+      "avatarUrl": "images/salons/king-barber-avatar.png",
+      "coverUrl": "images/salons/king-barber-cover.png",
+      "galleryImages": [
+        "images/salons/king-barber-cover.png",
+        "images/salons/king-barber-cover.png"
+      ],
+      "phone": "+221 77 123 45 67",
+      "address": "Route des Almadies, en face King Fahd",
+      "openingHours": "10:00 - 22:00",
+      "actions": [
+        {
+          "label": "Site Web",
+          "icon": "globe",
+          "href": "#"
+        },
+        {
+          "label": "Appeler",
+          "icon": "phone",
+          "href": "tel:+221771234567"
+        },
+        {
+          "label": "Direction",
+          "icon": "navigation",
+          "href": "#"
+        },
+        {
+          "label": "Partager",
+          "icon": "share",
+          "href": "#"
+        }
+      ]
+    },
+    {
+      "id": "king-barber-3",
+      "name": "King Barber Plateau",
+      "location": "Plateau, Dakar",
+      "district": "Plateau",
+      "status": "open",
+      "peopleWaiting": 8,
+      "estimatedWaitMinutes": 45,
+      "avatarUrl": "images/salons/king-barber-avatar.png",
+      "coverUrl": "images/salons/king-barber-cover.png",
+      "galleryImages": [
+        "images/salons/king-barber-cover.png"
+      ],
+      "phone": "+221 77 987 65 43",
+      "address": "Rue Carnot x Pompidou, Dakar Plateau",
+      "openingHours": "08:30 - 20:30",
+      "actions": [
+        {
+          "label": "Site Web",
+          "icon": "globe",
+          "href": "#"
+        },
+        {
+          "label": "Appeler",
+          "icon": "phone",
+          "href": "tel:+221779876543"
+        },
+        {
+          "label": "Direction",
+          "icon": "navigation",
+          "href": "#"
+        },
+        {
+          "label": "Partager",
+          "icon": "share",
+          "href": "#"
+        }
+      ]
+    },
+    {
+      "id": "king-barber-4",
+      "name": "King Barber Point E",
+      "location": "Point E, Dakar",
+      "district": "Point E",
+      "status": "open",
+      "peopleWaiting": 3,
+      "estimatedWaitMinutes": 20,
+      "avatarUrl": "images/salons/king-barber-avatar.png",
+      "coverUrl": "images/salons/king-barber-cover.png",
+      "galleryImages": [
+        "images/salons/king-barber-cover.png"
+      ],
+      "phone": "+221 78 555 12 34",
+      "address": "Boulevard de l'Est, Point E",
+      "openingHours": "09:00 - 21:00",
+      "actions": [
+        {
+          "label": "Site Web",
+          "icon": "globe",
+          "href": "#"
+        },
+        {
+          "label": "Appeler",
+          "icon": "phone",
+          "href": "tel:+221785551234"
+        },
+        {
+          "label": "Direction",
+          "icon": "navigation",
+          "href": "#"
+        },
+        {
+          "label": "Partager",
+          "icon": "share",
+          "href": "#"
+        }
+      ]
+    }
+  ],
+  "tickets": [
+    {
+      "id": "t-1",
+      "salonId": "king-barber",
+      "salonName": "King Barber",
+      "ownerName": "Awa Diop",
+      "ticketNumber": 6,
+      "status": "your_turn",
+      "category": "active",
+      "peopleAhead": 0,
+      "estimatedWaitMinutes": 0,
+      "createdAt": "2026-08-20T12:00:00.000Z"
+    },
+    {
+      "id": "t-2",
+      "salonId": "king-barber-2",
+      "salonName": "King Barber Almadies",
+      "ownerName": "Maman",
+      "ticketNumber": 12,
+      "status": "waiting",
+      "category": "active",
+      "peopleAhead": 3,
+      "estimatedWaitMinutes": 25,
+      "createdAt": "2026-08-20T12:30:00.000Z"
+    },
+    {
+      "id": "t-3",
+      "salonId": "king-barber",
+      "salonName": "King Barber",
+      "ownerName": "Bakary Jr",
+      "ticketNumber": 8,
+      "status": "waiting",
+      "category": "active",
+      "peopleAhead": 2,
+      "estimatedWaitMinutes": 15,
+      "createdAt": "2026-08-20T12:45:00.000Z"
+    },
+    {
+      "id": "t-4",
+      "salonId": "king-barber",
+      "salonName": "King Barber",
+      "ownerName": "Awa Diop",
+      "ticketNumber": 15,
+      "status": "served",
+      "category": "history",
+      "peopleAhead": 0,
+      "estimatedWaitMinutes": 0,
+      "createdAt": "2026-08-18T10:15:00.000Z",
+      "servedAt": "2026-08-18T11:00:00.000Z"
+    },
+    {
+      "id": "t-5",
+      "salonId": "king-barber-3",
+      "salonName": "King Barber Plateau",
+      "ownerName": "Maman",
+      "ticketNumber": 3,
+      "status": "cancelled",
+      "category": "history",
+      "peopleAhead": 0,
+      "estimatedWaitMinutes": 0,
+      "createdAt": "2026-08-15T15:00:00.000Z",
+      "servedAt": "2026-08-15T15:30:00.000Z"
+    },
+    {
+      "id": "t-1787234745619",
+      "salonId": "king-barber",
+      "salonName": "King Barber",
+      "ownerName": "Moi (Awa Diop)",
+      "ticketNumber": 4,
+      "status": "your_turn",
+      "category": "active",
+      "createdAt": "2026-08-20T14:05:45.619Z"
+    },
+    {
+      "id": "t-1787311494136",
+      "salonId": "king-barber",
+      "salonName": "King Barber",
+      "ownerName": "Moi (Awa Diop)",
+      "ticketNumber": 5,
+      "status": "your_turn",
+      "category": "active",
+      "createdAt": "2026-08-21T11:24:54.136Z"
+    }
+  ],
+  "categories": [
+    {
+      "id": "shampoings",
+      "name": "Shampoings",
+      "image": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=200&q=80"
+    },
+    {
+      "id": "brosses",
+      "name": "Brosses",
+      "image": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=200&q=80"
+    },
+    {
+      "id": "huiles",
+      "name": "Huiles",
+      "image": "https://images.unsplash.com/photo-1608248597263-0057e43a4522?auto=format&fit=crop&w=200&q=80"
+    },
+    {
+      "id": "tondeuses",
+      "name": "Tondeuses",
+      "image": "https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=200&q=80"
+    },
+    {
+      "id": "soins",
+      "name": "Soins",
+      "image": "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=200&q=80"
+    }
+  ],
+  "products": [
+    {
+      "id": "p-elixir",
+      "brand": "KÉRÀSTASE",
+      "title": "Elixir Ultime L'Huile",
+      "description": "Huile de soin capillaire sublimatrice multi-usages pour tous types de cheveux.",
+      "price": 32000,
+      "oldPrice": 42000,
+      "rating": 4.9,
+      "images": [
+        "https://images.unsplash.com/photo-1608248597263-0057e43a4522?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=300&q=80",
+        "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=300&q=80"
+      ],
+      "categoryId": "huiles",
+      "inStock": true
+    },
+    {
+      "id": "p-shampoing",
+      "brand": "KÉRÀSTASE",
+      "title": "Shampoing Hydratant",
+      "description": "Shampoing hydratant intense pour cheveux secs et fragilisés.",
+      "price": 3200,
+      "oldPrice": 4500,
+      "rating": 4.9,
+      "images": [
+        "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=600&q=80"
+      ],
+      "categoryId": "shampoings",
+      "inStock": true
+    },
+    {
+      "id": "p-brosse",
+      "brand": "GHD",
+      "title": "Brosse Plate Pro",
+      "description": "Brosse professionnelle thermique pour un lissage rapide et brillant.",
+      "price": 4500,
+      "oldPrice": 6000,
+      "rating": 5,
+      "images": [
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=600&q=80"
+      ],
+      "categoryId": "brosses",
+      "inStock": true
+    },
+    {
+      "id": "p-magic-clip",
+      "brand": "WAHL",
+      "title": "Wahl Magic Clip",
+      "description": "Tondeuse de coupe professionnelle sans fil haute précision.",
+      "price": 79000,
+      "oldPrice": 95000,
+      "rating": 4.8,
+      "images": [
+        "https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=600&q=80"
+      ],
+      "categoryId": "tondeuses",
+      "inStock": true
+    },
+    {
+      "id": "p-huile-tondeuse",
+      "brand": "WAHL",
+      "title": "Huile lubrifiante pour tondeuse",
+      "description": "Huile de protection et lubrification pour lames de tondeuses.",
+      "price": 5000,
+      "oldPrice": 7500,
+      "rating": 4.7,
+      "images": [
+        "https://images.unsplash.com/photo-1608248597263-0057e43a4522?auto=format&fit=crop&w=600&q=80"
+      ],
+      "categoryId": "tondeuses",
+      "inStock": true
+    },
+    {
+      "id": "p-blade-ice",
+      "brand": "WAHL",
+      "title": "Spray nettoyant Blade Ice",
+      "description": "Spray 4-en-1 nettoyant, refroidissant et lubrifiant pour tondeuses.",
+      "price": 3500,
+      "oldPrice": 5000,
+      "rating": 4.9,
+      "images": [
+        "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=600&q=80"
+      ],
+      "categoryId": "tondeuses",
+      "inStock": true
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-101",
+      "orderNumber": "CMD-2026-012",
+      "items": [
+        {
+          "product": {
+            "id": "p-elixir",
+            "brand": "KÉRÀSTASE",
+            "title": "Elixir Ultime L'Huile",
+            "description": "Huile de soin capillaire sublimatrice multi-usages pour tous types de cheveux.",
+            "price": 32000,
+            "images": [
+              "https://images.unsplash.com/photo-1608248597263-0057e43a4522?auto=format&fit=crop&w=600&q=80"
+            ],
+            "categoryId": "huiles",
+            "inStock": true
+          },
+          "quantity": 1
+        }
+      ],
+      "subtotal": 32000,
+      "deliveryFee": 2000,
+      "totalPrice": 34000,
+      "status": "en_cours",
+      "orderType": "whatsapp",
+      "createdAt": "2026-08-20T11:00:00.000Z"
+    },
+    {
+      "id": "ord-100",
+      "orderNumber": "CMD-2026-008",
+      "items": [
+        {
+          "product": {
+            "id": "p-magic-clip",
+            "brand": "WAHL",
+            "title": "Wahl Magic Clip",
+            "description": "Tondeuse de coupe professionnelle sans fil haute précision.",
+            "price": 79000,
+            "images": [
+              "https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=600&q=80"
+            ],
+            "categoryId": "tondeuses",
+            "inStock": true
+          },
+          "quantity": 1
+        },
+        {
+          "product": {
+            "id": "p-huile-tondeuse",
+            "brand": "WAHL",
+            "title": "Huile lubrifiante pour tondeuse",
+            "description": "Huile de protection et lubrification pour lames de tondeuses.",
+            "price": 5000,
+            "images": [
+              "https://images.unsplash.com/photo-1608248597263-0057e43a4522?auto=format&fit=crop&w=600&q=80"
+            ],
+            "categoryId": "tondeuses",
+            "inStock": true
+          },
+          "quantity": 1
+        }
+      ],
+      "subtotal": 84000,
+      "deliveryFee": 2000,
+      "totalPrice": 86000,
+      "status": "livre",
+      "orderType": "whatsapp",
+      "createdAt": "2026-08-17T14:20:00.000Z"
+    }
+  ],
+  "relatives": [
+    {
+      "id": "r-1",
+      "name": "Maman",
+      "relation": "mere",
+      "phone": "+221 77 123 45 67"
+    },
+    {
+      "id": "r-2",
+      "name": "Bakary Jr",
+      "relation": "enfant"
+    },
+    {
+      "id": "r-3",
+      "name": "Saliou Ndiaye",
+      "relation": "frere",
+      "phone": "+221 70 987 65 43"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n-client-1",
+      "title": "C'est bientôt votre tour !",
+      "message": "Votre ticket #6 chez King Barber approche. Merci de vous présenter au salon.",
+      "type": "ticket",
+      "recipientRole": "client",
+      "createdAt": "2026-08-20T13:00:00.000Z",
+      "isRead": false,
+      "targetRoute": "/client/tickets/t-1"
+    },
+    {
+      "id": "n-client-2",
+      "title": "Commande en cours de livraison",
+      "message": "Votre commande CMD-2026-012 a été expédiée et sera livrée sous peu.",
+      "type": "order",
+      "recipientRole": "client",
+      "createdAt": "2026-08-20T11:45:00.000Z",
+      "isRead": false,
+      "targetRoute": "/client/boutique/commandes/ord-101"
+    },
+    {
+      "id": "n-client-3",
+      "title": "Offre spéciale Kérastase !",
+      "message": "Profitez d'une réduction exclusive sur les produits Kérastase dans la boutique Fotolou.",
+      "type": "promo",
+      "recipientRole": "client",
+      "createdAt": "2026-08-19T09:00:00.000Z",
+      "isRead": true,
+      "targetRoute": "/client/boutique/produits/p-elixir"
+    },
+    {
+      "id": "n-coiffeur-1",
+      "title": "Nouveau client dans la file !",
+      "message": "Amadou Koulibaly vient de prendre le ticket #01 dans votre salon.",
+      "type": "ticket",
+      "recipientRole": "coiffeur",
+      "createdAt": "2026-08-20T13:20:00.000Z",
+      "isRead": false,
+      "targetRoute": "/coiffeur/tickets"
+    },
+    {
+      "id": "n-coiffeur-2",
+      "title": "Ticket Annulé",
+      "message": "Le client Saliou a annulé son passage pour aujourd'hui.",
+      "type": "ticket",
+      "recipientRole": "coiffeur",
+      "createdAt": "2026-08-20T12:45:00.000Z",
+      "isRead": false,
+      "targetRoute": "/coiffeur/tickets"
+    },
+    {
+      "id": "n-coiffeur-3",
+      "title": "Matériel livré 📦",
+      "message": "Votre commande de tondeuse Wahl Magic Clip est bien arrivée au salon.",
+      "type": "order",
+      "recipientRole": "coiffeur",
+      "createdAt": "2026-08-19T16:00:00.000Z",
+      "isRead": true,
+      "targetRoute": "/coiffeur/home"
+    },
+    {
+      "id": "n-coiffeur-4",
+      "title": "Bilan de la journée",
+      "message": "Félicitations ! Vous avez servi 25 clients aujourd'hui (+18% par rapport à hier).",
+      "type": "system",
+      "recipientRole": "coiffeur",
+      "createdAt": "2026-08-18T20:00:00.000Z",
+      "isRead": true,
+      "targetRoute": "/coiffeur/home"
+    }
+  ],
+  "users": [
+    {
+      "id": "u-client-1",
+      "role": "client",
+      "name": "Awa Diop",
+      "phone": "+221 70 123 45 67",
+      "email": "awa.diop@gmail.com",
+      "homeRoute": "/client/home"
+    },
+    {
+      "id": "u-coiffeur-1",
+      "role": "coiffeur",
+      "name": "Mamadou Fall",
+      "phone": "+221 77 456 78 90",
+      "email": "kingbarber@fotolou.sn",
+      "salonId": "king-barber",
+      "homeRoute": "/coiffeur/home"
+    }
+  ]
+}

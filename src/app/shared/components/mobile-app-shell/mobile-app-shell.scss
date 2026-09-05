@@ -1,0 +1,22 @@
+:host {
+  display: block;
+  min-height: 100svh;
+  background: #f4f6fb;
+}
+
+.mobile-app-shell {
+  position: relative;
+  width: min(100%, 390px);
+  min-height: 100svh;
+  margin: 0 auto;
+  overflow-x: hidden;
+  background: var(--white);
+}
+
+.mobile-app-shell--with-nav {
+  padding-bottom: 78px;
+}
+
+.mobile-app-shell--bleed {
+  background: var(--white);
+}

@@ -1,0 +1,481 @@
+// ── Fotolou Global Tokens & Design System ──────────────────────────────
+:root {
+  color-scheme: light;
+  --font-family: 'Plus Jakarta Sans', 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  
+  // Brand Colors (Official Fotolou Identity - Electric Blue)
+  --primary: #1E5AF0;
+  --primary-hover: #1746c0;
+  --primary-light: #eef2ff;
+  --secondary: #0d3eb8;
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-light: #fffbeb;
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --warning: #f59e0b;
+  --warning-light: #fef3c7;
+  --danger: #dc2626;
+  --danger-light: #fee2e2;
+
+  // Surfaces & Backgrounds (Pure White Enforced)
+  --white: #ffffff;
+  --bg-page: #ffffff;
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --bg-header: #ffffff;
+  
+  // Text Colors
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  // Borders & Dividers
+  --border-color: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --divider: #e2e8f0;
+
+  // Shadows
+  --shadow-sm: 0 1px 3px rgba(30, 90, 240, 0.05);
+  --shadow-md: 0 4px 16px rgba(30, 90, 240, 0.08);
+  --shadow-lg: 0 10px 30px rgba(30, 90, 240, 0.12);
+
+  // Border Radius
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  font-family: var(--font-family);
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: var(--text-primary);
+}
+
+// ── Dark Theme Overrides (White Backgrounds Enforced Everywhere) ──
+body.dark-theme {
+  --bg-page: #ffffff !important;
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #ffffff !important;
+  --bg-surface: #ffffff !important;
+  --bg-header: #ffffff !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #f8f9fa !important;
+
+  // Global dark mode text & surfaces
+  p, span, label, input, textarea, select, strong, b, h1, h2, h3, h4, h5, h6, div, button, a, li {
+    color: inherit;
+  }
+
+  // Header Back Button & Header Notification Bell
+  .page-header__back-btn,
+  .location-header__notification-btn,
+  .location-header__selector,
+  .shop-header__cart-btn,
+  .shop-header__orders-btn,
+  .shop-header__back-btn,
+  .notifications-header__read-all-btn,
+  .coiffeur-tickets__filter-btn {
+    color: #ffffff !important;
+    background-color: transparent !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.12) !important;
+    }
+  }
+
+  // Cards & Surfaces
+  .client-layout__header,
+  .page-header,
+  .location-header,
+  .shop-header,
+  .bottom-navigation,
+  .product-card,
+  .order-card,
+  .notification-card,
+  .profile-page__menu,
+  .coiffeur-stat-card,
+  .activity-card,
+  .queue-card,
+  .walkin-modal,
+  .confirm-modal__content,
+  .cart-item-card,
+  .cart-summary,
+  .cart-page__fixed-footer,
+  .order-confirm-page__card,
+  .order-confirm-page__fixed-footer,
+  .order-detail-page__fixed-footer,
+  .relatives-page__card,
+  .stat-card,
+  .settings-card,
+  .faq-card,
+  .settings-theme-selector,
+  .salon-card,
+  .ticket-owner-card {
+    background-color: #1c2541 !important;
+    border-color: #334155 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  // Hover states in dark mode
+  .profile-page__menu-item:hover,
+  .notification-card:hover,
+  .faq-card__header:hover,
+  .settings-row:hover,
+  .relative-card:hover,
+  .activity-card:hover {
+    background-color: #243056 !important;
+  }
+
+  // Headings
+  h1, h2, h3, h4, h5, h6, strong, b,
+  .page-header__title,
+  .location-header__text,
+  .shop-header__title,
+  .product-card__title,
+  .order-card__number,
+  .notification-card__title,
+  .profile-page__name,
+  .profile-page__menu-label,
+  .coiffeur-stat-card__val,
+  .coiffeur-activity__title,
+  .activity-card__name,
+  .queue-card__name,
+  .section-heading__title,
+  .salon-card__name,
+  .ticket-owner-card__name,
+  .cart-item-card__title,
+  .cart-summary__total-label,
+  .order-confirm-page__hero h1,
+  .order-confirm-page__order-num,
+  .order-confirm-page__item-info strong,
+  .order-detail-page__number,
+  .order-detail-item__title,
+  .order-detail-item__price,
+  .order-detail-page__total-label,
+  .notifications-page__empty h3,
+  .relative-card__name,
+  .stat-card__value,
+  .settings-section__title,
+  .settings-row__info strong,
+  .faq-card__question,
+  .support-section-title,
+  .support-contact-hero h1 {
+    color: #ffffff !important;
+  }
+
+  // Secondary text & Descriptions
+  p,
+  .product-card__category,
+  .order-card__date,
+  .notification-card__message,
+  .notification-card__time,
+  .profile-page__phone,
+  .queue-card__phone,
+  .activity-card__date,
+  .settings-section__subtitle,
+  .settings-row__info span,
+  .faq-card__answer,
+  .support-contact-hero p,
+  .relatives-page__subtitle,
+  .salon-card__subtitle,
+  .ticket-owner-card__subtitle {
+    color: #cbd5e1 !important;
+  }
+
+  // Icons
+  .profile-page__menu-icon,
+  .profile-page__menu-chevron,
+  .location-header__icon,
+  .shop-header__icon {
+    color: #94a3b8 !important;
+  }
+
+  // Form Inputs
+  input, textarea, select {
+    background-color: #0b132b !important;
+    border-color: #334155 !important;
+    color: #ffffff !important;
+
+    &::placeholder {
+      color: #94a3b8 !important;
+    }
+  }
+
+  // Layout Containers Background
+  .client-layout__body,
+  .profile-page,
+  .client-home__content,
+  .shop-page__content,
+  .my-tickets-page__content,
+  .my-orders-page__content,
+  .notifications-page__content,
+  .coiffeur-home,
+  .coiffeur-tickets,
+  .settings-page__content,
+  .support-page__content {
+    background-color: #ffffff !important;
+  }
+
+  // Bottom Navigation Bar
+  .bottom-navigation {
+    background-color: #1c2541 !important;
+    border-top: 1px solid #334155 !important;
+
+    .bottom-navigation__item {
+      color: #94a3b8 !important;
+
+      &--active {
+        color: #1E5AF0 !important;
+      }
+    }
+  }
+
+  // Category Pills / Tabs
+  .category-pill,
+  .coiffeur-tickets__tab,
+  .my-tickets-page__tab {
+    background: #0b132b !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+
+    &--active, &.active, &[class*="--active"] {
+      background: #1E5AF0 !important;
+      color: #ffffff !important;
+      border-color: #1E5AF0 !important;
+    }
+  }
+
+  // Dividers
+  .profile-page__divider,
+  .settings-divider {
+    background: #334155 !important;
+  }
+}
+
+// ── Reset & Core Styles ──────────────────────────────────────
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  min-height: 100%;
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-overflow-scrolling: touch;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+// ── Universal Pure White Background Across All Fotolou Pages ──
+html,
+body,
+app-root,
+.client-layout,
+.client-layout__header,
+.client-layout__body,
+.client-layout__main-content,
+.client-home,
+.client-home__pinned-header,
+.client-home__scroll-content,
+.profile-page,
+.my-tickets-page,
+.my-tickets-page__content,
+.my-orders-page,
+.my-orders-page__content,
+.notifications-page,
+.notifications-page__content,
+.shop-page,
+.shop-page__content,
+.shop-header,
+.cart-page,
+.cart-page__content,
+.order-confirm-page,
+.order-detail-page,
+.product-detail-page,
+.product-detail-page__content,
+.salon-detail,
+.salon-detail__content,
+.ticket-detail,
+.ticket-detail__content,
+.ticket-owner,
+.ticket-owner-page,
+.ticket-owner-page__content,
+.relatives-page,
+.add-relative-page,
+.edit-relative-page,
+.favorites-page,
+.favorites-page__content,
+.coiffeur-home,
+.coiffeur-tickets,
+.coiffeur-photos,
+.coiffeur-profile,
+.coiffeur-notifications,
+.settings-page,
+.settings-page__content,
+.support-page,
+.support-page__content,
+.admin-shell,
+.admin-main,
+.admin-topbar,
+.admin-content,
+.admin-page,
+.admin-auth,
+.auth-shell,
+.auth-shell__content,
+.login-page,
+.otp-page,
+.vitrine,
+.vitrine-hero,
+.vitrine-stats,
+.vitrine-steps,
+.vitrine-benefits,
+.vitrine-faq,
+.vitrine-phone__screen,
+.vitrine-phone__statusbar,
+.vitrine-phone__preview-header,
+.onboarding-screen,
+.mobile-app-shell {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+button,
+input,
+textarea,
+select,
+a {
+  font-family: var(--font-family);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+  font-family: var(--font-family);
+}
+
+// ── Universal Admin Form & Modal Styling ──────────────────
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  box-sizing: border-box;
+
+  label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text-secondary, #64748b);
+    letter-spacing: -0.01em;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"],
+  select {
+    width: 100%;
+    height: 46px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    background: var(--bg-page, #f8fafc);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--text-primary, #0f172a);
+    box-sizing: border-box;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &::placeholder {
+      color: var(--text-muted, #94a3b8);
+    }
+
+    &:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: var(--primary, #1E5AF0);
+      box-shadow: 0 0 0 3.5px rgba(30, 90, 240, 0.15);
+    }
+  }
+
+  textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    background: var(--bg-page, #f8fafc);
+    font-family: inherit;
+    font-size: 0.875rem;
+    color: var(--text-primary, #0f172a);
+    box-sizing: border-box;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    resize: vertical;
+
+    &::placeholder {
+      color: var(--text-muted, #94a3b8);
+    }
+
+    &:focus {
+      outline: none;
+      background: #ffffff;
+      border-color: var(--primary, #1E5AF0);
+      box-shadow: 0 0 0 3.5px rgba(30, 90, 240, 0.15);
+    }
+  }
+}

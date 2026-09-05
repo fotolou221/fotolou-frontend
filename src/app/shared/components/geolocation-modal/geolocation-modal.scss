@@ -1,0 +1,125 @@
+.geo-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  animation: geoFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.geo-modal__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 320px;
+  border-radius: 24px;
+  padding: 32px 24px 28px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: geoScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.geo-modal__icon-wrap {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 50%;
+  background: #edf4ff;
+  color: #2563eb;
+  margin-bottom: 20px;
+
+  svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.geo-modal__title {
+  margin: 0 0 10px;
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.geo-modal__message {
+  margin: 0 0 24px;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.geo-modal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.geo-modal__authorize-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
+  transition: background 0.15s ease, transform 0.12s ease;
+
+  &:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.geo-modal__later-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: #1d4ed8;
+  }
+}
+
+@keyframes geoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes geoScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

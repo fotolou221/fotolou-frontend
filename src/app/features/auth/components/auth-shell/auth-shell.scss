@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  min-height: 100svh;
+  background: var(--white);
+}
+
+.auth-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--white);
+}
+
+.auth-shell__back {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top));
+  left: max(18px, calc((100% - 768px) / 2 + 18px));
+  z-index: 10;
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.auth-shell__back svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+
+.auth-shell__content {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  min-height: 100svh;
+  padding: max(58px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+}
+
+.auth-shell__content--centered {
+  display: grid;
+  align-content: center;
+}

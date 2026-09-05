@@ -1,0 +1,424 @@
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 110px;
+  gap: 24px;
+  min-height: 100%;
+  background: #ffffff;
+}
+
+// ── Hero Section ──────────────────────────────────────────
+.profile-page__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.profile-page__avatar {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+
+  &--coiffeur {
+    background: #2563eb;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35);
+  }
+}
+
+.profile-page__name {
+  margin: 0;
+  color: #000000;
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+// ── Name Edit Button (tap-to-edit) ──────────────────────
+.profile-page__name-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.14s ease;
+
+  &:hover {
+    background: #f0f4ff;
+  }
+}
+
+.profile-page__name-edit-icon {
+  width: 16px;
+  height: 16px;
+  color: #2563eb;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+// ── Inline Name Edit Form ────────────────────────────────
+.profile-page__name-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 260px;
+}
+
+.profile-page__name-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #2563eb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  outline: none;
+  transition: box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: #94a3b8;
+    text-transform: none;
+    font-weight: 400;
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  }
+}
+
+.profile-page__name-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-page__name-save {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.14s ease;
+
+  &:hover {
+    background: #1d4ed8;
+  }
+}
+
+.profile-page__name-cancel {
+  padding: 8px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+}
+
+.profile-page__role-tag {
+  margin: 0;
+  color: #2563eb;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.profile-page__phone {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  font-weight: 400;
+}
+
+// ── Stats Row ─────────────────────────────────────────────
+.profile-page__stats {
+  display: flex;
+  gap: 14px;
+}
+
+// ── Menu ─────────────────────────────────────────────────
+.profile-page__menu {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.profile-page__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &:active {
+    background: #f1f5f9;
+  }
+}
+
+.profile-page__menu-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #475569;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.profile-page__menu-label {
+  flex: 1;
+  color: #1e293b;
+  font-size: 0.97rem;
+  font-weight: 600;
+}
+
+.profile-page__badge {
+  display: inline-grid;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  place-items: center;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.profile-page__menu-chevron {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.profile-page__divider {
+  height: 1px;
+  margin: 0 18px;
+  background: #f1f5f9;
+}
+
+// ── Logout ────────────────────────────────────────────────
+.profile-page__logout-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  padding-bottom: 24px;
+}
+
+.profile-page__logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  border: 1.5px solid #fecaca;
+  border-radius: 999px;
+  padding: 0 28px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.97rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #dc2626;
+    stroke: #dc2626;
+  }
+
+  span {
+    color: #dc2626;
+  }
+
+  &:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ── Dark Theme Overrides for Profile ──────────────────────
+body.dark-theme {
+  .profile-page {
+    background-color: #ffffff !important;
+  }
+
+  .profile-page__avatar--coiffeur {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4) !important;
+  }
+
+  .profile-page__name {
+    color: #ffffff !important;
+  }
+
+  .profile-page__role-tag {
+    color: #60a5fa !important;
+  }
+
+  .profile-page__phone {
+    color: #cbd5e1 !important;
+  }
+
+  .profile-page__menu {
+    background-color: #1c2541 !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  .profile-page__menu-item {
+    background: transparent !important;
+
+    &:hover {
+      background-color: #2a365c !important;
+    }
+
+    &:active {
+      background-color: #334155 !important;
+    }
+  }
+
+  .profile-page__menu-icon {
+    color: #60a5fa !important;
+
+    svg {
+      color: #60a5fa !important;
+      stroke: #60a5fa !important;
+    }
+  }
+
+  .profile-page__menu-label {
+    color: #ffffff !important;
+  }
+
+  .profile-page__menu-chevron {
+    color: #94a3b8 !important;
+
+    svg {
+      color: #94a3b8 !important;
+      stroke: #94a3b8 !important;
+    }
+  }
+
+  .profile-page__divider {
+    background-color: #334155 !important;
+  }
+
+  .profile-page__logout-btn {
+    background-color: #b91c1c !important;
+    border: 1.5px solid #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 16px rgba(185, 28, 28, 0.4) !important;
+
+    svg {
+      color: #ffffff !important;
+      stroke: #ffffff !important;
+    }
+
+    span {
+      color: #ffffff !important;
+      font-weight: 800 !important;
+    }
+
+    &:hover {
+      background-color: #dc2626 !important;
+      border-color: #f87171 !important;
+      transform: translateY(-1px);
+    }
+  }
+
+  // ── Name Edit Dark Mode ──────────────────────────────
+  .profile-page__name-btn {
+    &:hover {
+      background: rgba(96, 165, 250, 0.12) !important;
+    }
+  }
+
+  .profile-page__name-edit-icon {
+    color: #60a5fa !important;
+    stroke: #60a5fa !important;
+  }
+
+  .profile-page__name-input {
+    background-color: #0f172a !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+
+    &::placeholder {
+      color: #64748b !important;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
+    }
+  }
+
+  .profile-page__name-save {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  .profile-page__name-cancel {
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+
+    &:hover {
+      background-color: #1c2541 !important;
+    }
+  }
+}

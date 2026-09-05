@@ -1,0 +1,475 @@
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
+import { LocationHeader } from '../../../shared/components/location-header/location-header';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { NotificationService } from '../../../shared/services/notification.service';
+import { TicketService } from '../../../shared/services/ticket.service';
+import { SalonService } from '../../../shared/services/salon.service';
+import { AuthSessionService } from '../../auth/auth-session.service';
+import { Ticket } from '../../../shared/models/ticket';
+
+@Component({
+  selector: 'app-coiffeur-tickets-page',
+  imports: [
+    ClientLayout,
+    LocationHeader,
+    EmptyStateComponent
+  ],
+  template: `
+    <app-client-layout activeNav="tickets" role="coiffeur" [hasHeaderSlot]="true">
+      <!-- Fixed Header Slot -->
+      <app-location-header
+        slot="header"
+        [showLocation]="false"
+        [hasNotification]="notificationService.coiffeurUnreadCount() > 0"
+        (notificationClick)="goToNotifications()"
+      />
+
+      <!-- Content -->
+      <div class="coiffeur-tickets">
+        <!-- Toast Feedback Message -->
+        @if (toastMessage()) {
+          <div class="coiffeur-toast">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="coiffeur-toast__icon">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>{{ toastMessage() }}</span>
+          </div>
+        }
+
+        <!-- Tab Selector -->
+        <div class="coiffeur-tickets__tabs" role="tablist">
+          <button
+            type="button"
+            class="coiffeur-tickets__tab"
+            [class.coiffeur-tickets__tab--active]="activeTab() === 'active'"
+            (click)="activeTab.set('active')"
+            role="tab"
+          >
+            File en direct ({{ activeCount() }})
+          </button>
+          <button
+            type="button"
+            class="coiffeur-tickets__tab"
+            [class.coiffeur-tickets__tab--active]="activeTab() === 'history'"
+            (click)="activeTab.set('history')"
+            role="tab"
+          >
+            Historique ({{ historyCount() }})
+          </button>
+        </div>
+
+        <!-- Section Title & Actions -->
+        <div class="coiffeur-tickets__section-header">
+          <h1 class="coiffeur-tickets__title">
+            {{ activeTab() === 'active' ? 'Clients dans la file' : 'Historique des passages' }}
+          </h1>
+
+          @if (activeTab() === 'active') {
+            <button type="button" class="coiffeur-tickets__add-btn" (click)="showAddModal.set(true)">
+              + Ajouter un client
+            </button>
+          }
+        </div>
+
+        <!-- Live Queue List -->
+        <div class="coiffeur-tickets__list">
+          @for (item of displayedTickets(); track item.id; let idx = $index) {
+            <div
+              class="queue-card"
+              [class.queue-card--current]="isCurrentClient(item, idx)"
+              [class.queue-card--waiting]="!isCurrentClient(item, idx) && activeTab() === 'active'"
+            >
+              <div class="queue-card__top">
+                <!-- Position Box -->
+                <div
+                  class="queue-card__pos-box"
+                  [class.queue-card__pos-box--current]="isCurrentClient(item, idx)"
+                >
+                  #{{ item.ticketNumber }}
+                </div>
+
+                <!-- Client Info -->
+                <div class="queue-card__info">
+                  <strong class="queue-card__name">{{ item.ownerName }}</strong>
+                  <span class="queue-card__phone">{{ item.salonName }} &bull; Dakar</span>
+                </div>
+
+                <!-- Status Tag : Un seul En cours, les autres En attente -->
+                <span
+                  class="queue-card__status-tag"
+                  [class.queue-card__status-tag--current]="isCurrentClient(item, idx)"
+                  [class.queue-card__status-tag--waiting]="!isCurrentClient(item, idx) && activeTab() === 'active'"
+                  [class.queue-card__status-tag--served]="item.status === 'served' || item.status === 'completed'"
+                  [class.queue-card__status-tag--cancelled]="item.status === 'cancelled'"
+                >
+                  {{ getStatusText(item, isCurrentClient(item, idx)) }}
+                </span>
+              </div>
+
+              <!-- Action Bar with Icons Only (Active tab) -->
+              @if (activeTab() === 'active') {
+                <div class="queue-card__bottom">
+                  <div class="queue-card__pos-indicator">
+                    @if (isCurrentClient(item, idx)) {
+                      <span class="queue-card__sub-badge queue-card__sub-badge--chair">
+                        <span class="pulse-indicator"></span> Au fauteuil
+                      </span>
+                    } @else {
+                      <span class="queue-card__sub-badge queue-card__sub-badge--waiting">
+                        {{ getQueuePositionText(idx) }}
+                      </span>
+                    }
+                  </div>
+
+                  <!-- Icons Action Group -->
+                  <div class="queue-card__icons-group">
+                    <!-- 1. Icon Appeler -->
+                    <button
+                      type="button"
+                      class="queue-card__icon-btn queue-card__icon-btn--call"
+                      [disabled]="!isCurrentClient(item, idx)"
+                      (click)="callClient(item)"
+                      title="Appeler le client"
+                      aria-label="Appeler le client"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                    </button>
+
+                    <!-- 2. Icon Sauter / Annuler -->
+                    <button
+                      type="button"
+                      class="queue-card__icon-btn queue-card__icon-btn--skip"
+                      [disabled]="!isCurrentClient(item, idx)"
+                      (click)="openConfirmModal(item, 'skip')"
+                      title="Sauter / Annuler"
+                      aria-label="Sauter ce tour"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                      </svg>
+                    </button>
+
+                    <!-- 3. Icon Marquer Servi -->
+                    <button
+                      type="button"
+                      class="queue-card__icon-btn queue-card__icon-btn--served"
+                      [disabled]="!isCurrentClient(item, idx)"
+                      (click)="openConfirmModal(item, 'served')"
+                      title="Marquer comme servi"
+                      aria-label="Marquer comme servi"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @empty {
+            <app-empty-state
+              icon="ticket"
+              [title]="activeTab() === 'active' ? 'File d\\'attente vide' : 'Aucun historique'"
+              [description]="activeTab() === 'active' ? 'Aucun client n\\'est en attente pour le moment.' : 'L\\'historique des tickets servis apparaîtra ici.'"
+            />
+          }
+        </div>
+      </div>
+    </app-client-layout>
+
+    <!-- Confirmation Modal Before Skipping or Serving -->
+    @if (confirmModalTarget()) {
+      <div class="confirm-modal-backdrop" (click)="closeConfirmModal()">
+        <div class="confirm-modal" (click)="$event.stopPropagation()">
+          <div
+            class="confirm-modal__icon"
+            [class.confirm-modal__icon--danger]="confirmModalAction() === 'skip'"
+            [class.confirm-modal__icon--success]="confirmModalAction() === 'served'"
+          >
+            @if (confirmModalAction() === 'skip') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            }
+          </div>
+
+          <h3 class="confirm-modal__title">
+            @if (confirmModalAction() === 'skip') {
+              Sauter le tour de ce client ?
+            } @else {
+              Valider la prestation ?
+            }
+          </h3>
+
+          <p class="confirm-modal__desc">
+            @if (confirmModalAction() === 'skip') {
+              Le client <strong>{{ confirmModalTarget()?.ownerName }}</strong> (Ticket #{{ confirmModalTarget()?.ticketNumber }}) n'est pas présent ? Cette action libérera le fauteuil et appellera le client suivant.
+            } @else {
+              Confirmez-vous que la coupe de <strong>{{ confirmModalTarget()?.ownerName }}</strong> (Ticket #{{ confirmModalTarget()?.ticketNumber }}) est terminée ?
+            }
+          </p>
+
+          <div class="confirm-modal__actions">
+            <button
+              type="button"
+              class="confirm-modal__btn confirm-modal__btn--cancel"
+              (click)="closeConfirmModal()"
+              [disabled]="isProcessingAction()"
+            >
+              Annuler
+            </button>
+
+            <button
+              type="button"
+              class="confirm-modal__btn"
+              [class.confirm-modal__btn--danger]="confirmModalAction() === 'skip'"
+              [class.confirm-modal__btn--success]="confirmModalAction() === 'served'"
+              (click)="executeConfirmedAction()"
+              [disabled]="isProcessingAction()"
+            >
+              @if (isProcessingAction()) {
+                Traitement...
+              } @else if (confirmModalAction() === 'skip') {
+                Oui, sauter
+              } @else {
+                Oui, valider
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Quick Add Walk-in Modal -->
+    @if (showAddModal()) {
+      <div class="walkin-modal-backdrop" (click)="showAddModal.set(false)">
+        <div class="walkin-modal" (click)="$event.stopPropagation()">
+          <h2 class="walkin-modal__title">Ajouter un client direct</h2>
+
+          <div class="walkin-modal__field">
+            <label>Nom du client *</label>
+            <input type="text" #nameInput placeholder="Ex: Ousmane Sow" autofocus (keydown.enter)="addWalkInClient(nameInput.value)" />
+          </div>
+
+          <div class="walkin-modal__field">
+            <label>Salon</label>
+            <input type="text" [value]="getSalonDisplayName()" readonly disabled />
+          </div>
+
+          <div class="walkin-modal__actions">
+            <button
+              type="button"
+              class="walkin-modal__cancel-btn"
+              (click)="showAddModal.set(false)"
+              [disabled]="isAddingClient()"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              class="walkin-modal__submit-btn"
+              (click)="addWalkInClient(nameInput.value)"
+              [disabled]="isAddingClient()"
+            >
+              @if (isAddingClient()) {
+                Ajout en cours...
+              } @else {
+                Ajouter à la file
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  `,
+  styleUrl: './coiffeur-tickets-page.scss'
+})
+export class CoiffeurTicketsPage implements OnInit {
+  private readonly router = inject(Router);
+  protected readonly ticketService = inject(TicketService);
+  protected readonly salonService = inject(SalonService);
+  protected readonly notificationService = inject(NotificationService);
+  protected readonly auth = inject(AuthSessionService);
+
+  protected readonly activeTab = signal<'active' | 'history'>('active');
+  protected readonly showAddModal = signal(false);
+  protected readonly isAddingClient = signal(false);
+  protected readonly toastMessage = signal<string | null>(null);
+
+  // ── Action Confirmation Modal State ─────────────────────────
+  protected readonly confirmModalTarget = signal<Ticket | null>(null);
+  protected readonly confirmModalAction = signal<'served' | 'skip'>('served');
+  protected readonly isProcessingAction = signal(false);
+
+  protected readonly allTickets = computed(() => this.ticketService.tickets());
+
+  protected readonly activeCount = computed(() =>
+    this.allTickets().filter((t) => t.category === 'active').length
+  );
+
+  protected readonly historyCount = computed(() =>
+    this.allTickets().filter((t) => t.category === 'history').length
+  );
+
+  /**
+   * Liste triée pour affichage :
+   * - File active : triée par ticketNumber croissant (le #1 au fauteuil est en haut, puis #2, #3...)
+   * - Historique : trié par date de création décroissante
+   */
+  protected readonly displayedTickets = computed(() => {
+    const tab = this.activeTab();
+    const list = this.allTickets().filter((t) => t.category === tab);
+    if (tab === 'active') {
+      return [...list].sort((a, b) => (Number(a.ticketNumber) || 0) - (Number(b.ticketNumber) || 0));
+    }
+    return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  });
+
+  ngOnInit(): void {
+    // Recharger systématiquement les tickets du salon connecté
+    this.ticketService.loadTickets();
+  }
+
+  /**
+   * Seul et unique client actuellement au fauteuil :
+   * - En onglet actif uniquement
+   * - Premier ticket de la file active (ou celui avec 'your_turn')
+   */
+  protected isCurrentClient(item: Ticket, index: number): boolean {
+    if (this.activeTab() !== 'active') return false;
+    const activeList = this.displayedTickets();
+    if (activeList.length === 0) return false;
+    const currentItem = activeList.find((t) => t.status === 'your_turn') || activeList[0];
+    return currentItem ? currentItem.id === item.id : false;
+  }
+
+  /**
+   * Texte du badge d'état : UN SEUL "En cours", les autres "En attente"
+   */
+  protected getStatusText(item: Ticket, isCurrent: boolean): string {
+    if (this.activeTab() === 'history' || item.category === 'history') {
+      if (item.status === 'served' || item.status === 'completed') return 'SERVI';
+      if (item.status === 'cancelled') return 'ANNULÉ';
+    }
+    if (isCurrent || item.status === 'your_turn') {
+      return 'En cours';
+    }
+    return 'En attente';
+  }
+
+  protected getQueuePositionText(index: number): string {
+    if (index === 0) return 'Au fauteuil';
+    return `${index + 1}e dans la file`;
+  }
+
+  protected getSalonDisplayName(): string {
+    const user = this.auth.activeUser();
+    if (user?.name && user.name !== 'Espace Barbier') {
+      return user.name;
+    }
+    const salons = this.salonService.salons();
+    return salons[0]?.name || 'Mon Salon';
+  }
+
+  protected callClient(item: Ticket): void {
+    this.ticketService.callTicket(item.id).subscribe({
+      next: () => {
+        this.showToast(`Client ${item.ownerName} appelé ! Notification envoyée.`);
+      },
+      error: () => {
+        this.showToast(`Appel envoyé à ${item.ownerName}.`);
+      }
+    });
+  }
+
+  protected openConfirmModal(item: Ticket, action: 'served' | 'skip'): void {
+    this.confirmModalTarget.set(item);
+    this.confirmModalAction.set(action);
+  }
+
+  protected closeConfirmModal(): void {
+    if (this.isProcessingAction()) return;
+    this.confirmModalTarget.set(null);
+  }
+
+  protected executeConfirmedAction(): void {
+    const target = this.confirmModalTarget();
+    const action = this.confirmModalAction();
+    if (!target || this.isProcessingAction()) return;
+
+    this.isProcessingAction.set(true);
+
+    const request$ = action === 'served'
+      ? this.ticketService.serveTicket(target.id)
+      : this.ticketService.cancelTicket(target.id);
+
+    request$.subscribe({
+      next: () => {
+        this.isProcessingAction.set(false);
+        this.confirmModalTarget.set(null);
+        const msg = action === 'served'
+          ? `Prestation de ${target.ownerName} validée avec succès.`
+          : `Tour de ${target.ownerName} sauté / annulé.`;
+        this.showToast(msg);
+      },
+      error: () => {
+        this.isProcessingAction.set(false);
+        this.confirmModalTarget.set(null);
+      }
+    });
+  }
+
+  protected addWalkInClient(name: string): void {
+    if (!name.trim()) return;
+    this.isAddingClient.set(true);
+
+    const user = this.auth.activeUser();
+    let salonId = user?.salonId;
+    if (!salonId) {
+      const salon = this.salonService.salons()[0];
+      salonId = salon?.id || salon?.numericId || 1;
+    }
+    const numericSalonId = Number(salonId) || 1;
+
+    this.ticketService.addWalkInTicket(numericSalonId, name.trim()).subscribe({
+      next: (created) => {
+        this.isAddingClient.set(false);
+        this.showAddModal.set(false);
+        this.showToast(`Client ${created.ownerName} (#${created.ticketNumber}) ajouté à la file.`);
+      },
+      error: (err) => {
+        console.error('[CoiffeurTickets] Erreur addWalkInTicket:', err);
+        this.isAddingClient.set(false);
+        this.showAddModal.set(false);
+        this.showToast(`Erreur lors de l'enregistrement en base.`);
+      }
+    });
+  }
+
+  protected showToast(msg: string): void {
+    this.toastMessage.set(msg);
+    setTimeout(() => {
+      if (this.toastMessage() === msg) {
+        this.toastMessage.set(null);
+      }
+    }, 4000);
+  }
+
+  protected goToNotifications(): void {
+    this.router.navigate(['/coiffeur/notifications']);
+  }
+}

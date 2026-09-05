@@ -1,0 +1,36 @@
+:host {
+  display: block;
+}
+
+.otp-code-input {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.otp-code-input__field {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #eef1f6;
+  border-radius: 10px;
+  color: var(--text);
+  background: #f8fafc;
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 6px 16px rgba(17, 24, 39, 0.04);
+}
+
+.otp-code-input__field--active,
+.otp-code-input__field:focus {
+  border-color: var(--primary);
+  background: var(--white);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+@media (max-width: 340px) {
+  .otp-code-input {
+    gap: 8px;
+  }
+}

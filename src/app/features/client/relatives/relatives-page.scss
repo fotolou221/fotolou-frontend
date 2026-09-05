@@ -1,0 +1,205 @@
+.relatives-page {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px calc(110px + env(safe-area-inset-bottom, 0px));
+  gap: 28px;
+  background: #ffffff;
+  min-height: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+// ── Hero ──────────────────────────────────────────────────
+.relatives-page__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.relatives-page__hero-icon {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+
+  svg {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+.relatives-page__hero-text {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  max-width: 260px;
+}
+
+// ── List ──────────────────────────────────────────────────
+.relatives-page__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.relatives-page__card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1.5px solid #f1f5f9;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.relatives-page__card-avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 1.35rem;
+  background: #fef3c7;
+
+  &--mere, &--pere { background: #fef3c7; }
+  &--enfant { background: #dbeafe; }
+  &--frere, &--soeur { background: #ede9fe; }
+  &--ami { background: #dcfce7; }
+  &--autre { background: #f1f5f9; }
+}
+
+.relatives-page__card-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.relatives-page__card-name {
+  overflow: hidden;
+  color: #0f172a;
+  font-size: 0.97rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relatives-page__card-meta {
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 0.80rem;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relatives-page__card-edit-btn {
+  display: inline-grid;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  svg {
+    width: 17px;
+    height: 17px;
+  }
+}
+
+.relatives-page__empty {
+  margin: 0;
+  padding: 24px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+// ── Footer Fixed ──────────────────────────────────────────
+.relatives-page__footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding: 14px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.08);
+}
+
+.relatives-page__add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 600px;
+  min-height: 52px;
+  border: none;
+  border-radius: 14px;
+  padding: 0 24px;
+  background: #1E5AF0;
+  color: #ffffff;
+  font-size: 1.02rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(30, 90, 240, 0.3);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    background: #1746c0;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(30, 90, 240, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+:host-context(body.dark-theme) {
+  .relatives-page {
+    background: #0b132b !important;
+  }
+
+  .relatives-page__footer {
+    background: rgba(28, 37, 65, 0.95);
+    border-top-color: #334155;
+  }
+}
+

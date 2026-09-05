@@ -1,0 +1,104 @@
+:host {
+  display: block;
+}
+
+.admin-stat-card {
+  background: var(--bg-card, #ffffff);
+  border-radius: 18px;
+  padding: 22px 20px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: var(--shadow-sm, 0 4px 16px rgba(0, 0, 0, 0.03));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(30, 90, 240, 0.08);
+  }
+
+  &--accent {
+    background: linear-gradient(135deg, #1E5AF0 0%, #1746c0 100%);
+    color: #ffffff;
+    border-color: #1E5AF0;
+
+    .admin-stat-card__icon-wrap {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+
+    .admin-stat-card__label,
+    .admin-stat-card__subtext {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .admin-stat-card__value {
+      color: #ffffff;
+    }
+  }
+}
+
+.admin-stat-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.admin-stat-card__icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--primary-light, #eef2ff);
+  color: var(--primary, #1E5AF0);
+  display: grid;
+  place-items: center;
+
+  ::ng-deep svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.admin-stat-card__trend {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+
+  &--up {
+    background: var(--success-light, #dcfce7);
+    color: var(--success, #16a34a);
+  }
+
+  &--down {
+    background: var(--danger-light, #fee2e2);
+    color: var(--danger, #dc2626);
+  }
+}
+
+.admin-stat-card__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-stat-card__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.admin-stat-card__value {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--text-primary, #0f172a);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.admin-stat-card__subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+}

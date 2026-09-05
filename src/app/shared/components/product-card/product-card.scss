@@ -1,0 +1,138 @@
+:host {
+  display: block;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.product-card__image-wrap {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1.1;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 12px;
+  background: #f1f5f9;
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+
+  .product-card__image-wrap:hover & {
+    transform: scale(1.04);
+  }
+}
+
+.product-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.product-card__brand {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.product-card__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.product-card__star {
+  color: #f59e0b;
+  font-size: 0.85rem;
+}
+
+.product-card__title {
+  margin-bottom: 6px;
+  color: var(--text-primary, #0f172a);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  &:hover {
+    color: var(--primary, #1E5AF0);
+  }
+}
+
+.product-card__price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.product-card__current-price {
+  color: var(--primary, #1E5AF0);
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.product-card__old-price {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+.product-card__add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 42px;
+  border: none;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--secondary, #0d3eb8);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 62, 184, 0.25);
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  margin-top: auto;
+
+  span {
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: var(--secondary-hover, #0a2e8c);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(13, 62, 184, 0.35);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+}

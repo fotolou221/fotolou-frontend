@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  min-height: 100svh;
+  background: #ffffff !important;
+}
+
+.client-layout {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  width: 100%;
+  margin: 0 auto;
+  background: #ffffff !important;
+}
+
+.client-layout__header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  flex: none;
+  width: 100%;
+  background: #ffffff !important;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  .client-layout--bleed-header & {
+    border-bottom: none;
+    background: transparent !important;
+  }
+}
+
+.client-layout__header-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.client-layout__body {
+  position: relative;
+  z-index: 10;
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  background: #ffffff !important;
+
+  .client-layout--with-bottom-nav & {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+
+    @media (min-width: 1024px) {
+      padding-bottom: 0;
+    }
+  }
+}
+
+.client-layout__main-content {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.client-layout__footer {
+  position: relative;
+  z-index: 30;
+  flex: none;
+  width: 100%;
+
+  > * {
+    width: 100%;
+  }
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  :host,
+  .client-layout,
+  .client-layout__body {
+    background: #ffffff !important;
+  }
+}

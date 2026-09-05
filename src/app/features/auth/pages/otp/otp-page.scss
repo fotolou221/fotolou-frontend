@@ -1,0 +1,42 @@
+.otp-page__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px 32px;
+  text-align: center;
+}
+
+.otp-page__header {
+  margin-bottom: 28px;
+
+  p {
+    margin: 0 0 4px;
+    color: #64748b;
+    font-size: 0.92rem;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+}
+
+.otp-page__resend {
+  margin-top: 24px;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.otp-page__error {
+  margin-top: 16px;
+  color: #ef4444;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.otp-page__fixed-footer {
+  padding: 16px 20px 24px;
+  background: #ffffff;
+}

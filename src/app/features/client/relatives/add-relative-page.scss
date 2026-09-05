@@ -1,0 +1,234 @@
+.add-relative-page {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px 32px;
+  gap: 28px;
+  background: #ffffff;
+  min-height: 100%;
+}
+
+// ── Hero ──────────────────────────────────────────────────
+.add-relative-page__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.add-relative-page__hero-icon {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: #2563eb;
+
+  svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.add-relative-page__hero-text {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  max-width: 270px;
+  text-align: center;
+}
+
+// ── Form ──────────────────────────────────────────────────
+.add-relative-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.add-relative-page__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-relative-page__label {
+  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.add-relative-page__required {
+  color: #f59e0b;
+}
+
+.add-relative-page__input {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  box-sizing: border-box;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+
+  &::placeholder {
+    color: #cbd5e1;
+  }
+
+  &:focus {
+    background: #f1f5f9;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+  }
+
+  &--phone {
+    padding-right: 44px;
+  }
+}
+
+// ── Select ────────────────────────────────────────────────
+.add-relative-page__select-wrapper {
+  position: relative;
+}
+
+.add-relative-page__select {
+  width: 100%;
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 44px 14px 16px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: box-shadow 0.15s ease, background 0.15s ease;
+
+  &:focus {
+    background: #f1f5f9;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+  }
+
+  option[value=''][disabled] {
+    color: #cbd5e1;
+  }
+}
+
+.add-relative-page__select-icon {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+  pointer-events: none;
+  transform: translateY(-50%);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// ── Phone Input ───────────────────────────────────────────
+.add-relative-page__phone-wrapper {
+  position: relative;
+}
+
+.add-relative-page__phone-icon {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: #cbd5e1;
+  pointer-events: none;
+  transform: translateY(-50%);
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.add-relative-page__hint {
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+
+.add-relative-page__mandatory-note {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.76rem;
+  text-align: right;
+}
+
+// ── Footer ────────────────────────────────────────────────
+.add-relative-page__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px 24px;
+  background: #ffffff;
+}
+
+.add-relative-page__save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 999px;
+  padding: 0 24px;
+  background: #ffc107;
+  color: #111827;
+  font-size: 1.02rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255, 193, 7, 0.35);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  &:not(:disabled):hover {
+    background: #ffb300;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.add-relative-page__cancel-btn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-size: 0.97rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px;
+  transition: color 0.12s ease;
+
+  &:hover {
+    color: #1d4ed8;
+  }
+}

@@ -1,0 +1,98 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 20px;
+  background: var(--bg-card, #ffffff);
+  border-radius: 20px;
+  border: 1.5px solid rgba(220, 38, 38, 0.2);
+  margin: 10px 0;
+}
+
+.error-state__icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: var(--danger-light, #fee2e2);
+  color: var(--danger, #dc2626);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.error-state__title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 6px;
+}
+
+.error-state__message {
+  font-size: 0.84rem;
+  color: var(--text-secondary, #64748b);
+  max-width: 320px;
+  line-height: 1.45;
+  margin: 0 0 18px;
+}
+
+.error-state__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--primary, #1E5AF0);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(30, 90, 240, 0.25);
+  transition: all 0.2s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: var(--primary-hover, #1746c0);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .error-state {
+    background: #1c2541 !important;
+    border-color: rgba(220, 38, 38, 0.3) !important;
+  }
+
+  .error-state__title {
+    color: #ffffff !important;
+  }
+
+  .error-state__message {
+    color: #cbd5e1 !important;
+  }
+
+  .error-state__btn {
+    background: var(--primary, #1E5AF0) !important;
+  }
+}
