@@ -124,8 +124,9 @@ export class RealtimeSyncService {
         });
       });
 
-      this.eventSource.onerror = (err) => {
-        console.warn('⚡ [RealtimeSync] Connexion interrompue, reconnexion dans 5s...', err);
+      this.eventSource.onerror = () => {
+        // Déconnexion naturelle due au timeout du proxy cloud (Render / Cloudflare)
+        // Fermeture propre de la socket et reconnexion automatique en arrière-plan
         if (this.eventSource) {
           this.eventSource.close();
           this.eventSource = null;

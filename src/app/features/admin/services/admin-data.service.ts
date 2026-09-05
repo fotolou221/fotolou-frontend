@@ -177,8 +177,9 @@ export class AdminDataService {
     this.loadUsers();
 
     // 9. Platform Settings
-    this.http.get<any>(`${this.baseUrl}/platform-settings/1`).pipe(
-      tap((s) => {
+    this.http.get<any>(`${this.baseUrl}/platform-settings`).pipe(
+      tap((res) => {
+        const s = Array.isArray(res) ? res[0] : res;
         if (s) {
           this.settings.set({
             appName: s.appName || 'Fotolou Admin',
@@ -505,8 +506,13 @@ export class AdminDataService {
     );
   }
 
-  // ── User Management ───────────────────────────────────────
   loadUsers(): void {
+    // Éviter l'erreur 403 si l'utilisateur n'est pas encore connecté en tant qu'administrateur
+    const token = localStorage.getItem('fotolou_jwt_token') || localStorage.getItem('jhi-authenticationtoken');
+    if (!token) {
+      return;
+    }
+
     this.http.get<any[]>(`${this.baseUrl}/admin/users`).pipe(
       tap((users) => {
         if (Array.isArray(users)) {
@@ -523,10 +529,7 @@ export class AdminDataService {
           })));
         }
       }),
-      catchError((err) => {
-        console.warn('[AdminDataService] Error loading users from backend:', err);
-        return of([]);
-      })
+      catchError(() => of([]))
     ).subscribe();
   }
 
