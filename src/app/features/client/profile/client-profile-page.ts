@@ -259,10 +259,11 @@ export class ClientProfilePage implements OnInit {
   protected async saveName(): Promise<void> {
     const trimmed = this.nameBuffer.trim();
     if (trimmed.length > 0) {
-      this.displayName.set(trimmed);
+      const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+      this.displayName.set(capitalized);
       this.saving.set(true);
       try {
-        await this.auth.updateProfile({ name: trimmed });
+        await this.auth.updateProfile({ name: capitalized });
       } catch (err) {
         console.warn('Erreur mise à jour profil:', err);
       } finally {

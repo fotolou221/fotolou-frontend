@@ -206,9 +206,9 @@ export class TicketService {
     );
   }
 
-  addWalkInTicket(salonId: number | string, clientName: string): Observable<Ticket> {
+  addWalkInTicket(salonId: number | string, clientName: string, clientPhone?: string): Observable<Ticket> {
     const numericSalonId = Number(salonId) || 1;
-    const payload = { salonId: numericSalonId, clientName };
+    const payload = { salonId: numericSalonId, clientName: clientName?.trim() || '', clientPhone: clientPhone?.trim() || null };
     return this.http.post<any>(`${this.baseUrl}/tickets/walk-in`, payload).pipe(
       map((saved) => {
         const st = (saved.status || 'waiting').toLowerCase();
@@ -218,7 +218,7 @@ export class TicketService {
           id: saved.id ? saved.id.toString() : `t-${Date.now()}`,
           salonId: saved.salonId || (saved.salon?.id ? saved.salon.id.toString() : salonId.toString()),
           salonName: saved.salonName || saved.salon?.name || 'Mon Salon',
-          ownerName: saved.ownerName || clientName,
+          ownerName: saved.ownerName || clientName || 'Client direct',
           ticketNumber: saved.ticketNumber || 1,
           status: st as TicketStatus,
           category: (saved.category ? saved.category.toLowerCase() : (isHistory ? 'history' : 'active')) as TicketTab,

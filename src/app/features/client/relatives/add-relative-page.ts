@@ -40,7 +40,7 @@ type RelationOption = { value: RelativeRelation; label: string };
           <!-- Name Field -->
           <div class="add-relative-page__field">
             <label class="add-relative-page__label" for="relative-name">
-              NOM OU SURNOM <span class="add-relative-page__required">*</span>
+              NOM OU SURNOM <span class="add-relative-page__optional-hint">(Optionnel si numéro renseigné)</span>
             </label>
             <input
               id="relative-name"
@@ -49,41 +49,14 @@ type RelationOption = { value: RelativeRelation; label: string };
               placeholder="Ex: Maman, Papa, Ibrahim..."
               [(ngModel)]="name"
               name="name"
-              required
               autocomplete="off"
             />
           </div>
 
-          <!-- Relation Field -->
-          <div class="add-relative-page__field">
-            <label class="add-relative-page__label" for="relative-relation">
-              LIEN DE PARENTÉ <span class="add-relative-page__required">*</span>
-            </label>
-            <div class="add-relative-page__select-wrapper">
-              <select
-                id="relative-relation"
-                class="add-relative-page__select"
-                [(ngModel)]="relation"
-                name="relation"
-                required
-              >
-                <option value="" disabled selected>Choisir un lien</option>
-                @for (opt of relationOptions; track opt.value) {
-                  <option [value]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
-              <span class="add-relative-page__select-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </span>
-            </div>
-          </div>
-
-          <!-- Phone Field (Optional) -->
+          <!-- Phone Field (Optional if Name is set) -->
           <div class="add-relative-page__field">
             <label class="add-relative-page__label" for="relative-phone">
-              NUMÉRO DE TÉLÉPHONE
+              NUMÉRO DE TÉLÉPHONE <span class="add-relative-page__optional-hint">(Optionnel si nom renseigné)</span>
             </label>
             <div class="add-relative-page__phone-wrapper">
               <input
@@ -102,11 +75,35 @@ type RelationOption = { value: RelativeRelation; label: string };
               </span>
             </div>
             <small class="add-relative-page__hint">
-              Optionnel. Pour envoyer les notifications de ticket par SMS.
+              📲 Si renseigné, les notifications de tickets lui seront envoyées par SMS.
             </small>
           </div>
 
-          <p class="add-relative-page__mandatory-note">* Champs obligatoires</p>
+          <!-- Relation Field -->
+          <div class="add-relative-page__field">
+            <label class="add-relative-page__label" for="relative-relation">
+              LIEN DE PARENTÉ
+            </label>
+            <div class="add-relative-page__select-wrapper">
+              <select
+                id="relative-relation"
+                class="add-relative-page__select"
+                [(ngModel)]="relation"
+                name="relation"
+              >
+                @for (opt of relationOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+              <span class="add-relative-page__select-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <p class="add-relative-page__mandatory-note">* Au moins le nom ou le numéro de téléphone est requis.</p>
         </form>
       </div>
 
@@ -115,7 +112,7 @@ type RelationOption = { value: RelativeRelation; label: string };
         <button
           type="button"
           class="add-relative-page__save-btn"
-          [disabled]="!name.trim() || !relation"
+          [disabled]="!name.trim() && !phone.trim()"
           (click)="saveRelative()"
         >
           <span>Enregistrer</span>
@@ -138,7 +135,7 @@ export class AddRelativePage {
   private readonly relativeService = inject(RelativeService);
 
   protected name = '';
-  protected relation: RelativeRelation | '' = '';
+  protected relation: RelativeRelation | '' = 'autre';
   protected phone = '';
 
   protected readonly relationOptions: readonly RelationOption[] = (
@@ -146,11 +143,17 @@ export class AddRelativePage {
   ).map(([value, label]) => ({ value, label }));
 
   protected saveRelative(): void {
-    if (!this.name.trim() || !this.relation) return;
+    const trimmedName = this.name.trim();
+    const trimmedPhone = this.phone.trim();
+    if (!trimmedName && !trimmedPhone) return;
+
+    const finalName = trimmedName || `Proche (${trimmedPhone})`;
+    const finalRelation = (this.relation as RelativeRelation) || 'autre';
+
     this.relativeService.addRelative(
-      this.name,
-      this.relation as RelativeRelation,
-      this.phone || undefined
+      finalName,
+      finalRelation,
+      trimmedPhone || undefined
     ).subscribe(() => {
       this.router.navigate(['/client/proches']);
     });

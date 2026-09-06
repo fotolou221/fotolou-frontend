@@ -27,33 +27,40 @@
 .client-home__pinned-header {
   flex: none;
   background: #ffffff !important;
-  padding: 14px 16px 6px;
-  border-bottom: 1px solid var(--border-color, #f1f5f9);
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--border-subtle, #f1f5f9);
   z-index: 20;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
 
   @media (min-width: 640px) {
-    padding: 18px 24px 8px;
+    padding: 20px 24px 12px;
   }
 }
 
 .client-home__greeting {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
 
-  h1 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-primary, #0f172a);
-    font-size: 1.35rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    margin: 0;
+.client-home__greeting-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 
-    @media (min-width: 640px) {
-      font-size: 1.65rem;
-    }
+.client-home__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary, #0f172a);
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0;
+
+  @media (min-width: 640px) {
+    font-size: 1.7rem;
   }
 }
 
@@ -63,13 +70,117 @@
   font-weight: 800;
 }
 
+.client-home__wave {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: wave-hand 2.4s ease-in-out infinite;
+}
+
+@keyframes wave-hand {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(14deg); }
+  20% { transform: rotate(-8deg); }
+  30% { transform: rotate(14deg); }
+  40% { transform: rotate(-4deg); }
+  50% { transform: rotate(10deg); }
+  60% { transform: rotate(0deg); }
+}
+
+.client-home__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  color: #15803d;
+  font-size: 0.75rem;
+  font-weight: 650;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.client-home__badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.client-home__subtitle {
+  font-size: 0.845rem;
+  color: var(--text-secondary, #64748b);
+  margin-top: 5px;
+  margin-bottom: 0;
+  line-height: 1.45;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+}
+
 .client-home__search {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .client-home__heading-wrap {
   margin-bottom: 0;
   padding-bottom: 0;
+}
+
+.client-home__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.client-home__section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.client-home__section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #f59e0b;
+
+  svg {
+    width: 17px;
+    height: 17px;
+    fill: #fef3c7;
+    stroke: #f59e0b;
+  }
+}
+
+.client-home__section-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+
+.client-home__salons-count {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: -0.01em;
 }
 
 // ── Independently Scrollable Salons Area ───────────────────────

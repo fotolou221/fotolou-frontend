@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { LocationHeader } from '../../../shared/components/location-header/location-header';
 import { SearchBar } from '../../../shared/components/search-bar/search-bar';
-import { SectionHeading } from '../../../shared/components/section-heading/section-heading';
 import { SalonListCard } from '../../../shared/components/salon-list-card/salon-list-card';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -18,7 +17,6 @@ import { AuthSessionService } from '../../auth/auth-session.service';
     ClientLayout,
     LocationHeader,
     SearchBar,
-    SectionHeading,
     SalonListCard,
     SkeletonLoaderComponent,
     EmptyStateComponent,
@@ -41,9 +39,17 @@ import { AuthSessionService } from '../../auth/auth-session.service';
         <!-- 100% FIXED TOP SECTION (Greeting + Search + Salons Section Title) -->
         <header class="client-home__pinned-header">
           <section class="client-home__greeting">
-            <h1>
-              Bonjour, <span class="client-home__user-name">{{ userName }}</span> 👋
-            </h1>
+            <div class="client-home__greeting-header">
+              <h1 class="client-home__title">
+                Bonjour, <span class="client-home__user-name">{{ userName }}</span>
+                <span class="client-home__wave" aria-hidden="true">👋</span>
+              </h1>
+              <span class="client-home__badge">
+                <span class="client-home__badge-dot"></span>
+                En direct
+              </span>
+            </div>
+            <p class="client-home__subtitle">Prenez votre place dans votre salon préféré en 1 clic.</p>
           </section>
 
           <!-- Search Bar -->
@@ -57,9 +63,19 @@ import { AuthSessionService } from '../../auth/auth-session.service';
 
           <!-- Section Heading "Salons recommandés" -->
           <section class="client-home__heading-wrap">
-            <app-section-heading
-              title="Salons recommandés"
-            />
+            <div class="client-home__section-header">
+              <div class="client-home__section-title-wrap">
+                <span class="client-home__section-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </span>
+                <h2 class="client-home__section-title">Salons recommandés</h2>
+              </div>
+              @if (allSalons().length > 0) {
+                <span class="client-home__salons-count">{{ allSalons().length }} disponibles</span>
+              }
+            </div>
           </section>
         </header>
 
@@ -144,7 +160,8 @@ export class ClientHomePage implements OnInit, AfterViewInit, OnDestroy {
     const user = this.auth.activeUser();
     if (user && user.name && user.name !== 'Mon Compte') {
       const parts = user.name.trim().split(' ');
-      return parts[0] || 'Client';
+      const raw = parts[0] || 'Client';
+      return raw.charAt(0).toUpperCase() + raw.slice(1);
     }
     return 'Client';
   }

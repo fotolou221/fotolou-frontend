@@ -7,6 +7,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
 import { TicketService } from '../../../shared/services/ticket.service';
 import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
+import { FormsModule } from '@angular/forms';
 import { Ticket } from '../../../shared/models/ticket';
 
 @Component({
@@ -14,7 +15,8 @@ import { Ticket } from '../../../shared/models/ticket';
   imports: [
     ClientLayout,
     LocationHeader,
-    EmptyStateComponent
+    EmptyStateComponent,
+    FormsModule
   ],
   template: `
     <app-client-layout activeNav="tickets" role="coiffeur" [hasHeaderSlot]="true">
@@ -68,7 +70,7 @@ import { Ticket } from '../../../shared/models/ticket';
           </h1>
 
           @if (activeTab() === 'active') {
-            <button type="button" class="coiffeur-tickets__add-btn" (click)="showAddModal.set(true)">
+            <button type="button" class="coiffeur-tickets__add-btn" (click)="openAddModal()">
               + Ajouter un client
             </button>
           }
@@ -254,20 +256,41 @@ import { Ticket } from '../../../shared/models/ticket';
       </div>
     }
 
-    <!-- Quick Add Walk-in Modal -->
+    <!-- Quick Add Walk-in Modal (No Salon field, Name + Phone) -->
     @if (showAddModal()) {
       <div class="walkin-modal-backdrop" (click)="showAddModal.set(false)">
         <div class="walkin-modal" (click)="$event.stopPropagation()">
-          <h2 class="walkin-modal__title">Ajouter un client direct</h2>
+          <div class="walkin-modal__header">
+            <h2 class="walkin-modal__title">Ajouter un client direct</h2>
+            <button type="button" class="walkin-modal__close-btn" (click)="showAddModal.set(false)" aria-label="Fermer">✕</button>
+          </div>
+
+          <p class="walkin-modal__info-text">
+            Saisissez le nom, le numéro de téléphone ou les deux. Au moins un champ est requis.
+          </p>
 
           <div class="walkin-modal__field">
-            <label>Nom du client *</label>
-            <input type="text" #nameInput placeholder="Ex: Ousmane Sow" autofocus (keydown.enter)="addWalkInClient(nameInput.value)" />
+            <label>Nom du client <span class="walkin-modal__hint">(Optionnel si numéro renseigné)</span></label>
+            <input
+              type="text"
+              [(ngModel)]="walkInName"
+              placeholder="Ex: Ousmane Sow"
+              autofocus
+              (keydown.enter)="submitWalkIn()"
+            />
           </div>
 
           <div class="walkin-modal__field">
-            <label>Salon</label>
-            <input type="text" [value]="getSalonDisplayName()" readonly disabled />
+            <label>Numéro de téléphone <span class="walkin-modal__hint">(Optionnel si nom renseigné)</span></label>
+            <input
+              type="tel"
+              [(ngModel)]="walkInPhone"
+              placeholder="Ex: +221 77 123 45 67"
+              (keydown.enter)="submitWalkIn()"
+            />
+            <span class="walkin-modal__sms-tag">
+              📲 Si renseigné, le ticket lui sera envoyé par SMS
+            </span>
           </div>
 
           <div class="walkin-modal__actions">
@@ -282,14 +305,49 @@ import { Ticket } from '../../../shared/models/ticket';
             <button
               type="button"
               class="walkin-modal__submit-btn"
-              (click)="addWalkInClient(nameInput.value)"
-              [disabled]="isAddingClient()"
+              (click)="submitWalkIn()"
+              [disabled]="isAddingClient() || (!walkInName.trim() && !walkInPhone.trim())"
             >
               @if (isAddingClient()) {
                 Ajout en cours...
               } @else {
                 Ajouter à la file
               }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- 3-Second Ticket Announcement Popup -->
+    @if (createdTicketPopup(); as popup) {
+      <div class="ticket-popup-backdrop" (click)="closeAnnouncementPopup()">
+        <div class="ticket-popup-card" (click)="$event.stopPropagation()">
+          <div class="ticket-popup-card__badge-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+
+          <span class="ticket-popup-card__subtitle">Client ajouté avec succès !</span>
+          <h3 class="ticket-popup-card__heading">Numéro de passage</h3>
+
+          <div class="ticket-popup-card__ticket-pill">
+            <span class="ticket-popup-card__ticket-number">#{{ popup.ticketNumber }}</span>
+          </div>
+
+          <p class="ticket-popup-card__client-name">{{ popup.clientName }}</p>
+
+          @if (popup.clientPhone) {
+            <p class="ticket-popup-card__sms-info">
+              ✓ Notification SMS transmise au {{ popup.clientPhone }}
+            </p>
+          }
+
+          <div class="ticket-popup-card__footer">
+            <span class="ticket-popup-card__countdown">Fermeture automatique dans <strong>{{ countdownSeconds() }}s</strong></span>
+            <button type="button" class="ticket-popup-card__close-btn" (click)="closeAnnouncementPopup()">
+              OK
             </button>
           </div>
         </div>
@@ -308,6 +366,18 @@ export class CoiffeurTicketsPage implements OnInit {
   protected readonly activeTab = signal<'active' | 'history'>('active');
   protected readonly showAddModal = signal(false);
   protected readonly isAddingClient = signal(false);
+  protected walkInName = '';
+  protected walkInPhone = '';
+
+  // ── Created Ticket Announcement Popup (3s auto-close) ────────
+  protected readonly createdTicketPopup = signal<{
+    ticketNumber: number;
+    clientName: string;
+    clientPhone?: string;
+  } | null>(null);
+  protected readonly countdownSeconds = signal(3);
+  private countdownInterval?: any;
+
   protected readonly toastMessage = signal<string | null>(null);
 
   // ── Action Confirmation Modal State ─────────────────────────
@@ -433,8 +503,18 @@ export class CoiffeurTicketsPage implements OnInit {
     });
   }
 
-  protected addWalkInClient(name: string): void {
-    if (!name.trim()) return;
+  protected openAddModal(): void {
+    this.walkInName = '';
+    this.walkInPhone = '';
+    this.showAddModal.set(true);
+  }
+
+  protected submitWalkIn(): void {
+    const name = this.walkInName.trim();
+    const phone = this.walkInPhone.trim();
+    if (!name && !phone) return;
+    if (this.isAddingClient()) return;
+
     this.isAddingClient.set(true);
 
     const user = this.auth.activeUser();
@@ -444,20 +524,49 @@ export class CoiffeurTicketsPage implements OnInit {
       salonId = salon?.id || salon?.numericId || 1;
     }
     const numericSalonId = Number(salonId) || 1;
+    const finalName = name || `Client (${phone})`;
 
-    this.ticketService.addWalkInTicket(numericSalonId, name.trim()).subscribe({
+    this.ticketService.addWalkInTicket(numericSalonId, finalName, phone || undefined).subscribe({
       next: (created) => {
         this.isAddingClient.set(false);
         this.showAddModal.set(false);
-        this.showToast(`Client ${created.ownerName} (#${created.ticketNumber}) ajouté à la file.`);
+        this.walkInName = '';
+        this.walkInPhone = '';
+
+        // Trigger 3s popup!
+        this.triggerTicketAnnouncement(created.ticketNumber, created.ownerName, phone || undefined);
       },
       error: (err) => {
         console.error('[CoiffeurTickets] Erreur addWalkInTicket:', err);
         this.isAddingClient.set(false);
-        this.showAddModal.set(false);
-        this.showToast(`Erreur lors de l'enregistrement en base.`);
+        this.showToast(`Erreur lors de l'enregistrement du client.`);
       }
     });
+  }
+
+  protected triggerTicketAnnouncement(ticketNumber: number, clientName: string, clientPhone?: string): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+    this.createdTicketPopup.set({ ticketNumber, clientName, clientPhone });
+    this.countdownSeconds.set(3);
+
+    this.countdownInterval = setInterval(() => {
+      const remaining = this.countdownSeconds();
+      if (remaining <= 1) {
+        this.closeAnnouncementPopup();
+      } else {
+        this.countdownSeconds.set(remaining - 1);
+      }
+    }, 1000);
+  }
+
+  protected closeAnnouncementPopup(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = undefined;
+    }
+    this.createdTicketPopup.set(null);
   }
 
   protected showToast(msg: string): void {

@@ -366,11 +366,39 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   border-radius: 20px;
   padding: 24px;
   background: var(--bg-card, #ffffff);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.walkin-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.walkin-modal__close-btn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+
+  &:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+}
+
+.walkin-modal__info-text {
+  margin: 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .walkin-modal__title {
@@ -403,6 +431,19 @@
       border-color: var(--primary, #1E5AF0);
     }
   }
+}
+
+.walkin-modal__hint {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.walkin-modal__sms-tag {
+  font-size: 0.75rem;
+  color: #059669;
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 .walkin-modal__actions {
@@ -439,6 +480,151 @@
   &:hover {
     background: var(--primary-hover, #1746c0);
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// ── 3-Second Ticket Announcement Popup ─────────────────────────
+.ticket-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.ticket-popup-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 380px;
+  border-radius: 24px;
+  padding: 28px 24px 20px;
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ticket-popup-card__badge-check {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.ticket-popup-card__subtitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #16a34a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.ticket-popup-card__heading {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ticket-popup-card__ticket-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1e5af0 0%, #1746c0 100%);
+  box-shadow: 0 8px 24px rgba(30, 90, 240, 0.3);
+  margin-bottom: 14px;
+}
+
+.ticket-popup-card__ticket-number {
+  font-size: 2.75rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.ticket-popup-card__client-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ticket-popup-card__sms-info {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #059669;
+}
+
+.ticket-popup-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ticket-popup-card__countdown {
+  font-size: 0.8rem;
+  color: #64748b;
+
+  strong {
+    color: #1e5af0;
+    font-weight: 700;
+  }
+}
+
+.ticket-popup-card__close-btn {
+  border: none;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
 // ── Action Confirmation Modal & Waiting Notice ───────────────
