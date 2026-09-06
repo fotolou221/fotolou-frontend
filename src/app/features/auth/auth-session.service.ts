@@ -196,6 +196,38 @@ export class AuthSessionService {
     return role === 'coiffeur' ? '/coiffeur/home' : '/client/home';
   }
 
+  async updateProfile(updates: { name?: string; phone?: string; avatarUrl?: string }): Promise<AuthUserProfile> {
+    const current = this.activeUser();
+    const updated: AuthUserProfile = {
+      ...current,
+      name: updates.name !== undefined && updates.name.trim().length > 0 ? updates.name.trim() : current.name,
+      phone: updates.phone !== undefined ? updates.phone : current.phone,
+      avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : current.avatarUrl,
+      id: current.id === 'guest' ? `client_${Date.now()}` : current.id,
+    };
+
+    // 1. Immediately update reactive signal & localStorage
+    this.currentUserSignal.set(updated);
+    this.persistUser(updated);
+
+    // 2. If authenticated with backend JWT, also update on the server
+    const token = typeof window !== 'undefined' ? localStorage.getItem(this.tokenKey) : null;
+    if (token) {
+      try {
+        await firstValueFrom(
+          this.http.put(`${this.baseUrl}/account/profile`, {
+            name: updated.name,
+            imageUrl: updated.avatarUrl
+          })
+        );
+      } catch (err) {
+        console.warn('[AuthSessionService] Could not persist profile to backend, kept in local storage:', err);
+      }
+    }
+
+    return updated;
+  }
+
   logout(): void {
     this.currentUserSignal.set(null);
     if (typeof window !== 'undefined') {

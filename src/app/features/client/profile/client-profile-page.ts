@@ -39,13 +39,19 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                 class="profile-page__name-input"
                 type="text"
                 [(ngModel)]="nameBuffer"
-                placeholder="Votre prénom"
-                maxlength="30"
+                placeholder="Votre nom complet ou prénom"
+                maxlength="50"
                 autofocus
+                (keydown.enter)="saveName()"
+                (keydown.escape)="cancelEdit()"
               />
               <div class="profile-page__name-edit-actions">
-                <button type="button" class="profile-page__name-save" (click)="saveName()">
-                  ✓ Enregistrer
+                <button type="button" class="profile-page__name-save" (click)="saveName()" [disabled]="saving()">
+                  @if (saving()) {
+                    <span>Enregistrement...</span>
+                  } @else {
+                    <span>✓ Enregistrer</span>
+                  }
                 </button>
                 <button type="button" class="profile-page__name-cancel" (click)="cancelEdit()">
                   Annuler
@@ -226,6 +232,7 @@ export class ClientProfilePage implements OnInit {
 
   protected readonly showLogoutModal = signal(false);
   protected readonly displayName = signal('Client Fotolou');
+  protected readonly saving = signal(false);
   protected phone = '';
 
   // ── Inline Name Edit ─────────────────────────────────────
@@ -234,7 +241,7 @@ export class ClientProfilePage implements OnInit {
 
   ngOnInit(): void {
     const user = this.auth.activeUser();
-    if (user && user.name && user.id !== 'guest') {
+    if (user && user.name && user.name !== 'Mon Compte') {
       this.displayName.set(user.name);
       this.phone = user.phone;
     } else {
@@ -249,10 +256,18 @@ export class ClientProfilePage implements OnInit {
     this.editingName.set(true);
   }
 
-  protected saveName(): void {
+  protected async saveName(): Promise<void> {
     const trimmed = this.nameBuffer.trim();
     if (trimmed.length > 0) {
       this.displayName.set(trimmed);
+      this.saving.set(true);
+      try {
+        await this.auth.updateProfile({ name: trimmed });
+      } catch (err) {
+        console.warn('Erreur mise à jour profil:', err);
+      } finally {
+        this.saving.set(false);
+      }
     }
     this.editingName.set(false);
   }
@@ -301,6 +316,7 @@ export class ClientProfilePage implements OnInit {
 
   protected confirmLogout(): void {
     this.showLogoutModal.set(false);
+    this.auth.logout();
     this.router.navigate(['/auth/login']);
   }
 }

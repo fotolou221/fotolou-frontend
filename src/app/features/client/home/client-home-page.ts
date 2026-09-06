@@ -44,7 +44,6 @@ import { AuthSessionService } from '../../auth/auth-session.service';
             <h1>
               Bonjour, <span class="client-home__user-name">{{ userName }}</span> 👋
             </h1>
-            <p class="client-home__subtitle">Prenez votre place dans votre salon préféré en 1 clic.</p>
           </section>
 
           <!-- Search Bar -->
@@ -60,8 +59,6 @@ import { AuthSessionService } from '../../auth/auth-session.service';
           <section class="client-home__heading-wrap">
             <app-section-heading
               title="Salons recommandés"
-              linkLabel="Voir tout"
-              linkRoute="/client/home"
             />
           </section>
         </header>
@@ -145,10 +142,11 @@ export class ClientHomePage implements OnInit, AfterViewInit, OnDestroy {
 
   protected get userName(): string {
     const user = this.auth.activeUser();
-    if (user && user.name && user.name !== 'Mon Compte' && user.id !== 'guest') {
-      return user.name.split(' ')[0];
+    if (user && user.name && user.name !== 'Mon Compte') {
+      const parts = user.name.trim().split(' ');
+      return parts[0] || 'Client';
     }
-    return 'Cher Client';
+    return 'Client';
   }
 
   ngOnInit(): void {
