@@ -106,33 +106,36 @@
   border: none;
   border-radius: 12px;
   padding: 0 12px;
-  background: var(--secondary, #0d3eb8);
-  color: #ffffff;
+  background: var(--secondary, #f59e0b) !important;
+  color: #0f172a !important;
   font-size: 0.8125rem;
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(13, 62, 184, 0.25);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.32);
   transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
   margin-top: auto;
 
   span {
     white-space: nowrap;
-  }
-
-  &:hover {
-    background: var(--secondary-hover, #0a2e8c);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(13, 62, 184, 0.35);
-  }
-
-  &:active {
-    transform: translateY(0);
+    color: #0f172a !important;
   }
 
   svg {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+    color: #0f172a !important;
+    stroke: #0f172a !important;
+  }
+
+  &:hover {
+    background: var(--secondary-hover, #d97706) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }

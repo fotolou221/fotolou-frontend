@@ -7,7 +7,7 @@
   height: 4.5px;
   overflow: hidden;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: rgba(255, 255, 255, 0.25);
   position: relative;
 }
 
@@ -16,8 +16,8 @@
   width: 100%;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #1E5AF0 0%, #3b82f6 100%);
-  box-shadow: 0 0 8px rgba(30, 90, 240, 0.4);
+  background: linear-gradient(90deg, #ffffff 0%, #fef08a 100%);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
   transform: scaleX(0.04);
   transform-origin: left center;
   animation: splash-loader-fill 2.3s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;

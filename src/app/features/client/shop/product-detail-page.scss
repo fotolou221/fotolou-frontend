@@ -226,26 +226,32 @@
   border: none;
   border-radius: 999px;
   padding: 0 24px;
-  background: var(--secondary, #0d3eb8);
-  color: #ffffff;
+  background: var(--secondary, #f59e0b) !important;
+  color: #0f172a !important;
   font-size: 1.02rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(13, 62, 184, 0.3);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
   transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 
-  &:hover {
-    background: var(--secondary-hover, #0a2e8c);
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(13, 62, 184, 0.4);
-  }
-
-  &:active {
-    transform: translateY(0);
+  span {
+    color: #0f172a !important;
   }
 
   svg {
     width: 20px;
     height: 20px;
+    color: #0f172a !important;
+    stroke: #0f172a !important;
+  }
+
+  &:hover {
+    background: var(--secondary-hover, #d97706) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.5);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
