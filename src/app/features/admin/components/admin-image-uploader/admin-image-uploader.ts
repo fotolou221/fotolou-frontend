@@ -227,7 +227,12 @@ export class AdminImageUploader {
 
   private uploadFile(file: File): void {
     if (!file.type.startsWith('image/')) {
-      this.uploadError.set('Format invalide. Veuillez sélectionner un fichier image valide.');
+      this.uploadError.set('Format invalide. Veuillez sélectionner un fichier image valide (JPEG, PNG, WebP).');
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      this.uploadError.set('Le fichier est trop volumineux. La taille maximale autorisée est de 15 Mo.');
       return;
     }
 
@@ -236,7 +241,7 @@ export class AdminImageUploader {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', 'salons');
+    formData.append('folder', 'boutique');
 
     this.http.post<any>(`${API_CONFIG.baseUrl}/storage/upload`, formData).pipe(
       tap((res) => {
@@ -248,17 +253,10 @@ export class AdminImageUploader {
       }),
       catchError((err) => {
         this.isUploading.set(false);
-        console.warn('[AdminImageUploader] Upload error, using fallback:', err);
-        // Fallback to reading file if server upload fails, but warn user
-        const reader = new FileReader();
-        reader.onload = (e: ProgressEvent<FileReader>) => {
-          const result = e.target?.result as string;
-          if (result) {
-            this.imageUrl = result;
-            this.imageUrlChange.emit(result);
-          }
-        };
-        reader.readAsDataURL(file);
+        console.error('[AdminImageUploader] Upload error:', err);
+        const detail = err?.error?.error || err?.error?.detail;
+        const msg = detail || (err?.status === 413 ? 'Le fichier dépasse la taille maximale autorisée.' : 'Échec du téléversement sur le serveur. Veuillez réessayer ou choisir une image dans la galerie.');
+        this.uploadError.set(msg);
         return of(null);
       })
     ).subscribe();

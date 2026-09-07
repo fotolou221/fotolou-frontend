@@ -84,7 +84,9 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                     <td>
                       <strong class="admin-brand-tag">{{ product.brand }}</strong>
                     </td>
-                    <td>{{ product.categoryId }}</td>
+                    <td>
+                      <span class="admin-category-badge">{{ data.getCategoryName(product.categoryId) }}</span>
+                    </td>
                     <td>
                       <strong class="admin-price-tag">{{ formatPrice(product.price) }}</strong>
                     </td>
@@ -166,7 +168,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 
                 <div class="admin-product-card__price-row">
                   <strong class="admin-price-tag">{{ formatPrice(product.price) }}</strong>
-                  <span class="admin-product-card__cat">{{ product.categoryId }}</span>
+                  <span class="admin-product-card__cat">{{ data.getCategoryName(product.categoryId) }}</span>
                 </div>
               </div>
 
@@ -213,28 +215,66 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
       <app-admin-modal
         [title]="editingId() ? 'Modifier le Produit' : 'Ajouter un Nouveau Produit'"
         [isOpen]="isModalOpen()"
-        (close)="isModalOpen.set(false)"
+        (close)="closeModal()"
       >
         <form class="admin-form" (ngSubmit)="saveProduct()">
+          @if (formError()) {
+            <div class="admin-form-alert admin-form-alert--danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ formError() }}</span>
+            </div>
+          }
+
           <div class="admin-form__row">
             <div class="admin-form__field">
               <label>Marque *</label>
-              <input type="text" [(ngModel)]="formBrand" name="brand" required placeholder="Ex: Wahl, Kérastase..." />
+              <input
+                type="text"
+                [(ngModel)]="formBrand"
+                name="brand"
+                required
+                maxlength="100"
+                placeholder="Ex: Wahl, Kérastase..."
+                (input)="formError.set(null)"
+              />
             </div>
             <div class="admin-form__field">
               <label>Titre du produit *</label>
-              <input type="text" [(ngModel)]="formTitle" name="title" required placeholder="Ex: Tondeuse Sans Fil" />
+              <input
+                type="text"
+                [(ngModel)]="formTitle"
+                name="title"
+                required
+                maxlength="200"
+                placeholder="Ex: Tondeuse Sans Fil"
+                (input)="formError.set(null)"
+              />
             </div>
           </div>
 
           <div class="admin-form__row">
             <div class="admin-form__field">
-              <label>Prix (FCFA) *</label>
-              <input type="number" [(ngModel)]="formPrice" name="price" required placeholder="35000" />
+              <label>Prix de vente (FCFA) *</label>
+              <input
+                type="number"
+                [(ngModel)]="formPrice"
+                name="price"
+                min="0"
+                required
+                placeholder="35000"
+                (input)="formError.set(null)"
+              />
             </div>
             <div class="admin-form__field">
-              <label>Catégorie *</label>
-              <select [(ngModel)]="formCategoryId" name="categoryId">
+              <label>Catégorie de rattachement *</label>
+              <select [(ngModel)]="formCategoryId" name="categoryId" (change)="formError.set(null)">
+                @if (data.categories().length === 0) {
+                  <option value="">Aucune catégorie disponible</option>
+                }
                 @for (cat of data.categories(); track cat.id) {
                   <option [value]="cat.id">{{ cat.name }}</option>
                 }
@@ -244,7 +284,13 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 
           <div class="admin-form__field">
             <label>Description courte</label>
-            <input type="text" [(ngModel)]="formDesc" name="desc" placeholder="Ex: Idéal pour barbes et cheveux..." />
+            <input
+              type="text"
+              [(ngModel)]="formDesc"
+              name="desc"
+              maxlength="500"
+              placeholder="Ex: Idéal pour barbes et cheveux..."
+            />
           </div>
 
           <app-admin-image-uploader
@@ -254,11 +300,31 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
         </form>
 
         <div footer-actions>
-          <button type="button" class="admin-btn admin-btn--primary" (click)="saveProduct()">
-            {{ editingId() ? 'Enregistrer les modifications' : 'Ajouter le produit' }}
+          <button
+            type="button"
+            class="admin-btn admin-btn--primary"
+            [disabled]="isSubmitting()"
+            (click)="saveProduct()"
+          >
+            @if (isSubmitting()) {
+              <span class="admin-btn-spinner"></span>
+              <span>Enregistrement en cours...</span>
+            } @else {
+              <span>{{ editingId() ? 'Enregistrer les modifications' : 'Ajouter le produit' }}</span>
+            }
           </button>
         </div>
       </app-admin-modal>
+
+      <!-- Toast Feedback -->
+      @if (successToast()) {
+        <div class="admin-toast-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>{{ successToast() }}</span>
+        </div>
+      }
 
     </div>
   `,
@@ -277,11 +343,14 @@ export class AdminBoutiquePage {
 
   protected readonly isModalOpen = signal<boolean>(false);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly isSubmitting = signal<boolean>(false);
+  protected readonly formError = signal<string | null>(null);
+  protected readonly successToast = signal<string | null>(null);
 
   protected formBrand = '';
   protected formTitle = '';
   protected formPrice = 25000;
-  protected formCategoryId = 'tondeuses';
+  protected formCategoryId = '';
   protected formDesc = '';
   protected formImageUrl = '';
 
@@ -296,7 +365,7 @@ export class AdminBoutiquePage {
         p.brand.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q);
 
-      const matchCategory = cat === 'all' || p.categoryId === cat;
+      const matchCategory = cat === 'all' || p.categoryId === cat || this.data.getCategoryName(p.categoryId).toLowerCase() === cat.toLowerCase();
 
       return matchQuery && matchCategory;
     });
@@ -317,9 +386,11 @@ export class AdminBoutiquePage {
     this.formBrand = '';
     this.formTitle = '';
     this.formPrice = 25000;
-    this.formCategoryId = this.data.categories()[0]?.id || 'tondeuses';
+    this.formCategoryId = this.data.categories()[0]?.id || '';
     this.formDesc = '';
     this.formImageUrl = 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80';
+    this.formError.set(null);
+    this.isSubmitting.set(false);
     this.isModalOpen.set(true);
   }
 
@@ -331,37 +402,90 @@ export class AdminBoutiquePage {
     this.formCategoryId = p.categoryId;
     this.formDesc = p.description;
     this.formImageUrl = p.images[0] || '';
+    this.formError.set(null);
+    this.isSubmitting.set(false);
     this.isModalOpen.set(true);
   }
 
+  protected closeModal(): void {
+    if (!this.isSubmitting()) {
+      this.isModalOpen.set(false);
+      this.formError.set(null);
+    }
+  }
+
   protected saveProduct(): void {
-    if (!this.formTitle.trim() || !this.formBrand.trim()) return;
+    const brand = this.formBrand.trim();
+    const title = this.formTitle.trim();
+
+    if (!brand) {
+      this.formError.set('La marque du produit est obligatoire (ex: Wahl, Kérastase).');
+      return;
+    }
+    if (!title) {
+      this.formError.set('Le titre du produit est obligatoire.');
+      return;
+    }
+    if (this.formPrice === null || this.formPrice === undefined || isNaN(this.formPrice) || this.formPrice < 0) {
+      this.formError.set('Veuillez renseigner un prix de vente valide supérieur ou égal à 0.');
+      return;
+    }
+
+    const catId = this.formCategoryId || this.data.categories()[0]?.id;
+    if (!catId) {
+      this.formError.set('Veuillez créer et sélectionner une catégorie avant d\'ajouter un produit.');
+      return;
+    }
+
+    this.formError.set(null);
+    this.isSubmitting.set(true);
+
+    const imageUrl = this.formImageUrl || 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80';
 
     if (this.editingId()) {
       this.data.updateProduct(this.editingId()!, {
-        brand: this.formBrand,
-        title: this.formTitle,
+        brand: brand,
+        title: title,
         price: Number(this.formPrice),
-        categoryId: this.formCategoryId,
-        description: this.formDesc,
-        images: [this.formImageUrl || 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80']
-      }).subscribe();
+        categoryId: catId,
+        description: this.formDesc.trim(),
+        images: [imageUrl]
+      }).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.isModalOpen.set(false);
+          this.showSuccess('Produit mis à jour avec succès !');
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.formError.set(this.extractError(err, 'Impossible de modifier le produit. Vérifiez les informations saisies.'));
+        }
+      });
     } else {
       const newProduct: Product = {
         id: '',
-        brand: this.formBrand,
-        title: this.formTitle,
+        brand: brand,
+        title: title,
         price: Number(this.formPrice),
-        categoryId: this.formCategoryId,
-        description: this.formDesc,
-        images: [this.formImageUrl || 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80'],
+        categoryId: catId,
+        description: this.formDesc.trim(),
+        images: [imageUrl],
         rating: 5.0,
         inStock: true
       };
-      this.data.addProduct(newProduct).subscribe();
-    }
 
-    this.isModalOpen.set(false);
+      this.data.addProduct(newProduct).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.isModalOpen.set(false);
+          this.showSuccess('Produit ajouté à la boutique avec succès !');
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.formError.set(this.extractError(err, 'Impossible d\'ajouter le produit. Vérifiez les données ou la connexion.'));
+        }
+      });
+    }
   }
 
   protected async deleteProduct(product: Product): Promise<void> {
@@ -372,7 +496,37 @@ export class AdminBoutiquePage {
       variant: 'danger'
     });
     if (confirmed) {
-      this.data.deleteProduct(product.id).subscribe();
+      this.data.deleteProduct(product.id).subscribe({
+        next: () => {
+          this.showSuccess(`Le produit "${product.title}" a été supprimé.`);
+        },
+        error: (err) => {
+          alert(this.extractError(err, 'Échec de la suppression du produit.'));
+        }
+      });
     }
+  }
+
+  private showSuccess(msg: string): void {
+    this.successToast.set(msg);
+    setTimeout(() => {
+      this.successToast.set(null);
+    }, 3500);
+  }
+
+  private extractError(err: any, fallback: string): string {
+    if (err?.status === 0) {
+      return 'Impossible de contacter le serveur backend. Vérifiez que le serveur est démarré.';
+    }
+    if (err?.error?.detail) {
+      return err.error.detail;
+    }
+    if (err?.error?.message) {
+      return err.error.message;
+    }
+    if (err?.message && !err?.message.includes('Http failure')) {
+      return err.message;
+    }
+    return fallback;
   }
 }

@@ -173,12 +173,14 @@
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
+  width: 68px;
+  max-width: 68px;
 }
 
 .shop-page__category-thumb {
   display: grid;
-  width: 60px;
-  height: 60px;
+  width: 58px;
+  height: 58px;
   place-items: center;
   border-radius: 50%;
   overflow: hidden;
@@ -205,8 +207,16 @@
 
 .shop-page__category-name {
   color: var(--text-secondary, #64748b);
-  font-size: 0.78rem;
+  font-size: 0.6875rem;
   font-weight: 600;
+  width: 100%;
+  max-width: 68px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  display: block;
+  line-height: 1.2;
 
   .shop-page__category-item--active & {
     color: var(--primary, #1E5AF0);

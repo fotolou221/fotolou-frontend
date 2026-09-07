@@ -162,12 +162,31 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
       <app-admin-modal
         [title]="editingId() ? 'Modifier la Catégorie' : 'Ajouter une Nouvelle Catégorie'"
         [isOpen]="isModalOpen()"
-        (close)="isModalOpen.set(false)"
+        (close)="closeModal()"
       >
         <form class="admin-form" (ngSubmit)="saveCategory()">
+          @if (formError()) {
+            <div class="admin-form-alert admin-form-alert--danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ formError() }}</span>
+            </div>
+          }
+
           <div class="admin-form__field">
             <label>Nom de la catégorie *</label>
-            <input type="text" [(ngModel)]="formName" name="name" required placeholder="Ex: Soins de la Barbe" />
+            <input
+              type="text"
+              [(ngModel)]="formName"
+              name="name"
+              required
+              maxlength="100"
+              placeholder="Ex: Soins de la Barbe"
+              (input)="formError.set(null)"
+            />
           </div>
 
           <div class="admin-form__field">
@@ -176,6 +195,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
               [(ngModel)]="formDescription"
               name="description"
               rows="3"
+              maxlength="500"
               placeholder="Ex: Tous les produits indispensables pour entretenir votre barbe au quotidien..."
               style="width: 100%; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 0.875rem;"
             ></textarea>
@@ -188,11 +208,31 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
         </form>
 
         <div footer-actions>
-          <button type="button" class="admin-btn admin-btn--primary" (click)="saveCategory()">
-            {{ editingId() ? 'Enregistrer les modifications' : 'Créer la catégorie' }}
+          <button
+            type="button"
+            class="admin-btn admin-btn--primary"
+            [disabled]="isSubmitting()"
+            (click)="saveCategory()"
+          >
+            @if (isSubmitting()) {
+              <span class="admin-btn-spinner"></span>
+              <span>Enregistrement en cours...</span>
+            } @else {
+              <span>{{ editingId() ? 'Enregistrer les modifications' : 'Créer la catégorie' }}</span>
+            }
           </button>
         </div>
       </app-admin-modal>
+
+      <!-- Toast Feedback -->
+      @if (successToast()) {
+        <div class="admin-toast-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>{{ successToast() }}</span>
+        </div>
+      }
 
     </div>
   `,
@@ -210,6 +250,9 @@ export class AdminCategoriesPage {
 
   protected readonly isModalOpen = signal<boolean>(false);
   protected readonly editingId = signal<string | null>(null);
+  protected readonly isSubmitting = signal<boolean>(false);
+  protected readonly formError = signal<string | null>(null);
+  protected readonly successToast = signal<string | null>(null);
 
   protected formName = '';
   protected formIcon = 'category';
@@ -241,6 +284,8 @@ export class AdminCategoriesPage {
     this.formIcon = 'category';
     this.formDescription = '';
     this.formImage = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80';
+    this.formError.set(null);
+    this.isSubmitting.set(false);
     this.isModalOpen.set(true);
   }
 
@@ -250,32 +295,66 @@ export class AdminCategoriesPage {
     this.formIcon = cat.icon;
     this.formDescription = cat.description;
     this.formImage = cat.image;
+    this.formError.set(null);
+    this.isSubmitting.set(false);
     this.isModalOpen.set(true);
   }
 
+  protected closeModal(): void {
+    if (!this.isSubmitting()) {
+      this.isModalOpen.set(false);
+      this.formError.set(null);
+    }
+  }
+
   protected saveCategory(): void {
-    if (!this.formName.trim()) return;
+    const trimmedName = this.formName.trim();
+    if (!trimmedName) {
+      this.formError.set('Veuillez saisir un nom pour la catégorie.');
+      return;
+    }
+
+    this.formError.set(null);
+    this.isSubmitting.set(true);
 
     if (this.editingId()) {
       this.data.updateCategory(this.editingId()!, {
-        name: this.formName,
+        name: trimmedName,
         icon: this.formIcon || 'category',
-        description: this.formDescription,
+        description: this.formDescription.trim(),
         image: this.formImage
-      }).subscribe();
+      }).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.isModalOpen.set(false);
+          this.showSuccess('Catégorie mise à jour avec succès !');
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.formError.set(this.extractError(err, 'Impossible de modifier la catégorie. Vérifiez les informations saisies.'));
+        }
+      });
     } else {
-      const slug = this.formName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const newCat: AdminCategoryItem = {
-        id: slug || 'cat-' + Date.now(),
-        name: this.formName,
+        id: '',
+        name: trimmedName,
         icon: this.formIcon || 'category',
-        description: this.formDescription,
+        description: this.formDescription.trim(),
         image: this.formImage || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80'
       };
-      this.data.addCategory(newCat).subscribe();
-    }
 
-    this.isModalOpen.set(false);
+      this.data.addCategory(newCat).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.isModalOpen.set(false);
+          this.showSuccess('Catégorie créée avec succès !');
+        },
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.formError.set(this.extractError(err, 'Impossible de créer la catégorie. Un doublon de nom existe peut-être déjà.'));
+        }
+      });
+    }
   }
 
   protected async deleteCategory(cat: AdminCategoryItem): Promise<void> {
@@ -286,7 +365,40 @@ export class AdminCategoriesPage {
       variant: 'danger'
     });
     if (confirmed) {
-      this.data.deleteCategory(cat.id).subscribe();
+      this.data.deleteCategory(cat.id).subscribe({
+        next: () => {
+          this.showSuccess(`La catégorie "${cat.name}" a été supprimée.`);
+        },
+        error: (err) => {
+          alert(this.extractError(err, 'Échec de la suppression de la catégorie.'));
+        }
+      });
     }
+  }
+
+  private showSuccess(msg: string): void {
+    this.successToast.set(msg);
+    setTimeout(() => {
+      this.successToast.set(null);
+    }, 3500);
+  }
+
+  private extractError(err: any, fallback: string): string {
+    if (err?.status === 0) {
+      return 'Impossible de contacter le serveur. Vérifiez que le backend est bien démarré.';
+    }
+    if (err?.status === 409 || (err?.error?.message && err?.error?.message.includes('unique'))) {
+      return 'Une catégorie avec ce nom ou cet identifiant existe déjà.';
+    }
+    if (err?.error?.detail) {
+      return err.error.detail;
+    }
+    if (err?.error?.message) {
+      return err.error.message;
+    }
+    if (err?.message && !err?.message.includes('Http failure')) {
+      return err.message;
+    }
+    return fallback;
   }
 }

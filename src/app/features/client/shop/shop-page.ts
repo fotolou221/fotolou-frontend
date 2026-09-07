@@ -81,11 +81,12 @@ import { NotificationService } from '../../../shared/services/notification.servi
                   class="shop-page__category-item"
                   [class.shop-page__category-item--active]="productService.selectedCategory() === cat.id"
                   (click)="productService.toggleCategory(cat.id)"
+                  [title]="cat.name"
                 >
                   <div class="shop-page__category-thumb">
                     <img [src]="cat.image" [alt]="cat.name" loading="lazy" />
                   </div>
-                  <span class="shop-page__category-name">{{ cat.name }}</span>
+                  <span class="shop-page__category-name" [title]="cat.name">{{ cat.name }}</span>
                 </button>
               }
             </div>
