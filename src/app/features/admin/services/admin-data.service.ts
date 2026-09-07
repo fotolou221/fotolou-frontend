@@ -36,6 +36,8 @@ export interface AdminClientUser {
 
 export interface AdminCategoryItem {
   id: string;
+  rawId?: number;
+  slug?: string;
   name: string;
   description: string;
   image: string;
@@ -77,41 +79,10 @@ export class AdminDataService {
     this.loadSalons();
 
     // 3. Product Categories
-    this.http.get<any[]>(`${this.baseUrl}/product-categories`).pipe(
-      tap((cats) => {
-        if (Array.isArray(cats)) {
-          this.categories.set(cats.map((c: any) => ({
-            id: c.slug || c.id?.toString() || 'cat',
-            name: c.name || '',
-            description: c.description || 'Catégorie de produits',
-            image: c.image || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80',
-            icon: c.icon || 'category'
-          })));
-        }
-      }),
-      catchError(() => of([]))
-    ).subscribe();
+    this.loadCategories();
 
     // 4. Products
-    this.http.get<any[]>(`${this.baseUrl}/products`).pipe(
-      tap((prods) => {
-        if (Array.isArray(prods)) {
-          this.products.set(prods.map((p: any) => ({
-            id: p.id ? p.id.toString() : `prod-${Date.now()}`,
-            brand: p.brand || 'Fotolou',
-            title: p.title || '',
-            description: p.description || '',
-            price: Number(p.price) || 0,
-            oldPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
-            rating: p.rating || 4.8,
-            categoryId: p.category?.slug || (typeof p.category === 'string' ? p.category : (p.categoryId || 'tondeuses')),
-            images: Array.isArray(p.images) && p.images.length > 0 ? p.images : ['https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80'],
-            inStock: p.inStock !== false
-          })));
-        }
-      }),
-      catchError(() => of([]))
-    ).subscribe();
+    this.loadProducts();
 
     // 5. Orders
     this.http.get<any[]>(`${this.baseUrl}/orders`).pipe(
@@ -430,19 +401,145 @@ export class AdminDataService {
     );
   }
 
-  // ── Categories CRUD ───────────────────────────────────────
-  addCategory(category: AdminCategoryItem): void {
-    this.categories.update(list => [category, ...list]);
+  // ── Categories & Products Loading ─────────────────────────
+  loadCategories(): void {
+    this.http.get<any[]>(`${this.baseUrl}/product-categories`).pipe(
+      tap((cats) => {
+        if (Array.isArray(cats)) {
+          this.categories.set(cats.map((c: any) => ({
+            id: c.slug || c.id?.toString() || 'cat',
+            rawId: typeof c.id === 'number' ? c.id : (Number(c.id) || undefined),
+            slug: c.slug || c.id?.toString() || 'cat',
+            name: c.name || '',
+            description: c.description || 'Catégorie de produits',
+            image: c.image || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80',
+            icon: c.icon || 'category'
+          })));
+        }
+      }),
+      catchError((err) => {
+        console.error('[AdminDataService] Error loading categories:', err);
+        return of([]);
+      })
+    ).subscribe();
   }
 
-  updateCategory(id: string, updates: Partial<AdminCategoryItem>): void {
-    this.categories.update(list =>
-      list.map(c => (c.id === id ? { ...c, ...updates } : c))
+  loadProducts(): void {
+    this.http.get<any[]>(`${this.baseUrl}/products`).pipe(
+      tap((prods) => {
+        if (Array.isArray(prods)) {
+          this.products.set(prods.map((p: any) => ({
+            id: p.id ? p.id.toString() : `prod-${Date.now()}`,
+            brand: p.brand || 'Fotolou',
+            title: p.title || '',
+            description: p.description || '',
+            price: Number(p.price) || 0,
+            oldPrice: p.oldPrice ? Number(p.oldPrice) : undefined,
+            rating: p.rating || 4.8,
+            categoryId: p.category?.slug || (typeof p.category === 'string' ? p.category : (p.categoryId || 'tondeuses')),
+            images: Array.isArray(p.images) && p.images.length > 0
+              ? p.images
+              : (Array.isArray(p.imageses) && p.imageses.length > 0
+                  ? p.imageses.map((img: any) => img.imageUrl || img)
+                  : ['https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80']),
+            inStock: p.inStock !== false
+          })));
+        }
+      }),
+      catchError((err) => {
+        console.error('[AdminDataService] Error loading products:', err);
+        return of([]);
+      })
+    ).subscribe();
+  }
+
+  // ── Categories CRUD ───────────────────────────────────────
+  addCategory(category: AdminCategoryItem): Observable<boolean> {
+    const slug = (category.slug || category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'cat-' + Date.now()).slice(0, 100);
+    const payload = {
+      name: category.name,
+      slug: slug,
+      description: category.description || '',
+      image: category.image || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80',
+      icon: category.icon || 'category'
+    };
+
+    return this.http.post<any>(`${this.baseUrl}/product-categories`, payload).pipe(
+      tap((res) => {
+        const newCat: AdminCategoryItem = {
+          id: res.slug || res.id?.toString() || slug,
+          rawId: res.id,
+          slug: res.slug || slug,
+          name: res.name || category.name,
+          description: res.description || category.description,
+          image: res.image || category.image,
+          icon: res.icon || category.icon
+        };
+        this.categories.update(list => [newCat, ...list]);
+        this.loadCategories();
+        this.productService.loadCategories();
+      }),
+      map(() => true),
+      catchError((err) => {
+        console.error('[AdminDataService] Error adding category:', err);
+        return of(false);
+      })
     );
   }
 
-  deleteCategory(id: string): void {
-    this.categories.update(list => list.filter(c => c.id !== id));
+  updateCategory(id: string, updates: Partial<AdminCategoryItem>): Observable<boolean> {
+    const current = this.categories().find(c => c.id === id || c.rawId?.toString() === id);
+    const rawId = current?.rawId || (!isNaN(Number(id)) ? Number(id) : null);
+
+    this.categories.update(list =>
+      list.map(c => (c.id === id ? { ...c, ...updates } : c))
+    );
+
+    if (rawId) {
+      const payload: any = {
+        id: rawId,
+        name: updates.name || current?.name,
+        slug: updates.slug || current?.slug || id,
+        description: updates.description !== undefined ? updates.description : current?.description,
+        image: updates.image !== undefined ? updates.image : current?.image,
+        icon: updates.icon !== undefined ? updates.icon : current?.icon
+      };
+
+      return this.http.patch<any>(`${this.baseUrl}/product-categories/${rawId}`, payload).pipe(
+        tap(() => {
+          this.loadCategories();
+          this.productService.loadCategories();
+        }),
+        map(() => true),
+        catchError((err) => {
+          console.error('[AdminDataService] Error updating category:', err);
+          return of(false);
+        })
+      );
+    }
+    return of(true);
+  }
+
+  deleteCategory(id: string): Observable<boolean> {
+    const current = this.categories().find(c => c.id === id || c.rawId?.toString() === id);
+    const rawId = current?.rawId || (!isNaN(Number(id)) ? Number(id) : null);
+
+    this.categories.update(list => list.filter(c => c.id !== id && c.rawId?.toString() !== id));
+
+    if (rawId) {
+      return this.http.delete(`${this.baseUrl}/product-categories/${rawId}`).pipe(
+        tap(() => {
+          this.loadCategories();
+          this.productService.loadCategories();
+        }),
+        map(() => true),
+        catchError((err) => {
+          console.error('[AdminDataService] Error deleting category:', err);
+          return of(false);
+        })
+      );
+    }
+    return of(true);
   }
 
   getProductsCountByCategory(categoryId: string): number {
@@ -479,24 +576,125 @@ export class AdminDataService {
   }
 
   // ── Product CRUD ──────────────────────────────────────────
-  addProduct(product: Product): void {
-    this.products.update(list => [product, ...list]);
+  addProduct(product: Product): Observable<boolean> {
+    let categoryDbId: number | null = null;
+    const cat = this.categories().find(
+      c => c.id === product.categoryId || c.slug === product.categoryId || c.rawId?.toString() === product.categoryId
+    );
+    if (cat && cat.rawId) {
+      categoryDbId = cat.rawId;
+    } else if (!isNaN(Number(product.categoryId))) {
+      categoryDbId = Number(product.categoryId);
+    } else if (this.categories().length > 0 && this.categories()[0].rawId) {
+      categoryDbId = this.categories()[0].rawId!;
+    }
+
+    const payload: any = {
+      brand: product.brand || 'Fotolou',
+      title: product.title,
+      price: Number(product.price) || 0,
+      oldPrice: product.oldPrice ? Number(product.oldPrice) : null,
+      rating: product.rating || 5.0,
+      inStock: product.inStock !== false,
+      description: product.description || '',
+      category: categoryDbId ? { id: categoryDbId } : undefined,
+      images: Array.isArray(product.images) && product.images.length > 0 ? product.images : []
+    };
+
+    return this.http.post<any>(`${this.baseUrl}/products`, payload).pipe(
+      tap((res) => {
+        const createdProduct: Product = {
+          ...product,
+          id: res.id ? res.id.toString() : product.id
+        };
+        this.products.update(list => [createdProduct, ...list]);
+        this.loadProducts();
+        this.productService.loadProducts();
+      }),
+      map(() => true),
+      catchError((err) => {
+        console.error('[AdminDataService] Error creating product:', err);
+        return of(false);
+      })
+    );
   }
 
-  updateProduct(id: string, updates: Partial<Product>): void {
+  updateProduct(id: string, updates: Partial<Product>): Observable<boolean> {
+    const current = this.products().find(p => p.id === id);
+    const numId = Number(id);
+
     this.products.update(list =>
       list.map(p => (p.id === id ? { ...p, ...updates } : p))
     );
+
+    let categoryDbId: number | null = null;
+    const targetCatId = updates.categoryId || current?.categoryId;
+    if (targetCatId) {
+      const cat = this.categories().find(
+        c => c.id === targetCatId || c.slug === targetCatId || c.rawId?.toString() === targetCatId
+      );
+      if (cat && cat.rawId) {
+        categoryDbId = cat.rawId;
+      } else if (!isNaN(Number(targetCatId))) {
+        categoryDbId = Number(targetCatId);
+      }
+    }
+
+    const payload: any = {
+      id: !isNaN(numId) ? numId : undefined,
+      brand: updates.brand || current?.brand,
+      title: updates.title || current?.title,
+      price: updates.price !== undefined ? Number(updates.price) : (current ? Number(current.price) : 0),
+      oldPrice: updates.oldPrice !== undefined ? Number(updates.oldPrice) : (current?.oldPrice ? Number(current.oldPrice) : null),
+      rating: updates.rating ?? current?.rating ?? 5.0,
+      inStock: updates.inStock !== undefined ? updates.inStock : (current?.inStock !== false),
+      description: updates.description ?? current?.description ?? '',
+      category: categoryDbId ? { id: categoryDbId } : undefined,
+      images: updates.images || current?.images || []
+    };
+
+    if (!isNaN(numId)) {
+      return this.http.patch<any>(`${this.baseUrl}/products/${numId}`, payload).pipe(
+        tap(() => {
+          this.loadProducts();
+          this.productService.loadProducts();
+        }),
+        map(() => true),
+        catchError((err) => {
+          console.error('[AdminDataService] Error updating product:', err);
+          return of(false);
+        })
+      );
+    }
+    return of(true);
   }
 
-  deleteProduct(id: string): void {
+  deleteProduct(id: string): Observable<boolean> {
+    const numId = Number(id);
     this.products.update(list => list.filter(p => p.id !== id));
+
+    if (!isNaN(numId)) {
+      return this.http.delete(`${this.baseUrl}/products/${numId}`).pipe(
+        tap(() => {
+          this.loadProducts();
+          this.productService.loadProducts();
+        }),
+        map(() => true),
+        catchError((err) => {
+          console.error('[AdminDataService] Error deleting product:', err);
+          return of(false);
+        })
+      );
+    }
+    return of(true);
   }
 
   toggleProductStock(id: string): void {
-    this.products.update(list =>
-      list.map(p => (p.id === id ? { ...p, inStock: !p.inStock } : p))
-    );
+    const current = this.products().find(p => p.id === id);
+    if (current) {
+      const newStock = !current.inStock;
+      this.updateProduct(id, { inStock: newStock }).subscribe();
+    }
   }
 
   // ── Order Management ──────────────────────────────────────

@@ -345,10 +345,10 @@ export class AdminBoutiquePage {
         categoryId: this.formCategoryId,
         description: this.formDesc,
         images: [this.formImageUrl || 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80']
-      });
+      }).subscribe();
     } else {
       const newProduct: Product = {
-        id: 'p-' + Date.now(),
+        id: '',
         brand: this.formBrand,
         title: this.formTitle,
         price: Number(this.formPrice),
@@ -358,7 +358,7 @@ export class AdminBoutiquePage {
         rating: 5.0,
         inStock: true
       };
-      this.data.addProduct(newProduct);
+      this.data.addProduct(newProduct).subscribe();
     }
 
     this.isModalOpen.set(false);
@@ -372,7 +372,7 @@ export class AdminBoutiquePage {
       variant: 'danger'
     });
     if (confirmed) {
-      this.data.deleteProduct(product.id);
+      this.data.deleteProduct(product.id).subscribe();
     }
   }
 }

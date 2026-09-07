@@ -262,7 +262,7 @@ export class AdminCategoriesPage {
         icon: this.formIcon || 'category',
         description: this.formDescription,
         image: this.formImage
-      });
+      }).subscribe();
     } else {
       const slug = this.formName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const newCat: AdminCategoryItem = {
@@ -272,7 +272,7 @@ export class AdminCategoriesPage {
         description: this.formDescription,
         image: this.formImage || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80'
       };
-      this.data.addCategory(newCat);
+      this.data.addCategory(newCat).subscribe();
     }
 
     this.isModalOpen.set(false);
@@ -286,7 +286,7 @@ export class AdminCategoriesPage {
       variant: 'danger'
     });
     if (confirmed) {
-      this.data.deleteCategory(cat.id);
+      this.data.deleteCategory(cat.id).subscribe();
     }
   }
 }
