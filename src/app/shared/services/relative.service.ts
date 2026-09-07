@@ -1,12 +1,14 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, throwError } from 'rxjs';
 import { Relative, RelativeRelation, RELATION_LABELS } from '../models/relative';
 import { API_CONFIG } from '../../core/config/api.config';
+import { AuthSessionService } from '../../features/auth/auth-session.service';
 
 @Injectable({ providedIn: 'root' })
 export class RelativeService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthSessionService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   readonly relatives = signal<readonly Relative[]>([]);
@@ -14,7 +16,17 @@ export class RelativeService {
   readonly error = signal<string | null>(null);
 
   constructor() {
-    this.loadRelatives();
+    // Whenever user auth changes (login, logout, switch account), reload or reset relatives
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (user && user.id !== 'guest') {
+        this.loadRelatives();
+      } else {
+        this.relatives.set([]);
+        this.loading.set(false);
+        this.error.set(null);
+      }
+    });
   }
 
   getRelativeLabel(relation: RelativeRelation): string {
@@ -22,17 +34,26 @@ export class RelativeService {
   }
 
   loadRelatives(): void {
+    const user = this.auth.currentUser();
+    if (!user || user.id === 'guest') {
+      this.relatives.set([]);
+      this.loading.set(false);
+      return;
+    }
+
     this.loading.set(true);
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.relatives}`).pipe(
       map((data) =>
-        data.map((r) => ({
-          id: r.id ? r.id.toString() : `r-${Date.now()}`,
-          name: r.name || '',
-          relation: (r.relation ? r.relation.toLowerCase() : 'other') as RelativeRelation,
-          phone: r.phone || undefined
-        }))
+        Array.isArray(data)
+          ? data.map((r) => ({
+              id: r.id ? r.id.toString() : `r-${Date.now()}`,
+              name: r.name || '',
+              relation: (r.relation ? r.relation.toLowerCase() : 'other') as RelativeRelation,
+              phone: r.phone || undefined
+            }))
+          : []
       ),
       tap((data) => {
         this.relatives.set(data);
