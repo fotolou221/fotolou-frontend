@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, throwError } from 'rxjs';
+import { Observable, tap, catchError, of, map, throwError, finalize } from 'rxjs';
 import { Relative, RelativeRelation, RELATION_LABELS } from '../models/relative';
 import { API_CONFIG } from '../../core/config/api.config';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
@@ -13,17 +13,24 @@ export class RelativeService {
 
   readonly relatives = signal<readonly Relative[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // ── Cache Strategy (SWR - 2 min TTL) ────────────────────────
+  private lastFetchedAt: number | null = null;
+  private readonly CACHE_TTL_MS = 2 * 60 * 1000;
 
   constructor() {
     // Whenever user auth changes (login, logout, switch account), reload or reset relatives
     effect(() => {
       const user = this.auth.currentUser();
       if (user && user.id !== 'guest') {
-        this.loadRelatives();
+        this.loadRelatives(true);
       } else {
         this.relatives.set([]);
+        this.lastFetchedAt = null;
         this.loading.set(false);
+        this.isRefreshing.set(false);
         this.error.set(null);
       }
     });
@@ -33,15 +40,29 @@ export class RelativeService {
     return RELATION_LABELS[relation];
   }
 
-  loadRelatives(): void {
+  loadRelatives(forceRefresh: boolean = false): void {
     const user = this.auth.currentUser();
     if (!user || user.id === 'guest') {
       this.relatives.set([]);
+      this.lastFetchedAt = null;
       this.loading.set(false);
+      this.isRefreshing.set(false);
       return;
     }
 
-    this.loading.set(true);
+    const now = Date.now();
+    const hasData = this.relatives().length > 0;
+    const isCacheValid = this.lastFetchedAt !== null && (now - this.lastFetchedAt) < this.CACHE_TTL_MS;
+
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
+    if (hasData) {
+      this.isRefreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.relatives}`).pipe(
@@ -57,13 +78,18 @@ export class RelativeService {
       ),
       tap((data) => {
         this.relatives.set(data);
-        this.loading.set(false);
+        this.lastFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[RelativeService] Error loading relatives:', err);
-        this.error.set('Impossible de charger vos proches.');
-        this.loading.set(false);
+        if (!hasData) {
+          this.error.set('Impossible de charger vos proches.');
+        }
         return of([]);
+      }),
+      finalize(() => {
+        this.loading.set(false);
+        this.isRefreshing.set(false);
       })
     ).subscribe();
   }

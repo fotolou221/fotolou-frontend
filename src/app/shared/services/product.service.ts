@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { Product, ProductCategory } from '../models/product';
 import { API_CONFIG } from '../../core/config/api.config';
 
@@ -15,7 +15,13 @@ export class ProductService {
   readonly products = signal<readonly Product[]>([]);
   readonly categories = signal<readonly ProductCategory[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // ── Cache Strategy (SWR - 5 min TTL) ────────────────────────
+  private lastProductsFetchedAt: number | null = null;
+  private lastCategoriesFetchedAt: number | null = null;
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000;
 
   readonly searchQuery = signal<string>('');
   readonly selectedCategory = signal<string | null>(null);
@@ -41,13 +47,25 @@ export class ProductService {
     this.loadAll();
   }
 
-  loadAll(): void {
-    this.loadCategories();
-    this.loadProducts();
+  loadAll(forceRefresh: boolean = false): void {
+    this.loadCategories(forceRefresh);
+    this.loadProducts(forceRefresh);
   }
 
-  loadProducts(): void {
-    this.loading.set(true);
+  loadProducts(forceRefresh: boolean = false): void {
+    const now = Date.now();
+    const hasData = this.products().length > 0;
+    const isCacheValid = this.lastProductsFetchedAt !== null && (now - this.lastProductsFetchedAt) < this.CACHE_TTL_MS;
+
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
+    if (hasData) {
+      this.isRefreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.products}`).pipe(
@@ -69,18 +87,31 @@ export class ProductService {
       ),
       tap((items) => {
         this.products.set(items);
-        this.loading.set(false);
+        this.lastProductsFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[ProductService] Error loading products:', err);
-        this.error.set('Impossible de charger les produits de la boutique.');
-        this.loading.set(false);
+        if (!hasData) {
+          this.error.set('Impossible de charger les produits de la boutique.');
+        }
         return of([]);
+      }),
+      finalize(() => {
+        this.loading.set(false);
+        this.isRefreshing.set(false);
       })
     ).subscribe();
   }
 
-  loadCategories(): void {
+  loadCategories(forceRefresh: boolean = false): void {
+    const now = Date.now();
+    const hasData = this.categories().length > 0;
+    const isCacheValid = this.lastCategoriesFetchedAt !== null && (now - this.lastCategoriesFetchedAt) < this.CACHE_TTL_MS;
+
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.categories}`).pipe(
       map((cats) =>
         cats.map((c) => ({
@@ -89,7 +120,10 @@ export class ProductService {
           image: c.image || 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=400&q=80'
         }))
       ),
-      tap((cats) => this.categories.set(cats)),
+      tap((cats) => {
+        this.categories.set(cats);
+        this.lastCategoriesFetchedAt = Date.now();
+      }),
       catchError((err) => {
         console.error('[ProductService] Error loading categories:', err);
         return of([]);

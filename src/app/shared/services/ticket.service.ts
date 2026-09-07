@@ -1,9 +1,10 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, forkJoin, throwError } from 'rxjs';
+import { Observable, tap, catchError, of, map, forkJoin, throwError, finalize } from 'rxjs';
 import { Ticket, TicketTab, TicketStatus } from '../models/ticket';
 import { API_CONFIG } from '../../core/config/api.config';
 import { NotificationService } from './notification.service';
+import { AuthSessionService } from '../../features/auth/auth-session.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,13 +12,19 @@ import { NotificationService } from './notification.service';
 export class TicketService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
+  private readonly auth = inject(AuthSessionService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   // ── State Signals ───────────────────────────────────────────
   readonly activeTab = signal<TicketTab>('active');
   readonly tickets = signal<readonly Ticket[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // ── Cache Strategy (SWR - 1 min TTL) ────────────────────────
+  private lastFetchedAt: number | null = null;
+  private readonly CACHE_TTL_MS = 60 * 1000;
 
   // ── Computed Lists ──────────────────────────────────────────
   readonly displayedTickets = computed(() => {
@@ -46,16 +53,51 @@ export class TicketService {
   );
 
   constructor() {
-    this.loadTickets();
+    // Réaction réactive aux changements de session utilisateur
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (user && user.id !== 'guest') {
+        this.loadTickets(true);
+      } else {
+        this.tickets.set([]);
+        this.lastFetchedAt = null;
+        this.loading.set(false);
+        this.isRefreshing.set(false);
+        this.error.set(null);
+      }
+    });
   }
 
-  loadTickets(): void {
-    this.loading.set(true);
+  loadTickets(forceRefresh: boolean = false): void {
+    const user = this.auth.currentUser();
+    if (!user || user.id === 'guest') {
+      this.tickets.set([]);
+      this.lastFetchedAt = null;
+      this.loading.set(false);
+      this.isRefreshing.set(false);
+      return;
+    }
+
+    const now = Date.now();
+    const hasData = this.tickets().length > 0;
+    const isCacheValid = this.lastFetchedAt !== null && (now - this.lastFetchedAt) < this.CACHE_TTL_MS;
+
+    // Cache-first : si les données sont déjà en mémoire et fraîches, affichage immédiat sans requête
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
+    // Mise à jour silencieuse si données déjà présentes (pas de spinner bloquant)
+    if (hasData) {
+      this.isRefreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}/tickets/my-tickets`).pipe(
       map((data) =>
-        data.map((t) => {
+        (Array.isArray(data) ? data : []).map((t) => {
           const st = (t.status || 'waiting').toLowerCase();
           const isHistory = st === 'served' || st === 'cancelled' || st === 'completed';
           const rawCat = (t.category || '').toLowerCase();
@@ -75,13 +117,18 @@ export class TicketService {
       ),
       tap((data) => {
         this.tickets.set(data);
-        this.loading.set(false);
+        this.lastFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[TicketService] Error fetching tickets:', err);
-        this.error.set('Impossible de charger vos tickets.');
-        this.loading.set(false);
+        if (!hasData) {
+          this.error.set('Impossible de charger vos tickets.');
+        }
         return of([]);
+      }),
+      finalize(() => {
+        this.loading.set(false);
+        this.isRefreshing.set(false);
       })
     ).subscribe();
   }
@@ -227,7 +274,7 @@ export class TicketService {
       }),
       tap((savedTicket) => {
         this.tickets.update((prev) => [...prev, savedTicket]);
-        this.loadTickets();
+        this.loadTickets(true);
       }),
       catchError((err) => {
         console.error('[TicketService] Erreur walk-in:', err);
@@ -238,7 +285,7 @@ export class TicketService {
 
   callTicket(id: string): Observable<Ticket | null> {
     return this.http.post<any>(`${this.baseUrl}/tickets/${id}/call-next`, {}).pipe(
-      tap(() => this.loadTickets()),
+      tap(() => this.loadTickets(true)),
       catchError((err) => {
         console.warn(`[TicketService] Erreur call ticket ${id}:`, err);
         return of(null);
@@ -257,7 +304,7 @@ export class TicketService {
     );
 
     return this.http.post<any>(`${this.baseUrl}/tickets/${id}/cancel`, {}).pipe(
-      tap(() => this.loadTickets()),
+      tap(() => this.loadTickets(true)),
       catchError((err) => {
         console.warn(`[TicketService] Erreur cancel ticket ${id}:`, err);
         return of(null);
@@ -276,7 +323,7 @@ export class TicketService {
     );
 
     return this.http.post<any>(`${this.baseUrl}/tickets/${id}/serve`, {}).pipe(
-      tap(() => this.loadTickets()),
+      tap(() => this.loadTickets(true)),
       catchError((err) => {
         console.warn(`[TicketService] Erreur serve ticket ${id}:`, err);
         return of(null);

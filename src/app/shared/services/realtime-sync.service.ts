@@ -94,33 +94,33 @@ export class RealtimeSyncService {
 
       this.eventSource.addEventListener('TICKET_CREATED', () => {
         this.ngZone.run(() => {
-          this.ticketService.loadTickets();
-          this.salonService.loadSalons();
+          this.ticketService.loadTickets(true);
+          this.salonService.loadSalons(true);
           this.adminDataService.loadFromBackend();
-          this.notificationService.loadNotifications();
+          this.notificationService.loadNotifications(true);
         });
       });
 
       this.eventSource.addEventListener('TICKET_UPDATED', () => {
         this.ngZone.run(() => {
-          this.ticketService.loadTickets();
-          this.salonService.loadSalons();
+          this.ticketService.loadTickets(true);
+          this.salonService.loadSalons(true);
           this.adminDataService.loadFromBackend();
-          this.notificationService.loadNotifications();
+          this.notificationService.loadNotifications(true);
         });
       });
 
       this.eventSource.addEventListener('QUEUE_UPDATED', () => {
         this.ngZone.run(() => {
-          this.ticketService.loadTickets();
-          this.salonService.loadSalons();
-          this.notificationService.loadNotifications();
+          this.ticketService.loadTickets(true);
+          this.salonService.loadSalons(true);
+          this.notificationService.loadNotifications(true);
         });
       });
 
       this.eventSource.addEventListener('NOTIFICATION_CREATED', () => {
         this.ngZone.run(() => {
-          this.notificationService.loadNotifications();
+          this.notificationService.loadNotifications(true);
         });
       });
 

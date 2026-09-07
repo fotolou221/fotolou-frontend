@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { Salon } from '../models/salon';
 import { TicketOwner } from '../models/ticket-owner';
 import { API_CONFIG } from '../../core/config/api.config';
@@ -32,7 +32,12 @@ export class SalonService {
   // ── State Signals ───────────────────────────────────────────
   readonly salons = signal<readonly Salon[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // ── Cache Strategy (SWR - 5 min TTL) ────────────────────────
+  private lastFetchedAt: number | null = null;
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000;
 
   readonly searchQuery = signal<string>('');
   readonly currentLocation = signal<string>('Dakar, Sénégal');
@@ -58,8 +63,22 @@ export class SalonService {
     this.loadSalons();
   }
 
-  loadSalons(): void {
-    this.loading.set(true);
+  loadSalons(forceRefresh: boolean = false): void {
+    const now = Date.now();
+    const hasData = this.salons().length > 0;
+    const isCacheValid = this.lastFetchedAt !== null && (now - this.lastFetchedAt) < this.CACHE_TTL_MS;
+
+    // Cache-first : si déjà en mémoire et encore valide, pas d'appel réseau
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
+    // Si on a déjà les données, rafraîchissement silencieux (pas de skeleton bloquant)
+    if (hasData) {
+      this.isRefreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.salons}`).pipe(
@@ -83,13 +102,18 @@ export class SalonService {
       ),
       tap((data) => {
         this.salons.set(data);
-        this.loading.set(false);
+        this.lastFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[SalonService] Error fetching salons:', err);
-        this.error.set('Impossible de charger les salons de coiffure.');
-        this.loading.set(false);
+        if (!hasData) {
+          this.error.set('Impossible de charger les salons de coiffure.');
+        }
         return of([]);
+      }),
+      finalize(() => {
+        this.loading.set(false);
+        this.isRefreshing.set(false);
       })
     ).subscribe();
   }

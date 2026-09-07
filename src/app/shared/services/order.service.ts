@@ -1,21 +1,28 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { Order, OrderStatus, OrderType } from '../models/order';
 import { CartItem } from '../models/product';
 import { API_CONFIG } from '../../core/config/api.config';
+import { AuthSessionService } from '../../features/auth/auth-session.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthSessionService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   // ── State Signals ───────────────────────────────────────────
   readonly orders = signal<readonly Order[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // ── Cache Strategy (SWR - 2 min TTL) ────────────────────────
+  private lastFetchedAt: number | null = null;
+  private readonly CACHE_TTL_MS = 2 * 60 * 1000;
 
   readonly phoneNumber = '+221 77 862 70 52';
   readonly whatsappPhone = '221778627052';
@@ -30,16 +37,48 @@ export class OrderService {
   );
 
   constructor() {
-    this.loadOrders();
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (user && user.id !== 'guest') {
+        this.loadOrders(true);
+      } else {
+        this.orders.set([]);
+        this.lastFetchedAt = null;
+        this.loading.set(false);
+        this.isRefreshing.set(false);
+        this.error.set(null);
+      }
+    });
   }
 
-  loadOrders(): void {
-    this.loading.set(true);
+  loadOrders(forceRefresh: boolean = false): void {
+    const user = this.auth.currentUser();
+    if (!user || user.id === 'guest') {
+      this.orders.set([]);
+      this.lastFetchedAt = null;
+      this.loading.set(false);
+      this.isRefreshing.set(false);
+      return;
+    }
+
+    const now = Date.now();
+    const hasData = this.orders().length > 0;
+    const isCacheValid = this.lastFetchedAt !== null && (now - this.lastFetchedAt) < this.CACHE_TTL_MS;
+
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
+    if (hasData) {
+      this.isRefreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.orders}`).pipe(
       map((data) =>
-        data.map((o) => ({
+        (Array.isArray(data) ? data : []).map((o) => ({
           ...o,
           id: o.id ? o.id.toString() : `ord-${Date.now()}`,
           orderNumber: o.orderNumber || 'CMD-2026-001',
@@ -61,13 +100,18 @@ export class OrderService {
       ),
       tap((data) => {
         this.orders.set(data);
-        this.loading.set(false);
+        this.lastFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[OrderService] Error fetching orders:', err);
-        this.error.set('Impossible de charger vos commandes.');
-        this.loading.set(false);
+        if (!hasData) {
+          this.error.set('Impossible de charger vos commandes.');
+        }
         return of([]);
+      }),
+      finalize(() => {
+        this.loading.set(false);
+        this.isRefreshing.set(false);
       })
     ).subscribe();
   }

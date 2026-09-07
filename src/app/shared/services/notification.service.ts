@@ -1,19 +1,26 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { AppNotification } from '../models/notification';
 import { API_CONFIG } from '../../core/config/api.config';
+import { AuthSessionService } from '../../features/auth/auth-session.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthSessionService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   readonly notifications = signal<readonly AppNotification[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly isRefreshing = signal<boolean>(false);
   readonly error = signal<string | null>(null);
+
+  // ── Cache Strategy (SWR - 1 min TTL) ────────────────────────
+  private lastFetchedAt: number | null = null;
+  private readonly CACHE_TTL_MS = 60 * 1000;
 
   readonly clientNotifications = computed(() =>
     this.notifications().filter((n) => n.recipientRole === 'client')
@@ -34,11 +41,43 @@ export class NotificationService {
   readonly unreadCount = computed(() => this.clientUnreadCount());
 
   constructor() {
-    this.loadNotifications();
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (user && user.id !== 'guest') {
+        this.loadNotifications(true);
+      } else {
+        this.notifications.set([]);
+        this.lastFetchedAt = null;
+        this.loading.set(false);
+        this.isRefreshing.set(false);
+        this.error.set(null);
+      }
+    });
   }
 
-  loadNotifications(): void {
-    this.loading.set(true);
+  loadNotifications(forceRefresh: boolean = false): void {
+    const user = this.auth.currentUser();
+    if (!user || user.id === 'guest') {
+      this.notifications.set([]);
+      this.lastFetchedAt = null;
+      this.loading.set(false);
+      this.isRefreshing.set(false);
+      return;
+    }
+
+    const now = Date.now();
+    const hasData = this.notifications().length > 0;
+    const isCacheValid = this.lastFetchedAt !== null && (now - this.lastFetchedAt) < this.CACHE_TTL_MS;
+
+    if (hasData && isCacheValid && !forceRefresh) {
+      return;
+    }
+
+    if (hasData) {
+      this.isRefreshing.set(true);
+    } else {
+      this.loading.set(true);
+    }
     this.error.set(null);
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.notifications}`).pipe(
@@ -56,13 +95,18 @@ export class NotificationService {
       ),
       tap((data) => {
         this.notifications.set(data);
-        this.loading.set(false);
+        this.lastFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[NotificationService] Error loading notifications:', err);
-        this.error.set('Impossible de charger les notifications.');
-        this.loading.set(false);
+        if (!hasData) {
+          this.error.set('Impossible de charger les notifications.');
+        }
         return of([]);
+      }),
+      finalize(() => {
+        this.loading.set(false);
+        this.isRefreshing.set(false);
       })
     ).subscribe();
   }
