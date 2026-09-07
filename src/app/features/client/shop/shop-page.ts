@@ -41,7 +41,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
               <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
             </svg>
             @if (notificationService.unreadCount() > 0) {
-              <span class="shop-header__unread-dot"></span>
+              <span class="shop-header__notif-badge">{{ notificationService.unreadCount() > 99 ? '99+' : notificationService.unreadCount() }}</span>
             }
           </button>
 
