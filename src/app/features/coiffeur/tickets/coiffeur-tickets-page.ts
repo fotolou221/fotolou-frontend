@@ -9,6 +9,7 @@ import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
 import { FormsModule } from '@angular/forms';
 import { Ticket } from '../../../shared/models/ticket';
+import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 @Component({
   selector: 'app-coiffeur-tickets-page',
@@ -244,7 +245,7 @@ import { Ticket } from '../../../shared/models/ticket';
               [disabled]="isProcessingAction()"
             >
               @if (isProcessingAction()) {
-                Traitement...
+                <span>Traitement</span><span class="loading-dots" aria-hidden="true"></span>
               } @else if (confirmModalAction() === 'skip') {
                 Oui, sauter
               } @else {
@@ -309,7 +310,7 @@ import { Ticket } from '../../../shared/models/ticket';
               [disabled]="isAddingClient() || (!walkInName.trim() && !walkInPhone.trim())"
             >
               @if (isAddingClient()) {
-                Ajout en cours...
+                <span>Ajout en cours</span><span class="loading-dots" aria-hidden="true"></span>
               } @else {
                 Ajouter à la file
               }
@@ -362,6 +363,7 @@ export class CoiffeurTicketsPage implements OnInit {
   protected readonly salonService = inject(SalonService);
   protected readonly notificationService = inject(NotificationService);
   protected readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
 
   protected readonly activeTab = signal<'active' | 'history'>('active');
   protected readonly showAddModal = signal(false);
@@ -460,8 +462,8 @@ export class CoiffeurTicketsPage implements OnInit {
       next: () => {
         this.showToast(`Client ${item.ownerName} appelé ! Notification envoyée.`);
       },
-      error: () => {
-        this.showToast(`Appel envoyé à ${item.ownerName}.`);
+      error: (err) => {
+        this.showToast(this.errorMessages.message(err, `Impossible d'appeler ${item.ownerName}. Verifiez votre connexion.`));
       }
     });
   }
@@ -496,9 +498,10 @@ export class CoiffeurTicketsPage implements OnInit {
           : `Tour de ${target.ownerName} sauté / annulé.`;
         this.showToast(msg);
       },
-      error: () => {
+      error: (err) => {
         this.isProcessingAction.set(false);
         this.confirmModalTarget.set(null);
+        this.showToast(this.errorMessages.message(err, 'Action impossible pour le moment. Verifiez votre connexion.'));
       }
     });
   }
@@ -539,7 +542,7 @@ export class CoiffeurTicketsPage implements OnInit {
       error: (err) => {
         console.error('[CoiffeurTickets] Erreur addWalkInTicket:', err);
         this.isAddingClient.set(false);
-        this.showToast(`Erreur lors de l'enregistrement du client.`);
+        this.showToast(this.errorMessages.message(err, "Erreur lors de l'enregistrement du client. Verifiez votre connexion."));
       }
     });
   }

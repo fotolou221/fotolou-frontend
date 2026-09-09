@@ -42,9 +42,9 @@
   --divider: #e2e8f0;
 
   // Shadows
-  --shadow-sm: 0 1px 3px rgba(30, 90, 240, 0.05);
-  --shadow-md: 0 4px 16px rgba(30, 90, 240, 0.08);
-  --shadow-lg: 0 10px 30px rgba(30, 90, 240, 0.12);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
 
   // Border Radius
   --radius-sm: 8px;
@@ -127,7 +127,7 @@ body.dark-theme {
     background-color: #1c2541 !important;
     border-color: #334155 !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: none !important;
   }
 
   // Hover states in dark mode
@@ -269,6 +269,71 @@ body.dark-theme {
 // ── Reset & Core Styles ──────────────────────────────────────
 * {
   box-sizing: border-box;
+}
+
+body [class],
+body [class]::before,
+body [class]::after,
+html body [class][class],
+html body [class][class]::before,
+html body [class][class]::after,
+html body.dark-theme [class][class],
+html body.dark-theme [class][class]::before,
+html body.dark-theme [class][class]::after,
+button,
+button::before,
+button::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+body [class]:focus-visible {
+  outline: 2px solid rgba(30, 90, 240, 0.72) !important;
+  outline-offset: 2px;
+}
+
+.loading-dots {
+  display: inline-flex;
+  width: 1.2em;
+  margin-left: 0.08em;
+  justify-content: flex-start;
+  vertical-align: baseline;
+}
+
+.loading-dots::after {
+  content: "...";
+  display: inline-block;
+  overflow: hidden;
+  width: 0;
+  animation: fotolou-loading-dots 1.05s steps(4, end) infinite;
+}
+
+@keyframes fotolou-loading-dots {
+  0% {
+    width: 0;
+  }
+  25% {
+    width: 0.35em;
+  }
+  50% {
+    width: 0.7em;
+  }
+  75%,
+  100% {
+    width: 1.05em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots::after {
+    animation: none;
+    width: 1.05em;
+  }
 }
 
 html {
@@ -451,7 +516,7 @@ h1, h2, h3, h4, h5, h6, p {
       outline: none;
       background: #ffffff;
       border-color: var(--primary, #1E5AF0);
-      box-shadow: 0 0 0 3.5px rgba(30, 90, 240, 0.15);
+      box-shadow: none;
     }
   }
 
@@ -476,7 +541,7 @@ h1, h2, h3, h4, h5, h6, p {
       outline: none;
       background: #ffffff;
       border-color: var(--primary, #1E5AF0);
-      box-shadow: 0 0 0 3.5px rgba(30, 90, 240, 0.15);
+      box-shadow: none;
     }
   }
 }

@@ -75,8 +75,7 @@ export interface ImagePreset {
         @if (activeTab() === 'upload') {
           @if (isUploading()) {
             <div class="admin-uploader__loading">
-              <span class="admin-uploader__spinner"></span>
-              <span>Téléversement sur Cloudinary CDN en cours...</span>
+              <span>Téléversement sur Cloudinary CDN en cours</span><span class="loading-dots" aria-hidden="true"></span>
             </div>
           } @else {
             <div

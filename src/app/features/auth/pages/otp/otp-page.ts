@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ClientLayout } from '../../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
@@ -36,7 +36,13 @@ import { AuthSessionService } from '../../auth-session.service';
           <p class="otp-page__resend">Renvoyer le code dans {{ countdown() }}</p>
         } @else {
           <p class="otp-page__resend">
-            <button type="button" class="otp-resend-btn" (click)="resendCode()">Renvoyer le code SMS</button>
+            <button type="button" class="otp-resend-btn" [disabled]="isResending()" (click)="resendCode()">
+              @if (isResending()) {
+                <span>Renvoi du code</span><span class="loading-dots" aria-hidden="true"></span>
+              } @else {
+                Renvoyer le code SMS
+              }
+            </button>
           </p>
         }
 
@@ -49,22 +55,20 @@ import { AuthSessionService } from '../../auth-session.service';
       <div slot="footer" class="otp-page__fixed-footer">
         <app-auth-action-button
           variant="outline"
-          [disabled]="!isCodeValid() || isSubmitting()"
+          [disabled]="!isCodeValid()"
+          [loading]="isSubmitting()"
+          loadingLabel="Vérification du code"
           (pressed)="verifyCode()"
         >
-          @if (isSubmitting()) {
-            Vérification en cours...
-          } @else {
-            Vérifier
-            <span aria-hidden="true">&#8594;</span>
-          }
+          Vérifier
+          <span aria-hidden="true">&#8594;</span>
         </app-auth-action-button>
       </div>
     </app-client-layout>
   `,
   styleUrl: './otp-page.scss'
 })
-export class OtpPage {
+export class OtpPage implements OnInit {
   protected readonly auth = inject(AuthSessionService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
@@ -73,6 +77,7 @@ export class OtpPage {
   protected readonly remainingSeconds = signal(45);
   protected readonly verificationCode = signal('');
   protected readonly isSubmitting = signal(false);
+  protected readonly isResending = signal(false);
 
   protected readonly isCodeValid = computed(() => this.verificationCode().trim().length === 6);
   protected readonly countdown = computed(() => {
@@ -90,6 +95,12 @@ export class OtpPage {
     });
   }
 
+  ngOnInit(): void {
+    if (!this.auth.pendingPhone()) {
+      void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+    }
+  }
+
   protected onCodeChanged(code: string): void {
     this.verificationCode.set(code);
     this.errorMessage.set('');
@@ -100,8 +111,16 @@ export class OtpPage {
 
   protected async resendCode(): Promise<void> {
     this.errorMessage.set('');
-    this.remainingSeconds.set(45);
-    await this.auth.startPhoneLogin(this.auth.pendingPhone());
+    if (this.isResending()) return;
+    this.isResending.set(true);
+    try {
+      await this.auth.startPhoneLogin(this.auth.pendingPhone());
+      this.remainingSeconds.set(45);
+    } catch (err) {
+      this.errorMessage.set(err instanceof Error ? err.message : 'Impossible de renvoyer le code SMS.');
+    } finally {
+      this.isResending.set(false);
+    }
   }
 
   protected async verifyCode(): Promise<void> {
@@ -118,9 +137,9 @@ export class OtpPage {
         return;
       }
 
-      void this.router.navigateByUrl(this.auth.getHomeRoute());
-    } catch {
-      this.errorMessage.set('Erreur de validation du code. Réessayez.');
+      void this.router.navigateByUrl(this.auth.getHomeRoute(), { replaceUrl: true });
+    } catch (err) {
+      this.errorMessage.set(err instanceof Error ? err.message : 'Erreur de validation du code. Reessayez.');
     } finally {
       this.isSubmitting.set(false);
     }

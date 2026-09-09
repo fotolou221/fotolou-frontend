@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, effect, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -9,6 +9,7 @@ import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loa
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { TicketService } from '../../../shared/services/ticket.service';
 import { Ticket } from '../../../shared/models/ticket';
+import { AuthSessionService } from '../../auth/auth-session.service';
 
 @Component({
   selector: 'app-ticket-detail-page',
@@ -55,7 +56,7 @@ import { Ticket } from '../../../shared/models/ticket';
               {{ statusTagText }}
             </span>
 
-            <h1>Ticket pour: {{ ticket.ownerName }}</h1>
+            <h1>Ticket pour: {{ displayOwnerName }}</h1>
             <p>{{ ticket.salonName }} &bull; Dakar</p>
 
             <!-- Circular Ring Progress -->
@@ -85,7 +86,8 @@ import { Ticket } from '../../../shared/models/ticket';
                 />
               </svg>
               <div class="ticket-detail-page__number-display">
-                {{ currentRank }}
+                <span>Votre ticket</span>
+                <strong>{{ ticket.ticketNumber || '-' }}</strong>
               </div>
             </div>
           </section>
@@ -190,32 +192,33 @@ import { Ticket } from '../../../shared/models/ticket';
   `,
   styleUrl: './ticket-detail-page.scss'
 })
-export class TicketDetailPage implements OnInit, OnDestroy {
+export class TicketDetailPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly ticketService = inject(TicketService);
+  private readonly auth = inject(AuthSessionService);
 
   protected ticket: Ticket | null = null;
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly showCancelModal = signal(false);
 
-  private pollTimer: any = null;
   private initialRank = 1;
+
+  private readonly syncTicketFromStore = effect(() => {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) return;
+
+    const updated = this.ticketService.tickets().find((t) => t.id === id);
+    if (!updated) return;
+
+    this.ticket = updated;
+    this.updateInitialRank(this.currentRank);
+  });
 
   ngOnInit(): void {
     this.loadTicket();
-    // Rafraîchissement automatique en temps réel toutes les 3 secondes
-    this.pollTimer = setInterval(() => {
-      this.refreshTicketSilently();
-    }, 3000);
-  }
-
-  ngOnDestroy(): void {
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer);
-      this.pollTimer = null;
-    }
+    this.ticketService.loadTickets(true);
   }
 
   loadTicket(): void {
@@ -237,21 +240,6 @@ export class TicketDetailPage implements OnInit, OnDestroy {
         console.error('[TicketDetailPage] Error loading ticket:', err);
         this.error.set('Impossible de charger le ticket.');
         this.loading.set(false);
-      }
-    });
-  }
-
-  private refreshTicketSilently(): void {
-    if (!this.ticket || this.isHistory) return;
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) return;
-
-    this.ticketService.getTicketById(id).subscribe({
-      next: (updated) => {
-        if (updated) {
-          this.ticket = updated;
-          this.updateInitialRank(this.currentRank);
-        }
       }
     });
   }
@@ -367,17 +355,49 @@ export class TicketDetailPage implements OnInit, OnDestroy {
 
   /**
    * NUMÉRO EN COURS :
-   * Le client actuellement au fauteuil dans le salon est toujours le numéro 1 !
+   * Le numéro du ticket reste fixe; seul le ticket actuellement appelé avance.
    */
   protected get queueNumberDisplay(): string {
     if (!this.ticket) return '-';
     if (this.isServed) return 'Servi';
     if (this.ticket.status === 'cancelled') return 'Annulé';
-    return '1';
+    return `${this.currentQueueNumber}`;
+  }
+
+  protected get currentQueueNumber(): number {
+    if (!this.ticket) return 1;
+    if (this.ticket.currentTicketNumber) {
+      return this.ticket.currentTicketNumber;
+    }
+
+    if (this.ticket.status === 'your_turn') {
+      return this.ticket.ticketNumber || 1;
+    }
+
+    const ticketNumber = this.ticket.ticketNumber || 1;
+    const peopleAhead =
+      this.ticket.peopleAhead !== undefined && this.ticket.peopleAhead !== null
+        ? this.ticket.peopleAhead
+        : Math.max(ticketNumber - 1, 0);
+
+    return Math.max(1, ticketNumber - peopleAhead);
   }
 
   protected get salonStatus(): 'open' | 'closed' {
     return this.isHistory ? 'closed' : 'open';
+  }
+
+  protected get displayOwnerName(): string {
+    if (!this.ticket) return '';
+    const ownerName = this.ticket.ownerName?.trim() || 'Client';
+    const profileName = this.currentProfileName();
+    const ownerType = (this.ticket.ownerType || '').toString().toUpperCase();
+
+    if (profileName && (ownerType === 'SELF' || this.looksLikeSelfOwner(ownerName))) {
+      return profileName;
+    }
+
+    return ownerName;
   }
 
   protected confirmLeaveQueue(): void {
@@ -386,5 +406,25 @@ export class TicketDetailPage implements OnInit, OnDestroy {
     this.ticketService.cancelTicket(this.ticket.id).subscribe(() => {
       this.router.navigate(['/client/tickets']);
     });
+  }
+
+  private currentProfileName(): string {
+    const user = this.auth.currentUser();
+    const name = user?.name?.trim();
+    if (!user || user.id === 'guest' || !name || name === 'Mon Compte' || name === 'Utilisateur Fotolou') {
+      return '';
+    }
+    return name;
+  }
+
+  private looksLikeSelfOwner(value: string): boolean {
+    const normalized = value.trim().toLowerCase();
+    return (
+      normalized === 'moi' ||
+      normalized === 'moi-même' ||
+      normalized === 'moi-meme' ||
+      normalized.startsWith('moi ') ||
+      normalized.startsWith('moi(')
+    );
   }
 }

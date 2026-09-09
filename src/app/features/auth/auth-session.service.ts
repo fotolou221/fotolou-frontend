@@ -2,6 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from '../../core/config/api.config';
+import { HttpErrorMessageService } from '../../shared/services/http-error-message.service';
 
 export type UserRole = 'client' | 'coiffeur';
 export type AuthProvider = 'phone' | 'google' | 'apple';
@@ -40,6 +41,7 @@ const GUEST_COIFFEUR_USER: AuthUserProfile = {
 @Injectable({ providedIn: 'root' })
 export class AuthSessionService {
   private readonly http = inject(HttpClient);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   private readonly storageRoleKey = 'fotolou-active-role';
@@ -49,6 +51,7 @@ export class AuthSessionService {
 
   private readonly currentUserSignal = signal<AuthUserProfile | null>(this.readStoredUser());
   private readonly activeRoleSignal = signal<UserRole>(this.readStoredRole());
+  private readonly pendingLoginRoleSignal = signal<UserRole>('client');
   private readonly pendingPhoneSignal = signal<string>('');
   private readonly providerSignal = signal<AuthProvider>('phone');
 
@@ -73,22 +76,29 @@ export class AuthSessionService {
     return value === 'coiffeur' ? 'coiffeur' : 'client';
   }
 
-  async startPhoneLogin(rawPhone: string): Promise<boolean> {
+  async startPhoneLogin(rawPhone: string, requestedRole?: UserRole): Promise<boolean> {
     const digits = rawPhone.replace(/\D/g, '').replace(/^221/, '');
     if (digits.length < 9) {
       throw new Error('Veuillez entrer un numéro de téléphone valide à 9 chiffres.');
     }
+    const loginRole: UserRole = requestedRole ?? this.pendingLoginRoleSignal();
     const formattedPhone = this.formatPhone(rawPhone);
     this.providerSignal.set('phone');
     this.pendingPhoneSignal.set(formattedPhone);
+    this.pendingLoginRoleSignal.set(loginRole);
+    this.activeRoleSignal.set(loginRole);
 
     const cleanPhone = `+221${digits.slice(-9)}`;
-    await firstValueFrom(
-      this.http.post(`${this.baseUrl}/auth/otp/send`, {
-        phone: cleanPhone,
-        role: 'CLIENT'
-      })
-    );
+    try {
+      await firstValueFrom(
+        this.http.post(`${this.baseUrl}/auth/otp/send`, {
+          phone: cleanPhone,
+          role: loginRole === 'coiffeur' ? 'COIFFEUR' : 'CLIENT'
+        })
+      );
+    } catch (err) {
+      throw new Error(this.errorMessages.message(err, "Impossible d'envoyer le code SMS. Verifiez votre connexion."));
+    }
     return true;
   }
 
@@ -101,12 +111,14 @@ export class AuthSessionService {
   async verifyOtpAsync(code: string): Promise<boolean> {
     try {
       const cleanPhone = this.pendingPhoneSignal().replace(/\s+/g, '');
+      const loginRole = this.pendingLoginRoleSignal();
       const res = await firstValueFrom(
         this.http.post<{ id_token?: string; token?: string; refresh_token?: string; refreshToken?: string; user?: any }>(
           `${this.baseUrl}/auth/otp/verify`,
           {
             phone: cleanPhone,
-            code
+            code,
+            role: loginRole === 'coiffeur' ? 'COIFFEUR' : 'CLIENT'
           }
         )
       );
@@ -145,8 +157,12 @@ export class AuthSessionService {
     } catch (e) {
       console.warn('[AuthSessionService] Backend OTP verify fallback to dev code:', e);
       if (code === '123456') {
+        this.activeRoleSignal.set('client');
         this.persistActiveRole();
         return true;
+      }
+      if (this.errorMessages.isConnectionIssue(e)) {
+        throw new Error(this.errorMessages.message(e, 'Connexion instable. Impossible de verifier le code pour le moment.'));
       }
       return false;
     }
@@ -230,7 +246,12 @@ export class AuthSessionService {
 
   logout(): void {
     this.currentUserSignal.set(null);
+    this.activeRoleSignal.set('client');
+    this.pendingLoginRoleSignal.set('client');
+    this.pendingPhoneSignal.set('');
+    this.providerSignal.set('phone');
     if (typeof window !== 'undefined') {
+      localStorage.removeItem(this.storageRoleKey);
       localStorage.removeItem(this.storageUserKey);
       localStorage.removeItem(this.tokenKey);
       localStorage.removeItem(this.refreshTokenKey);

@@ -1,10 +1,11 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, forkJoin, throwError, finalize } from 'rxjs';
+import { Observable, tap, catchError, of, map, throwError, finalize } from 'rxjs';
 import { Ticket, TicketTab, TicketStatus } from '../models/ticket';
 import { API_CONFIG } from '../../core/config/api.config';
 import { NotificationService } from './notification.service';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
+import { HttpErrorMessageService } from './http-error-message.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class TicketService {
   private readonly http = inject(HttpClient);
   private readonly notificationService = inject(NotificationService);
   private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   // ── State Signals ───────────────────────────────────────────
@@ -25,6 +27,7 @@ export class TicketService {
   // ── Cache Strategy (SWR - 1 min TTL) ────────────────────────
   private lastFetchedAt: number | null = null;
   private readonly CACHE_TTL_MS = 60 * 1000;
+  private requestInFlight = false;
 
   // ── Computed Lists ──────────────────────────────────────────
   readonly displayedTickets = computed(() => {
@@ -56,15 +59,18 @@ export class TicketService {
     // Réaction réactive aux changements de session utilisateur
     effect(() => {
       const user = this.auth.currentUser();
-      if (user && user.id !== 'guest') {
-        this.loadTickets(true);
-      } else {
-        this.tickets.set([]);
-        this.lastFetchedAt = null;
-        this.loading.set(false);
-        this.isRefreshing.set(false);
-        this.error.set(null);
-      }
+      untracked(() => {
+        if (user && user.id !== 'guest') {
+          this.loadTickets(true);
+        } else {
+          this.tickets.set([]);
+          this.lastFetchedAt = null;
+          this.requestInFlight = false;
+          this.loading.set(false);
+          this.isRefreshing.set(false);
+          this.error.set(null);
+        }
+      });
     });
   }
 
@@ -87,6 +93,10 @@ export class TicketService {
       return;
     }
 
+    if (this.requestInFlight) {
+      return;
+    }
+
     // Mise à jour silencieuse si données déjà présentes (pas de spinner bloquant)
     if (hasData) {
       this.isRefreshing.set(true);
@@ -94,6 +104,7 @@ export class TicketService {
       this.loading.set(true);
     }
     this.error.set(null);
+    this.requestInFlight = true;
 
     this.http.get<any[]>(`${this.baseUrl}/tickets/my-tickets`).pipe(
       map((data) =>
@@ -107,8 +118,9 @@ export class TicketService {
             id: t.id ? t.id.toString() : `t-${Date.now()}`,
             salonId: t.salonId || t.salon?.slug || (t.salon?.id ? t.salon.id.toString() : 'king-barber'),
             salonName: t.salonName || t.salon?.name || 'King Barber',
-            ownerName: t.ownerName || t.customerName || 'Moi',
+            ownerName: this.resolveOwnerName(t.ownerName || t.customerName || 'Moi', t),
             ticketNumber: t.ticketNumber || t.dailySequenceNumber || 1,
+            currentTicketNumber: this.normalizeCurrentTicketNumber(t.currentTicketNumber || t.currentQueueNumber),
             status: st as TicketStatus,
             category: cat,
             createdAt: t.createdAt || t.createdDate || new Date().toISOString()
@@ -121,12 +133,16 @@ export class TicketService {
       }),
       catchError((err) => {
         console.error('[TicketService] Error fetching tickets:', err);
+        const message = this.errorMessages.message(err, 'Impossible de charger vos tickets. Verifiez votre connexion.');
         if (!hasData) {
-          this.error.set('Impossible de charger vos tickets.');
+          this.error.set(message);
+        } else {
+          this.error.set(message);
         }
         return of([]);
       }),
       finalize(() => {
+        this.requestInFlight = false;
         this.loading.set(false);
         this.isRefreshing.set(false);
       })
@@ -146,8 +162,9 @@ export class TicketService {
           id: t.id ? t.id.toString() : id,
           salonId: t.salonId || t.salon?.slug || (t.salon?.id ? t.salon.id.toString() : 'king-barber'),
           salonName: t.salonName || t.salon?.name || 'King Barber',
-          ownerName: t.ownerName || t.customerName || 'Moi',
+          ownerName: this.resolveOwnerName(t.ownerName || t.customerName || 'Moi', t),
           ticketNumber: t.ticketNumber || t.dailySequenceNumber || 1,
+          currentTicketNumber: this.normalizeCurrentTicketNumber(t.currentTicketNumber || t.currentQueueNumber),
           status: st as TicketStatus,
           category: cat,
           createdAt: t.createdAt || t.createdDate || new Date().toISOString()
@@ -182,8 +199,9 @@ export class TicketService {
           id: saved.id ? saved.id.toString() : `t-${Date.now()}`,
           salonId,
           salonName: saved.salon?.name || salonName,
-          ownerName: saved.ownerName || ownerName || 'Moi',
+          ownerName: this.resolveOwnerName(saved.ownerName || ownerName || 'Moi', saved),
           ticketNumber: saved.ticketNumber || (activeCount + 1),
+          currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
           status: st,
           category: cat,
           createdAt: saved.createdDate || new Date().toISOString()
@@ -196,7 +214,7 @@ export class TicketService {
       }),
       catchError((err) => {
         console.error('[TicketService] Erreur création ticket:', err);
-        return throwError(() => err);
+        return throwError(() => new Error(this.errorMessages.message(err, "Impossible de creer le ticket. Verifiez votre connexion.")));
       })
     );
   }
@@ -229,8 +247,9 @@ export class TicketService {
               id: saved.id ? saved.id.toString() : `t-${now}-${idx}`,
               salonId,
               salonName: saved.salon?.name || salonName,
-              ownerName: saved.ownerName || ownerNames[idx] || 'Moi',
+              ownerName: this.resolveOwnerName(saved.ownerName || ownerNames[idx] || 'Moi', saved),
               ticketNumber: saved.ticketNumber || (activeCount + idx + 1),
+              currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
               status: st,
               category: cat,
               createdAt: saved.createdDate || new Date().toISOString(),
@@ -248,7 +267,7 @@ export class TicketService {
       }),
       catchError((err) => {
         console.error('[TicketService] Erreur réservation tickets:', err);
-        return throwError(() => err);
+        return throwError(() => new Error(this.errorMessages.message(err, "Impossible de reserver vos tickets. Verifiez votre connexion.")));
       })
     );
   }
@@ -267,6 +286,7 @@ export class TicketService {
           salonName: saved.salonName || saved.salon?.name || 'Mon Salon',
           ownerName: saved.ownerName || clientName || 'Client direct',
           ticketNumber: saved.ticketNumber || 1,
+          currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
           status: st as TicketStatus,
           category: (saved.category ? saved.category.toLowerCase() : (isHistory ? 'history' : 'active')) as TicketTab,
           createdAt: saved.createdDate || new Date().toISOString()
@@ -278,7 +298,7 @@ export class TicketService {
       }),
       catchError((err) => {
         console.error('[TicketService] Erreur walk-in:', err);
-        throw err;
+        return throwError(() => new Error(this.errorMessages.message(err, "Impossible d'enregistrer ce client. Verifiez votre connexion.")));
       })
     );
   }
@@ -288,13 +308,16 @@ export class TicketService {
       tap(() => this.loadTickets(true)),
       catchError((err) => {
         console.warn(`[TicketService] Erreur call ticket ${id}:`, err);
-        return of(null);
+        const message = this.errorMessages.message(err, "Impossible d'appeler ce client. Verifiez votre connexion.");
+        this.error.set(message);
+        return throwError(() => new Error(message));
       })
     );
   }
 
   cancelTicket(id: string): Observable<Ticket | null> {
     const now = new Date().toISOString();
+    const previousTickets = this.tickets();
     this.tickets.update((prev) =>
       prev.map((ticket) =>
         ticket.id === id
@@ -307,13 +330,17 @@ export class TicketService {
       tap(() => this.loadTickets(true)),
       catchError((err) => {
         console.warn(`[TicketService] Erreur cancel ticket ${id}:`, err);
-        return of(null);
+        this.tickets.set(previousTickets);
+        const message = this.errorMessages.message(err, "Impossible de sortir cette personne de la file. Verifiez votre connexion.");
+        this.error.set(message);
+        return throwError(() => new Error(message));
       })
     );
   }
 
   serveTicket(id: string): Observable<Ticket | null> {
     const now = new Date().toISOString();
+    const previousTickets = this.tickets();
     this.tickets.update((prev) =>
       prev.map((ticket) =>
         ticket.id === id
@@ -326,8 +353,55 @@ export class TicketService {
       tap(() => this.loadTickets(true)),
       catchError((err) => {
         console.warn(`[TicketService] Erreur serve ticket ${id}:`, err);
-        return of(null);
+        this.tickets.set(previousTickets);
+        const message = this.errorMessages.message(err, "Impossible de valider cette prestation. Verifiez votre connexion.");
+        this.error.set(message);
+        return throwError(() => new Error(message));
       })
+    );
+  }
+
+  private normalizeCurrentTicketNumber(value: unknown): number | undefined {
+    const num = Number(value);
+    return Number.isFinite(num) && num > 0 ? num : undefined;
+  }
+
+  private resolveOwnerName(ownerName: unknown, rawTicket?: any): string {
+    const fallback = typeof ownerName === 'string' && ownerName.trim().length > 0 ? ownerName.trim() : 'Moi';
+    const user = this.auth.currentUser();
+    if (!user || user.role !== 'client' || user.id === 'guest') {
+      return fallback;
+    }
+
+    const profileName = this.currentProfileName();
+    if (!profileName) {
+      return fallback;
+    }
+
+    const ownerType = (rawTicket?.ownerType || '').toString().toUpperCase();
+    if (ownerType === 'SELF' || this.looksLikeSelfOwner(fallback)) {
+      return profileName;
+    }
+
+    return fallback;
+  }
+
+  private currentProfileName(): string {
+    const name = this.auth.currentUser()?.name?.trim();
+    if (!name || name === 'Mon Compte' || name === 'Utilisateur Fotolou') {
+      return '';
+    }
+    return name;
+  }
+
+  private looksLikeSelfOwner(value: string): boolean {
+    const normalized = value.trim().toLowerCase();
+    return (
+      normalized === 'moi' ||
+      normalized === 'moi-même' ||
+      normalized === 'moi-meme' ||
+      normalized.startsWith('moi ') ||
+      normalized.startsWith('moi(')
     );
   }
 }

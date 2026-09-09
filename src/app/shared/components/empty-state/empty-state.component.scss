@@ -96,7 +96,7 @@
 
   .empty-state__btn {
     background: var(--primary, #1E5AF0) !important;
-    box-shadow: 0 4px 14px rgba(30, 90, 240, 0.35) !important;
+    box-shadow: none !important;
 
     &:hover {
       background: var(--primary-hover, #1746c0) !important;

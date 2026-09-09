@@ -78,18 +78,16 @@ import { AuthSessionService, SocialProvider, UserRole } from '../../auth-session
 
         <footer class="login-page__footer">
           <app-auth-action-button
-            [disabled]="!isPhoneValid() || isSubmitting()"
+            [disabled]="!isPhoneValid()"
+            [loading]="isSubmitting()"
+            loadingLabel="Envoi du code"
             (pressed)="continueWithPhone()"
           >
-            @if (isSubmitting()) {
-              <span>Envoi du code...</span>
-            } @else {
-              <span>Continuer</span>
-              <svg class="auth-action-button__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-              </svg>
-            }
+            <span>Continuer</span>
+            <svg class="auth-action-button__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
           </app-auth-action-button>
           <p>
             En continuant, tu acceptes nos
@@ -107,12 +105,12 @@ export class LoginPage implements OnInit {
   protected readonly auth = inject(AuthSessionService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private loginRole: UserRole = 'client';
 
   ngOnInit(): void {
     const targetRole = this.route.snapshot.queryParamMap.get('role');
-    if (targetRole === 'coiffeur' || targetRole === 'client') {
-      this.auth.selectRole(targetRole);
-    }
+    this.loginRole = targetRole === 'coiffeur' ? 'coiffeur' : 'client';
+    this.auth.selectRole(this.loginRole);
   }
 
   protected readonly phoneNumber = signal('');
@@ -157,7 +155,7 @@ export class LoginPage implements OnInit {
     this.errorMessage.set('');
 
     try {
-      await this.auth.startPhoneLogin(this.cleanDigits());
+      await this.auth.startPhoneLogin(this.cleanDigits(), this.loginRole);
       void this.router.navigateByUrl('/auth/code');
     } catch (e: any) {
       this.errorMessage.set(e?.message || "Impossible d'envoyer le code SMS. Vérifiez votre connexion.");
@@ -168,6 +166,6 @@ export class LoginPage implements OnInit {
 
   protected continueWithSocial(provider: SocialProvider): void {
     const user = this.auth.completeSocialLogin(provider);
-    void this.router.navigateByUrl(user.homeRoute);
+    void this.router.navigateByUrl(user.homeRoute, { replaceUrl: true });
   }
 }

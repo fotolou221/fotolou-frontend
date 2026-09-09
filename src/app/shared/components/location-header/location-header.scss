@@ -27,6 +27,77 @@
   cursor: pointer;
 }
 
+.location-header__salon-toggle {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(22, 163, 74, 0.24);
+  border-radius: 9999px;
+  padding: 0 8px 0 12px;
+  background: #f0fdf4;
+  color: #15803d;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+    transform: none;
+  }
+
+  &--closed {
+    border-color: rgba(220, 38, 38, 0.26);
+    background: #fef2f2;
+    color: #dc2626;
+
+    .location-header__salon-switch {
+      background: #dc2626;
+    }
+  }
+}
+
+.location-header__salon-label {
+  min-width: 52px;
+  text-align: left;
+}
+
+.location-header__salon-switch {
+  display: inline-flex;
+  width: 36px;
+  height: 22px;
+  flex: none;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 2px;
+  background: #dc2626;
+  transition: background-color 0.15s ease;
+
+  span {
+    width: 18px;
+    height: 18px;
+    border-radius: 9999px;
+    background: #ffffff;
+    transform: translateX(0);
+    transition: transform 0.15s ease;
+  }
+
+  &--on {
+    background: #16a34a;
+
+    span {
+      transform: translateX(14px);
+    }
+  }
+}
+
 .location-header__pin-icon {
   display: inline-flex;
   width: 18px;
@@ -126,6 +197,22 @@
 
   .location-header__action-btn {
     color: #f8fafc !important;
+  }
+
+  .location-header__salon-toggle {
+    border-color: rgba(34, 197, 94, 0.3) !important;
+    background: rgba(22, 163, 74, 0.14) !important;
+    color: #86efac !important;
+
+    &--closed {
+      border-color: rgba(248, 113, 113, 0.36) !important;
+      background: rgba(220, 38, 38, 0.16) !important;
+      color: #fca5a5 !important;
+
+      .location-header__salon-switch {
+        background: #ef4444 !important;
+      }
+    }
   }
 
   .location-header__fav-badge,

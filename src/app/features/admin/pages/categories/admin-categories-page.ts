@@ -215,8 +215,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
             (click)="saveCategory()"
           >
             @if (isSubmitting()) {
-              <span class="admin-btn-spinner"></span>
-              <span>Enregistrement en cours...</span>
+              <span>Enregistrement en cours</span><span class="loading-dots" aria-hidden="true"></span>
             } @else {
               <span>{{ editingId() ? 'Enregistrer les modifications' : 'Créer la catégorie' }}</span>
             }

@@ -1,9 +1,10 @@
 import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, CanActivateFn } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, tap, map, catchError } from 'rxjs';
 import { API_CONFIG } from '../../../core/config/api.config';
+import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 export interface AdminUser {
   id: string;
@@ -22,6 +23,7 @@ export class AdminAuthService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
@@ -72,9 +74,12 @@ export class AdminAuthService {
       map(() => ({ success: true })),
       catchError((err) => {
         console.warn('[AdminAuthService] Login failed:', err);
+        const message = err instanceof HttpErrorResponse && err.status === 401
+          ? 'Identifiants invalides. Verifiez votre adresse email et mot de passe.'
+          : this.errorMessages.message(err, 'Impossible de se connecter au tableau de bord. Verifiez votre connexion.');
         return of({
           success: false,
-          message: 'Identifiants invalides. Vérifiez votre adresse email et mot de passe.'
+          message
         });
       })
     );
@@ -102,4 +107,3 @@ export const adminAuthGuard: CanActivateFn = () => {
   router.navigate(['/admin/login']);
   return false;
 };
-

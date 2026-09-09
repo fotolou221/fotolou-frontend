@@ -221,7 +221,7 @@ export class CoiffeurProfilePage {
   });
 
   protected readonly servedClientsCount = computed(() => {
-    return this.ticketService.coiffeurHistoryTickets().length;
+    return this.ticketService.tickets().filter((ticket) => ticket.status === 'served' || ticket.status === 'completed').length;
   });
 
   protected goToPhotos(): void {
@@ -250,6 +250,7 @@ export class CoiffeurProfilePage {
 
   protected confirmLogout(): void {
     this.showLogoutModal.set(false);
-    this.router.navigate(['/auth/login']);
+    this.auth.logout();
+    this.router.navigate(['/auth/login'], { replaceUrl: true });
   }
 }

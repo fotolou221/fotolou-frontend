@@ -1,9 +1,12 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
+import { SwPush } from '@angular/service-worker';
+import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
 import { AppNotification } from '../models/notification';
 import { API_CONFIG } from '../../core/config/api.config';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
+import { HttpErrorMessageService } from './http-error-message.service';
 
 @Injectable({
   providedIn: 'root'
@@ -11,6 +14,10 @@ import { AuthSessionService } from '../../features/auth/auth-session.service';
 export class NotificationService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly swPush = inject(SwPush, { optional: true });
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   readonly notifications = signal<readonly AppNotification[]>([]);
@@ -21,6 +28,12 @@ export class NotificationService {
   // ── Cache Strategy (SWR - 1 min TTL) ────────────────────────
   private lastFetchedAt: number | null = null;
   private readonly CACHE_TTL_MS = 60 * 1000;
+  private seenNotificationIds = new Set<string>();
+  private hasLoadedOnce = false;
+  private audioContext: AudioContext | null = null;
+  private pushRegistrationStarted = false;
+  private pushSubscriptionActive = false;
+  private requestInFlight = false;
 
   readonly clientNotifications = computed(() =>
     this.notifications().filter((n) => n.recipientRole === 'client')
@@ -43,15 +56,23 @@ export class NotificationService {
   constructor() {
     effect(() => {
       const user = this.auth.currentUser();
-      if (user && user.id !== 'guest') {
-        this.loadNotifications(true);
-      } else {
-        this.notifications.set([]);
-        this.lastFetchedAt = null;
-        this.loading.set(false);
-        this.isRefreshing.set(false);
-        this.error.set(null);
-      }
+      untracked(() => {
+        if (user && user.id !== 'guest') {
+          this.loadNotifications(true);
+          this.ensurePushSubscription();
+        } else {
+          this.notifications.set([]);
+          this.lastFetchedAt = null;
+          this.requestInFlight = false;
+          this.seenNotificationIds.clear();
+          this.hasLoadedOnce = false;
+          this.pushRegistrationStarted = false;
+          this.pushSubscriptionActive = false;
+          this.loading.set(false);
+          this.isRefreshing.set(false);
+          this.error.set(null);
+        }
+      });
     });
   }
 
@@ -73,12 +94,17 @@ export class NotificationService {
       return;
     }
 
+    if (this.requestInFlight) {
+      return;
+    }
+
     if (hasData) {
       this.isRefreshing.set(true);
     } else {
       this.loading.set(true);
     }
     this.error.set(null);
+    this.requestInFlight = true;
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.notifications}`).pipe(
       map((items) =>
@@ -94,21 +120,165 @@ export class NotificationService {
         }))
       ),
       tap((data) => {
+        this.announceNewNotifications(data);
         this.notifications.set(data);
         this.lastFetchedAt = Date.now();
       }),
       catchError((err) => {
         console.error('[NotificationService] Error loading notifications:', err);
-        if (!hasData) {
-          this.error.set('Impossible de charger les notifications.');
-        }
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger les notifications. Verifiez votre connexion.'));
         return of([]);
       }),
       finalize(() => {
+        this.requestInFlight = false;
         this.loading.set(false);
         this.isRefreshing.set(false);
       })
     ).subscribe();
+  }
+
+  private announceNewNotifications(data: readonly AppNotification[]): void {
+    const newUnread = data.filter((n) => !this.seenNotificationIds.has(n.id) && !n.isRead);
+    this.seenNotificationIds = new Set(data.map((n) => n.id));
+
+    if (!this.hasLoadedOnce) {
+      this.hasLoadedOnce = true;
+      return;
+    }
+
+    if (newUnread.length === 0) {
+      return;
+    }
+
+    const latest = newUnread[0];
+    this.playNotificationSound();
+    this.showBrowserNotification(latest);
+  }
+
+  private playNotificationSound(): void {
+    if (!this.isBrowser) return;
+
+    const AudioContextCtor =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) return;
+
+    try {
+      const context = this.audioContext || new AudioContextCtor();
+      this.audioContext = context;
+
+      const play = () => {
+        const start = context.currentTime;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(740, start);
+        oscillator.frequency.exponentialRampToValueAtTime(980, start + 0.12);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(0.16, start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(start);
+        oscillator.stop(start + 0.24);
+      };
+
+      if (context.state === 'suspended') {
+        context.resume().then(play).catch(() => undefined);
+      } else {
+        play();
+      }
+    } catch {
+      // Browser autoplay policies can block audio until the user interacts with the app.
+    }
+  }
+
+  private showBrowserNotification(notification: AppNotification): void {
+    if (!this.isBrowser || this.pushSubscriptionActive || !('Notification' in window)) return;
+
+    const show = () => {
+      const title = notification.title || 'Notification Fotolou';
+      const options: NotificationOptions = {
+        body: notification.message,
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/favicon-64.png',
+        tag: `fotolou-${notification.id}`,
+        data: { url: notification.targetRoute || '/client/notifications' }
+      };
+
+      navigator.serviceWorker?.ready
+        .then((registration) => registration.showNotification(title, options))
+        .catch(() => {
+          const browserNotification = new Notification(title, options);
+          browserNotification.onclick = () => {
+            window.focus();
+            if (notification.targetRoute) {
+              window.location.assign(notification.targetRoute);
+            }
+          };
+        });
+    };
+
+    if (Notification.permission === 'granted') {
+      show();
+    } else if (Notification.permission === 'default') {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          show();
+        }
+      });
+    }
+  }
+
+  private ensurePushSubscription(): void {
+    if (!this.isBrowser || this.pushRegistrationStarted || !this.swPush?.isEnabled) {
+      return;
+    }
+
+    this.pushRegistrationStarted = true;
+    this.swPush.notificationClicks.subscribe(({ notification }) => {
+      const data = notification.data as { url?: string; onActionClick?: { default?: { url?: string } } } | undefined;
+      const target = data?.url || data?.onActionClick?.default?.url || '/client/notifications';
+      window.open(target, '_self');
+    });
+
+    this.http.get<{ publicKey: string }>(`${this.baseUrl}/push/public-key`).pipe(
+      catchError((err) => {
+        console.warn('[NotificationService] Push public key unavailable:', err);
+        return of({ publicKey: '' });
+      })
+    ).subscribe(({ publicKey }) => {
+      if (!publicKey) return;
+
+      const subscribe = () => {
+        this.swPush?.requestSubscription({ serverPublicKey: publicKey }).then((subscription) => {
+          this.pushSubscriptionActive = true;
+          this.http.post(`${this.baseUrl}/push/subscriptions`, subscription).pipe(
+            catchError((err) => {
+              this.pushSubscriptionActive = false;
+              console.warn('[NotificationService] Push subscription registration failed:', err);
+              return of(null);
+            })
+          ).subscribe();
+        }).catch((err) => {
+          this.pushSubscriptionActive = false;
+          console.warn('[NotificationService] Push subscription refused:', err);
+        });
+      };
+
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') {
+        subscribe();
+      } else if (Notification.permission === 'default') {
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            subscribe();
+          }
+        });
+      }
+    });
   }
 
   markAsRead(id: string): Observable<AppNotification | null> {
@@ -119,6 +289,7 @@ export class NotificationService {
     return this.http.patch<AppNotification>(`${this.baseUrl}${API_CONFIG.endpoints.notifications}/${id}/read`, {}).pipe(
       catchError((err) => {
         console.warn(`[NotificationService] API patch failed for ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de marquer cette notification comme lue.'));
         return of(null);
       })
     );
@@ -132,6 +303,7 @@ export class NotificationService {
     this.http.put(`${this.baseUrl}${API_CONFIG.endpoints.notifications}/mark-all-read`, {}).pipe(
       catchError((err) => {
         console.warn('[NotificationService] mark-all-read backend failed:', err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de marquer les notifications comme lues.'));
         return of(null);
       })
     ).subscribe();
@@ -148,6 +320,7 @@ export class NotificationService {
       map(() => true),
       catchError((err) => {
         console.warn(`[NotificationService] API delete failed for ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de supprimer cette notification.'));
         return of(true);
       })
     );

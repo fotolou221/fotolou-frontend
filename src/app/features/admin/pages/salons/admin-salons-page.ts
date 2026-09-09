@@ -298,7 +298,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                     [disabled]="isGpsLoading()"
                   >
                     @if (isGpsLoading()) {
-                      <span>Recherche satellite...</span>
+                      <span>Recherche satellite</span><span class="loading-dots" aria-hidden="true"></span>
                     } @else {
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
                       <span>Détecter ma position GPS</span>

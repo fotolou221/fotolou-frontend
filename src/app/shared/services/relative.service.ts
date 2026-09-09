@@ -1,14 +1,16 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, inject, signal, effect, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, throwError, finalize } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { Relative, RelativeRelation, RELATION_LABELS } from '../models/relative';
 import { API_CONFIG } from '../../core/config/api.config';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
+import { HttpErrorMessageService } from './http-error-message.service';
 
 @Injectable({ providedIn: 'root' })
 export class RelativeService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   readonly relatives = signal<readonly Relative[]>([]);
@@ -19,20 +21,24 @@ export class RelativeService {
   // ── Cache Strategy (SWR - 2 min TTL) ────────────────────────
   private lastFetchedAt: number | null = null;
   private readonly CACHE_TTL_MS = 2 * 60 * 1000;
+  private requestInFlight = false;
 
   constructor() {
     // Whenever user auth changes (login, logout, switch account), reload or reset relatives
     effect(() => {
       const user = this.auth.currentUser();
-      if (user && user.id !== 'guest') {
-        this.loadRelatives(true);
-      } else {
-        this.relatives.set([]);
-        this.lastFetchedAt = null;
-        this.loading.set(false);
-        this.isRefreshing.set(false);
-        this.error.set(null);
-      }
+      untracked(() => {
+        if (user && user.id !== 'guest') {
+          this.loadRelatives(true);
+        } else {
+          this.relatives.set([]);
+          this.lastFetchedAt = null;
+          this.requestInFlight = false;
+          this.loading.set(false);
+          this.isRefreshing.set(false);
+          this.error.set(null);
+        }
+      });
     });
   }
 
@@ -58,12 +64,17 @@ export class RelativeService {
       return;
     }
 
+    if (this.requestInFlight) {
+      return;
+    }
+
     if (hasData) {
       this.isRefreshing.set(true);
     } else {
       this.loading.set(true);
     }
     this.error.set(null);
+    this.requestInFlight = true;
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.relatives}`).pipe(
       map((data) =>
@@ -82,12 +93,11 @@ export class RelativeService {
       }),
       catchError((err) => {
         console.error('[RelativeService] Error loading relatives:', err);
-        if (!hasData) {
-          this.error.set('Impossible de charger vos proches.');
-        }
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger vos proches. Verifiez votre connexion.'));
         return of([]);
       }),
       finalize(() => {
+        this.requestInFlight = false;
         this.loading.set(false);
         this.isRefreshing.set(false);
       })
@@ -99,6 +109,7 @@ export class RelativeService {
     return this.http.get<Relative>(`${this.baseUrl}${API_CONFIG.endpoints.relatives}/${id}`).pipe(
       catchError((err) => {
         console.error(`[RelativeService] Error loading relative ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger ce proche.'));
         return of(this.relatives().find((r) => r.id === id) || null);
       })
     );
@@ -123,6 +134,7 @@ export class RelativeService {
       }),
       catchError((err) => {
         console.warn('[RelativeService] API post failed, using local relative:', err);
+        this.error.set(this.errorMessages.message(err, 'Proche ajoute localement. Connexion instable, verifiez votre reseau.'));
         const localRelative: Relative = {
           id: `r-${Date.now()}`,
           name: name.trim(),
@@ -164,6 +176,7 @@ export class RelativeService {
       })),
       catchError((err) => {
         console.warn(`[RelativeService] API put failed for ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Modification gardee localement. Connexion instable, verifiez votre reseau.'));
         return of(updatedLocal);
       })
     );
@@ -176,6 +189,7 @@ export class RelativeService {
       map(() => true),
       catchError((err) => {
         console.warn(`[RelativeService] API delete failed for ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Suppression gardee localement. Connexion instable, verifiez votre reseau.'));
         return of(true);
       })
     );

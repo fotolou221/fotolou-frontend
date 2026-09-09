@@ -8,6 +8,7 @@ import { TicketService } from '../../../shared/services/ticket.service';
 import { RelativeService } from '../../../shared/services/relative.service';
 import { TicketOwner } from '../../../shared/models/ticket-owner';
 import { AuthSessionService } from '../../auth/auth-session.service';
+import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 @Component({
   selector: 'app-ticket-owner-page',
@@ -154,8 +155,7 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                 (click)="confirmBooking()"
               >
                 @if (modalState() === 'loading') {
-                  <span class="booking-modal__spinner"></span>
-                  <span>Validation...</span>
+                  <span>Validation</span><span class="loading-dots" aria-hidden="true"></span>
                 } @else {
                   <span>Valider mon ticket</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -178,6 +178,7 @@ export class TicketOwnerPage implements OnInit {
   private readonly ticketService = inject(TicketService);
   private readonly relativeService = inject(RelativeService);
   private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
 
   protected salonId = 'king-barber';
   protected readonly salonName = signal<string>('Salon');
@@ -365,15 +366,13 @@ export class TicketOwnerPage implements OnInit {
           },
           error: (err) => {
             this.modalState.set('confirm');
-            const msg = err?.error?.error || err?.error?.message || 'Une erreur est survenue lors de la réservation du ticket.';
-            this.modalError.set(msg);
+            this.modalError.set(this.errorMessages.message(err, 'Une erreur est survenue lors de la reservation du ticket.'));
           }
         });
       },
       error: (err) => {
         this.modalState.set('confirm');
-        const msg = err?.error?.error || err?.error?.message || 'Impossible de joindre le salon.';
-        this.modalError.set(msg);
+        this.modalError.set(this.errorMessages.message(err, 'Impossible de joindre le salon. Verifiez votre connexion.'));
       }
     });
   }

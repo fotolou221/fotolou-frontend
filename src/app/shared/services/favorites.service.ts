@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject, effect, PLATFORM_ID } from '@angular/core';
+import { Injectable, signal, computed, inject, effect, PLATFORM_ID, untracked } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { catchError, of, tap } from 'rxjs';
@@ -49,7 +49,11 @@ export class FavoritesService {
     // Whenever user auth changes (login/logout), reload favorites
     effect(() => {
       const user = this.auth.currentUser();
-      this.loadFavoritesFromApi();
+      untracked(() => {
+        if (user && user.id !== 'guest') {
+          this.loadFavoritesFromApi();
+        }
+      });
     });
   }
 

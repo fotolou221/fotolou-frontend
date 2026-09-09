@@ -1,6 +1,6 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, Observable, of, shareReplay, switchMap, throwError } from 'rxjs';
+import { catchError, Observable, of, shareReplay, switchMap, throwError, timeout } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 let isRefreshing = false;
@@ -34,7 +34,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const httpBackend = inject(HttpBackend);
 
-  return next(authReq).pipe(
+  const isApiRequest = authReq.url.startsWith(API_CONFIG.baseUrl) || authReq.url.includes('/api/');
+  const handledRequest = isApiRequest ? next(authReq).pipe(timeout(API_CONFIG.timeoutMs)) : next(authReq);
+
+  return handledRequest.pipe(
     catchError((error: HttpErrorResponse) => {
       // Si 401 Unauthorized et qu'on a un refresh token disponible en local
       if (error.status === 401 && !isAuthOrRefresh && isBrowser) {

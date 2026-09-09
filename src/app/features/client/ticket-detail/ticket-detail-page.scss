@@ -102,10 +102,25 @@
 .ticket-detail-page__number-display {
   position: relative;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   color: var(--text-primary, #0f172a);
-  font-size: 5rem;
-  font-weight: 900;
-  line-height: 1;
+
+  span {
+    color: var(--text-secondary, #64748b);
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: inherit;
+    font-size: 4.25rem;
+    font-weight: 900;
+    line-height: 0.95;
+  }
 }
 
 .ticket-detail-page__stats {

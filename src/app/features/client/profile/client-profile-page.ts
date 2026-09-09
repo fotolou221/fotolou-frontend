@@ -8,6 +8,7 @@ import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-m
 import { TicketService } from '../../../shared/services/ticket.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
+import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 @Component({
   selector: 'app-client-profile-page',
@@ -48,7 +49,7 @@ import { AuthSessionService } from '../../auth/auth-session.service';
               <div class="profile-page__name-edit-actions">
                 <button type="button" class="profile-page__name-save" (click)="saveName()" [disabled]="saving()">
                   @if (saving()) {
-                    <span>Enregistrement...</span>
+                    <span>Enregistrement</span><span class="loading-dots" aria-hidden="true"></span>
                   } @else {
                     <span>✓ Enregistrer</span>
                   }
@@ -69,6 +70,10 @@ import { AuthSessionService } from '../../auth/auth-session.service';
           }
 
           <p class="profile-page__phone">{{ phone }}</p>
+
+          @if (profileError()) {
+            <p class="profile-page__inline-error" role="alert">{{ profileError() }}</p>
+          }
         </section>
 
         <!-- Stats Row -->
@@ -229,10 +234,12 @@ export class ClientProfilePage implements OnInit {
   private readonly ticketService = inject(TicketService);
   protected readonly notificationService = inject(NotificationService);
   private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
 
   protected readonly showLogoutModal = signal(false);
   protected readonly displayName = signal('Client Fotolou');
   protected readonly saving = signal(false);
+  protected readonly profileError = signal<string | null>(null);
   protected phone = '';
 
   // ── Inline Name Edit ─────────────────────────────────────
@@ -252,6 +259,7 @@ export class ClientProfilePage implements OnInit {
   }
 
   protected startEdit(): void {
+    this.profileError.set(null);
     this.nameBuffer = this.displayName();
     this.editingName.set(true);
   }
@@ -259,13 +267,18 @@ export class ClientProfilePage implements OnInit {
   protected async saveName(): Promise<void> {
     const trimmed = this.nameBuffer.trim();
     if (trimmed.length > 0) {
+      const previousName = this.displayName();
       const capitalized = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+      this.profileError.set(null);
       this.displayName.set(capitalized);
       this.saving.set(true);
       try {
         await this.auth.updateProfile({ name: capitalized });
       } catch (err) {
         console.warn('Erreur mise à jour profil:', err);
+        this.displayName.set(previousName);
+        this.profileError.set(this.errorMessages.message(err, 'Impossible de mettre a jour le profil. Verifiez votre connexion.'));
+        return;
       } finally {
         this.saving.set(false);
       }

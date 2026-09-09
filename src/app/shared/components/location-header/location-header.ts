@@ -7,7 +7,28 @@ import { NotificationService } from '../../services/notification.service';
   selector: 'app-location-header',
   template: `
     <header class="location-header">
-      @if (showLocation) {
+      @if (showSalonToggle) {
+        <button
+          class="location-header__salon-toggle"
+          [class.location-header__salon-toggle--closed]="!salonOpen"
+          [disabled]="salonToggleDisabled || salonToggleLoading"
+          (click)="onSalonToggleClick()"
+          type="button"
+          [attr.aria-pressed]="salonOpen"
+          [attr.aria-label]="salonOpen ? 'Fermer le salon' : 'Ouvrir le salon'"
+        >
+          <span class="location-header__salon-label">
+            @if (salonToggleLoading) {
+              Mise à jour<span class="loading-dots" aria-hidden="true"></span>
+            } @else {
+              {{ salonOpen ? 'Ouvert' : 'Fermé' }}
+            }
+          </span>
+          <span class="location-header__salon-switch" [class.location-header__salon-switch--on]="salonOpen" aria-hidden="true">
+            <span></span>
+          </span>
+        </button>
+      } @else if (showLocation) {
         <button class="location-header__selector" (click)="locationClick.emit()" type="button">
           <span class="location-header__pin-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -73,10 +94,15 @@ export class LocationHeader {
   @Input() showLocation = true;
   @Input() hasNotification = true;
   @Input() notificationCount?: number;
+  @Input() showSalonToggle = false;
+  @Input() salonOpen = true;
+  @Input() salonToggleLoading = false;
+  @Input() salonToggleDisabled = false;
 
   @Output() locationClick = new EventEmitter<void>();
   @Output() notificationClick = new EventEmitter<void>();
   @Output() favoritesClick = new EventEmitter<void>();
+  @Output() salonToggleClick = new EventEmitter<void>();
 
   protected get favoritesCount(): number {
     return this.favoritesService.count();
@@ -112,5 +138,9 @@ export class LocationHeader {
         : '/client/notifications';
       this.router.navigate([target]);
     }
+  }
+
+  protected onSalonToggleClick(): void {
+    this.salonToggleClick.emit();
   }
 }

@@ -112,8 +112,7 @@ import { AuthSessionService } from '../../auth/auth-session.service';
               <div #scrollSentinel class="client-home__sentinel">
                 @if (loadingMore()) {
                   <div class="client-home__loading-more">
-                    <span class="client-home__spinner"></span>
-                    <span>Chargement d'autres salons...</span>
+                    <span>Chargement d'autres salons</span><span class="loading-dots" aria-hidden="true"></span>
                   </div>
                 } @else if (!hasMoreToLoad()) {
                   <div class="client-home__end-message">

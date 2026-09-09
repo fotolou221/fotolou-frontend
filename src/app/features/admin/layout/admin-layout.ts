@@ -16,7 +16,7 @@ import { AdminConfirmDialogComponent } from '../components/admin-confirm-dialog/
       <aside class="admin-sidebar">
         <div class="admin-sidebar__header">
           <a routerLink="/admin/dashboard" class="admin-sidebar__brand">
-            <img src="images/logoFotolou.png" alt="Fotolou" class="admin-sidebar__logo" />
+            <img src="images/logoFotolou-small.png" alt="Fotolou" class="admin-sidebar__logo" />
             @if (!sidebarCollapsed()) {
               <div class="admin-sidebar__brand-text">
                 <span class="admin-sidebar__title">Fotolou</span>

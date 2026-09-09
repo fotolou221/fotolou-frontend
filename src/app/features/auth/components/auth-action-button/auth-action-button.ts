@@ -9,11 +9,17 @@ type AuthActionVariant = 'primary' | 'outline';
       class="auth-action-button"
       [class.auth-action-button--outline]="variant === 'outline'"
       type="button"
-      [disabled]="disabled"
+      [disabled]="disabled || loading"
+      [attr.aria-busy]="loading"
       (click)="pressed.emit()"
     >
       <span class="auth-action-button__content">
-        <ng-content />
+        @if (loading) {
+          <span>{{ loadingLabel }}</span>
+          <span class="loading-dots" aria-hidden="true"></span>
+        } @else {
+          <ng-content />
+        }
       </span>
     </button>
   `,
@@ -22,5 +28,7 @@ type AuthActionVariant = 'primary' | 'outline';
 export class AuthActionButton {
   @Input() variant: AuthActionVariant = 'primary';
   @Input() disabled = false;
+  @Input() loading = false;
+  @Input() loadingLabel = 'Chargement';
   @Output() readonly pressed = new EventEmitter<void>();
 }

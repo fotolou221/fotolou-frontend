@@ -24,7 +24,7 @@ interface FaqItem {
           
           <!-- Real Logo Fotolou (Blue for white header) -->
           <a routerLink="/" class="vitrine-header__logo">
-            <img src="images/logoFotolou-blue.png" alt="Fotolou - Moins d'attente, plus de temps" class="vitrine-header__logo-img" />
+            <img src="images/logoFotolou-blue-small.png" alt="Fotolou - Moins d'attente, plus de temps" class="vitrine-header__logo-img" />
           </a>
 
           <!-- Nav Links (Desktop) -->
@@ -761,7 +761,7 @@ interface FaqItem {
                 <div class="vitrine-cta__phone-notch"></div>
                 <div class="vitrine-cta__phone-screen">
                   <div class="vitrine-cta__logo-splash">
-                    <img src="images/logoFotolou.png" alt="Fotolou" />
+                    <img src="images/logoFotolou-small.png" alt="Fotolou" />
                     <strong>Fotolou</strong>
                   </div>
                 </div>
@@ -784,7 +784,7 @@ interface FaqItem {
             <!-- Brand Info with Real Logo -->
             <div class="vitrine-footer__brand">
               <div class="vitrine-footer__logo">
-                <img src="images/logoFotolou.png" alt="Fotolou" class="vitrine-footer__logo-img" />
+                <img src="images/logoFotolou-small.png" alt="Fotolou" class="vitrine-footer__logo-img" />
               </div>
               <p class="vitrine-footer__desc">
                 La plateforme n°1 de réservation de tickets virtuels en salon de coiffure à Dakar. Moins d'attente, plus de temps.

@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-onboarding-brand',
   template: `
     <section class="onboarding-brand" aria-label="Fotolou">
-      <img class="onboarding-brand__logo" src="images/logoFotolou.png" alt="Logo Fotolou" />
+      <img class="onboarding-brand__logo" src="images/logoFotolou-small.png" alt="Logo Fotolou" />
     </section>
   `,
   styleUrl: './onboarding-brand.scss'

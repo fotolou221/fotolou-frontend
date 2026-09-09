@@ -1,410 +1,533 @@
-.coiffeur-home {
-  padding: 16px 20px 90px;
-}
-
-// ── Hero Banner ───────────────────────────────────────────────
-.coiffeur-hero {
-  position: relative;
-  width: 100%;
-  height: 180px;
-  border-radius: 20px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  background-image: url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80');
-  background-size: cover;
-  background-position: center;
-  box-shadow: 0 6px 20px rgba(30, 90, 240, 0.16);
-}
-
-.coiffeur-hero__overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(11, 19, 43, 0.35) 0%, rgba(11, 19, 43, 0.85) 100%);
-}
-
-.coiffeur-hero__content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  height: 100%;
-  padding: 20px;
-  color: #ffffff;
-}
-
-.coiffeur-hero__label {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
-.coiffeur-hero__main-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-.coiffeur-hero__count {
-  font-size: 3.2rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.coiffeur-hero__right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.coiffeur-hero__trend {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 700;
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-.coiffeur-toggle {
-  position: relative;
-  width: 54px;
-  height: 30px;
-  border: none;
-  border-radius: 999px;
-  padding: 3px;
-  background: var(--text-muted, #94a3b8);
-  cursor: pointer;
-  transition: background 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &--active {
-    background: var(--success, #16a34a);
-  }
-}
-
-.coiffeur-toggle__thumb {
+:host {
   display: block;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-
-  .coiffeur-toggle--active & {
-    transform: translateX(24px);
-  }
 }
 
-// ── 3 Stat Cards Row ──────────────────────────────────────────
-.coiffeur-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.coiffeur-stat-card {
+.coiffeur-home {
   display: flex;
+  min-height: 100%;
   flex-direction: column;
-  gap: 4px;
-  border: 1.5px solid var(--border-color, #e2e8f0);
-  border-radius: 16px;
-  padding: 12px;
-  background: var(--bg-card, #ffffff);
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.03));
+  gap: 16px;
+  padding: 16px 16px 96px;
+  background: var(--bg-primary, #ffffff);
 }
 
-.coiffeur-stat-card__label {
-  color: var(--text-secondary, #64748b);
-  font-size: 0.68rem;
+.coiffeur-home__greeting {
+  margin-bottom: -2px;
+}
+
+.coiffeur-home__greeting-header {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coiffeur-home__title {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary, #0f172a);
+  font-size: 1.4rem;
   font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.coiffeur-home__user-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary, #0f172a);
+  font-weight: 800;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.coiffeur-stat-card__val {
-  color: var(--text-primary, #0f172a);
-  font-size: 1.5rem;
-  font-weight: 900;
-  line-height: 1.1;
-  margin-bottom: 2px;
+.coiffeur-home__wave {
+  display: inline-block;
+  flex: none;
+  transform-origin: 70% 70%;
+  animation: wave-hand 2.4s ease-in-out infinite;
 }
 
-.coiffeur-stat-card__bar-track {
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--bg-secondary, #f1f5f9);
-  overflow: hidden;
-}
-
-.coiffeur-stat-card__bar-fill {
-  height: 100%;
-  border-radius: 999px;
-
-  &--current {
-    background: var(--accent, #f59e0b);
+@keyframes wave-hand {
+  0%,
+  100% {
+    transform: rotate(0deg);
   }
 
-  &--served {
-    background: var(--primary, #1E5AF0);
+  10%,
+  30% {
+    transform: rotate(14deg);
   }
 
-  &--cancelled {
-    background: var(--danger, #ef4444);
+  20% {
+    transform: rotate(-8deg);
+  }
+
+  40% {
+    transform: rotate(-4deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  60% {
+    transform: rotate(0deg);
   }
 }
 
-// ── Action Buttons ─────────────────────────────────────────────
-.coiffeur-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.coiffeur-action-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: 18px;
-  border: 1.5px solid var(--border-color, #e2e8f0);
-  background: var(--bg-card, #ffffff);
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.03));
+.coiffeur-home__salon-toggle {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  border: 1px solid rgba(22, 163, 74, 0.24);
+  border-radius: 9999px;
+  padding: 0 7px 0 10px;
+  background: #f0fdf4;
+  color: #15803d;
   cursor: pointer;
-  text-align: left;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-
-  &:hover {
-    border-color: var(--primary, #1E5AF0);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(30, 90, 240, 0.08);
-  }
+  font-size: 0.76rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 
   &:active {
     transform: scale(0.98);
   }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.72;
+    transform: none;
+  }
+
+  &--closed {
+    border-color: rgba(220, 38, 38, 0.26);
+    background: #fef2f2;
+    color: #dc2626;
+
+    .coiffeur-home__salon-switch {
+      background: #dc2626;
+    }
+  }
 }
 
-.coiffeur-action-btn__icon {
-  display: flex;
+.coiffeur-home__salon-label {
+  min-width: 43px;
+  text-align: left;
+}
+
+.coiffeur-home__salon-switch {
+  display: inline-flex;
+  width: 32px;
+  height: 20px;
+  flex: none;
   align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  flex-shrink: 0;
-
-  svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  &--queue {
-    background: #eff6ff;
-    color: #1E5AF0;
-  }
-
-  &--salon {
-    background: #f0fdf4;
-    color: #16a34a;
-  }
-}
-
-.coiffeur-action-btn__text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-
-  strong {
-    font-size: 0.95rem;
-    font-weight: 800;
-    color: var(--text-primary, #0f172a);
-    line-height: 1.2;
-  }
+  border-radius: 9999px;
+  padding: 2px;
+  background: #dc2626;
+  transition: background-color 0.15s ease;
 
   span {
-    font-size: 0.76rem;
-    color: var(--text-secondary, #64748b);
-    line-height: 1.2;
+    width: 16px;
+    height: 16px;
+    border-radius: 9999px;
+    background: #ffffff;
+    transform: translateX(0);
+    transition: transform 0.15s ease;
+  }
+
+  &--on {
+    background: #16a34a;
+
+    span {
+      transform: translateX(12px);
+    }
   }
 }
 
-// ── Activity Section ───────────────────────────────────────────
-.coiffeur-activity__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-
-  h3 {
-    margin: 0;
-    color: var(--text-primary, #0f172a);
-    font-size: 1.15rem;
-    font-weight: 800;
-  }
-}
-
-.coiffeur-activity__badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--bg-secondary, #f1f5f9);
+.coiffeur-home__subtitle {
+  margin: 5px 0 0;
   color: var(--text-secondary, #64748b);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.845rem;
+  font-weight: 450;
+  line-height: 1.45;
+  letter-spacing: 0;
 }
 
-.coiffeur-activity__list {
+.coiffeur-home__queue-error {
+  margin: -4px 0 0;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.coiffeur-home__search {
+  margin-bottom: -2px;
+}
+
+.coiffeur-home__clients {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.activity-card {
+.coiffeur-home__section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.coiffeur-home__section-title > div {
+  min-width: 0;
+  flex: 1 1 140px;
+}
+
+.coiffeur-home__section-title h2 {
+  margin: 0;
+  color: var(--text-primary, #0f172a);
+  font-size: 1.08rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.coiffeur-home__section-title span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.coiffeur-home__manage-btn {
+  min-height: 36px;
+  flex: none;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 0 13px;
+  background: #eff6ff;
+  color: var(--primary, #1e5af0);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.coiffeur-home__client-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.queue-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border: 1px solid #f1f5f9;
+  border-radius: 18px;
+  padding: 16px;
+  background: var(--bg-card, #ffffff);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &--current {
+    border: 1.5px solid rgba(30, 90, 240, 0.35);
+    background: #f8fbff;
+  }
+
+  &--waiting {
+    border: 1px solid #eef2f6;
+  }
+}
+
+.queue-card__top {
   display: flex;
   align-items: center;
   gap: 14px;
-  border: 1.5px solid var(--border-color, #e2e8f0);
-  border-radius: 18px;
-  padding: 14px 16px;
-  background: var(--bg-card, #ffffff);
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.02));
 }
 
-.activity-card__avatar {
+.queue-card__pos-box {
   display: grid;
-  width: 44px;
-  height: 44px;
+  min-width: 46px;
+  height: 46px;
+  flex: none;
   place-items: center;
-  border-radius: 12px;
-  color: var(--text-primary, #0f172a);
-  font-size: 1rem;
+  border-radius: 14px;
+  padding: 0 8px;
+  background: var(--primary-light, #eef2ff);
+  color: var(--primary, #1e5af0);
+  font-size: 1.05rem;
   font-weight: 800;
-  flex-shrink: 0;
+
+  &--current {
+    background: var(--primary, #1e5af0);
+    color: #ffffff;
+  }
 }
 
-.activity-card__info {
+.queue-card__info {
   display: flex;
+  min-width: 0;
   flex: 1;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
 }
 
-.activity-card__name {
+.queue-card__name {
+  overflow: hidden;
   color: var(--text-primary, #0f172a);
-  font-size: 0.92rem;
+  font-size: 0.98rem;
   font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.activity-card__date {
-  color: var(--text-muted, #94a3b8);
-  font-size: 0.78rem;
+.queue-card__phone {
+  overflow: hidden;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.activity-card__badge {
-  padding: 4px 10px;
+.queue-card__status-tag {
+  flex: none;
   border-radius: 999px;
-  font-size: 0.70rem;
+  padding: 5px 12px;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  white-space: nowrap;
 
-  &--served {
-    background: var(--success-light, #dcfce7);
-    color: var(--success, #16a34a);
+  &--current {
+    background: var(--primary, #1e5af0);
+    color: #ffffff;
   }
 
-  &--cancelled {
-    background: var(--danger-light, #fee2e2);
-    color: var(--danger, #dc2626);
+  &--waiting {
+    background: #f1f5f9;
+    color: #64748b;
   }
 }
 
-.coiffeur-activity__empty {
+.queue-card__bottom {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 14px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+
+.queue-card__sub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+
+  &--chair {
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  &--waiting {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+  }
+}
+
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2563eb;
+  animation: pulseDot 1.8s infinite;
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.95);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+.queue-card__open-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary, #1e5af0);
+  font-size: 0.78rem;
+  font-weight: 850;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.coiffeur-home__loading,
+.coiffeur-home__inline-error {
+  display: flex;
+  min-height: 72px;
   align-items: center;
   justify-content: center;
-  padding: 32px 16px;
-  background: var(--bg-surface, #ffffff);
   border: 1px dashed var(--border-color, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.coiffeur-home__inline-error {
+  flex-direction: column;
+  gap: 10px;
+  color: #b91c1c;
   text-align: center;
 
-  p {
-    margin: 0 0 4px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-primary, #0f172a);
-  }
-
-  span {
-    font-size: 0.82rem;
-    color: var(--text-muted, #64748b);
+  button {
+    min-height: 34px;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #ffffff;
+    color: #b91c1c;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 850;
   }
 }
 
-// ── Dark Mode ──────────────────────────────────────────────────
-:host-context(body.dark-theme) {
-  .coiffeur-stat-card,
-  .coiffeur-action-btn,
-  .activity-card {
-    background: #1c2541 !important;
-    border-color: #2e3a59 !important;
+@media (max-width: 430px) {
+  .coiffeur-home__greeting-header {
+    align-items: center;
   }
 
-  .coiffeur-stat-card__val,
-  .coiffeur-action-btn__text strong,
-  .activity-card__name,
-  .coiffeur-activity__header h3 {
-    color: #f8fafc !important;
+  .coiffeur-home__title {
+    gap: 5px;
+    font-size: 1.16rem;
   }
 
-  .coiffeur-stat-card__label,
-  .coiffeur-action-btn__text span,
-  .activity-card__date {
-    color: #94a3b8 !important;
+  .coiffeur-home__salon-toggle {
+    min-height: 32px;
+    gap: 6px;
+    padding: 0 6px 0 9px;
+    font-size: 0.72rem;
   }
 
-  .coiffeur-activity__badge {
-    background: #2e3a59 !important;
-    color: #94a3b8 !important;
-  }
+  .coiffeur-home__salon-switch {
+    width: 30px;
+    height: 18px;
 
-  .coiffeur-action-btn__icon--queue {
-    background: rgba(30, 90, 240, 0.15) !important;
-    color: #3b82f6 !important;
-  }
-
-  .coiffeur-action-btn__icon--salon {
-    background: rgba(22, 163, 74, 0.15) !important;
-    color: #22c55e !important;
-  }
-
-  .coiffeur-activity__empty {
-    background: #1c2541 !important;
-    border-color: #2e3a59 !important;
-
-    p {
-      color: #f8fafc !important;
+    span {
+      width: 14px;
+      height: 14px;
     }
+
+    &--on span {
+      transform: translateX(12px);
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .coiffeur-home {
+    padding-inline: 12px;
+  }
+
+  .queue-card__top {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .queue-card__status-tag {
+    margin-left: 60px;
+  }
+}
+
+@media (min-width: 720px) {
+  .coiffeur-home {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-inline: 24px;
+  }
+}
+
+:host-context(body.dark-theme) {
+  .coiffeur-home {
+    background: var(--bg-primary, #10182d);
+  }
+
+  .queue-card,
+  .coiffeur-home__loading,
+  .coiffeur-home__inline-error {
+    border-color: #334155;
+    background: #1c2541;
+  }
+
+  .queue-card--current {
+    border-color: rgba(96, 165, 250, 0.42);
+    background: #172348;
+  }
+
+  .coiffeur-home__salon-toggle {
+    border-color: rgba(34, 197, 94, 0.3);
+    background: rgba(22, 163, 74, 0.14);
+    color: #86efac;
+
+    &--closed {
+      border-color: rgba(248, 113, 113, 0.36);
+      background: rgba(220, 38, 38, 0.16);
+      color: #fca5a5;
+
+      .coiffeur-home__salon-switch {
+        background: #ef4444;
+      }
+    }
+  }
+
+  .coiffeur-home__title,
+  .coiffeur-home__user-name,
+  .coiffeur-home__section-title h2,
+  .queue-card__name {
+    color: #ffffff;
+  }
+
+  .coiffeur-home__subtitle,
+  .coiffeur-home__section-title span,
+  .queue-card__phone {
+    color: #cbd5e1;
   }
 }

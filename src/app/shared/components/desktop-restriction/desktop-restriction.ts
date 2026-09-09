@@ -12,7 +12,7 @@ import { filter } from 'rxjs/operators';
           
           <!-- Brand Logo -->
           <div class="desktop-alert__brand">
-            <img src="images/logoFotolou.png" alt="Fotolou" class="desktop-alert__logo" />
+            <img src="images/logoFotolou-small.png" alt="Fotolou" class="desktop-alert__logo" />
           </div>
 
           <!-- Mobile Illustration Icon -->

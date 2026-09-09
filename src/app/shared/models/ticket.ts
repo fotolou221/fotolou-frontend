@@ -6,7 +6,9 @@ export interface Ticket {
   readonly salonId: string;
   readonly salonName: string;
   readonly ownerName: string;
+  readonly ownerType?: 'SELF' | 'RELATIVE' | 'CUSTOM' | 'self' | 'relative' | 'custom' | string;
   readonly ticketNumber: number;
+  readonly currentTicketNumber?: number;
   readonly status: TicketStatus;
   readonly category: TicketTab;
   readonly createdAt: string;
@@ -14,4 +16,8 @@ export interface Ticket {
   readonly itemCount?: number; // Number of items / services (default 1)
   readonly peopleAhead?: number;
   readonly estimatedWaitMinutes?: number;
+  readonly user?: {
+    readonly id?: number | string;
+    readonly login?: string;
+  };
 }

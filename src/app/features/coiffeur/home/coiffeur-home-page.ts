@@ -1,30 +1,21 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { LocationHeader } from '../../../shared/components/location-header/location-header';
+import { SearchBar } from '../../../shared/components/search-bar/search-bar';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TicketService } from '../../../shared/services/ticket.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
-
-interface RecentActivity {
-  readonly id: string;
-  readonly initial: string;
-  readonly name: string;
-  readonly date: string;
-  readonly status: 'SERVI' | 'ANNULÉ';
-  readonly avatarBg: string;
-}
+import { Ticket } from '../../../shared/models/ticket';
 
 @Component({
   selector: 'app-coiffeur-home-page',
-  imports: [
-    ClientLayout,
-    LocationHeader
-  ],
+  imports: [ClientLayout, LocationHeader, SearchBar, EmptyStateComponent],
   template: `
     <app-client-layout activeNav="home" role="coiffeur" [hasHeaderSlot]="true">
-      <!-- Fixed Header Slot -->
       <app-location-header
         slot="header"
         [showLocation]="false"
@@ -32,135 +23,129 @@ interface RecentActivity {
         (notificationClick)="goToNotifications()"
       />
 
-      <!-- Content Body -->
-      <div class="coiffeur-home">
-        <!-- Hero Card -->
-        <section class="coiffeur-hero">
-          <div class="coiffeur-hero__overlay"></div>
+      <main class="coiffeur-home">
+        <section class="coiffeur-home__greeting" aria-label="Accueil coiffeur">
+          <div class="coiffeur-home__greeting-header">
+            <h1 class="coiffeur-home__title">
+              Bonjour, <span class="coiffeur-home__user-name">{{ greetingName() }}</span>
+              <span class="coiffeur-home__wave" aria-hidden="true">👋</span>
+            </h1>
+            <button
+              type="button"
+              class="coiffeur-home__salon-toggle"
+              [class.coiffeur-home__salon-toggle--closed]="!isQueueOpen()"
+              [disabled]="!currentSalon() || queueBusy()"
+              [attr.aria-pressed]="isQueueOpen()"
+              [attr.aria-label]="isQueueOpen() ? 'Fermer le salon' : 'Ouvrir le salon'"
+              (click)="toggleQueue()"
+            >
+              <span class="coiffeur-home__salon-label">
+                @if (queueBusy()) {
+                  Mise à jour<span class="loading-dots" aria-hidden="true"></span>
+                } @else {
+                  {{ isQueueOpen() ? 'Ouvert' : 'Fermé' }}
+                }
+              </span>
+              <span class="coiffeur-home__salon-switch" [class.coiffeur-home__salon-switch--on]="isQueueOpen()" aria-hidden="true">
+                <span></span>
+              </span>
+            </button>
+          </div>
+          <p class="coiffeur-home__subtitle">{{ salonName() }}</p>
+        </section>
 
-          <div class="coiffeur-hero__content">
-            <span class="coiffeur-hero__label">CLIENTS EN ATTENTE</span>
-            <div class="coiffeur-hero__main-row">
-              <span class="coiffeur-hero__count">{{ ticketService.activeCount() }}</span>
+        @if (queueError()) {
+          <p class="coiffeur-home__queue-error" role="alert">{{ queueError() }}</p>
+        }
 
-              <div class="coiffeur-hero__right">
-                <span class="coiffeur-hero__trend">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-                    <polyline points="17 6 23 6 23 12"/>
-                  </svg>
-                  {{ isQueueOpen() ? 'File Ouverte' : 'File Fermée' }}
-                </span>
+        <section class="coiffeur-home__search">
+          <app-search-bar
+            [value]="searchQuery()"
+            (valueChange)="onSearchChange($event)"
+            placeholder="Rechercher un client ou un ticket"
+          />
+        </section>
 
-                <!-- Toggle Switch -->
+        <section class="coiffeur-home__clients" aria-label="Liste des clients">
+          <div class="coiffeur-home__section-title">
+            <div>
+              <h2>Clients dans la file</h2>
+              <span>{{ clientsCountLabel() }}</span>
+            </div>
+            <button type="button" class="coiffeur-home__manage-btn" (click)="goToQueue()">Gérer</button>
+          </div>
+
+          @if (ticketService.loading() && activeTickets().length === 0) {
+            <div class="coiffeur-home__loading">
+              <span>Chargement des clients</span><span class="loading-dots" aria-hidden="true"></span>
+            </div>
+          } @else if (ticketService.error() && activeTickets().length === 0) {
+            <div class="coiffeur-home__inline-error" role="alert">
+              <span>{{ ticketService.error() }}</span>
+              <button type="button" (click)="reloadTickets()">Réessayer</button>
+            </div>
+          } @else {
+            <div class="coiffeur-home__client-list">
+              @for (item of filteredClients(); track item.id) {
                 <button
                   type="button"
-                  class="coiffeur-toggle"
-                  [class.coiffeur-toggle--active]="isQueueOpen()"
-                  (click)="toggleQueue()"
-                  [attr.aria-label]="isQueueOpen() ? 'Fermer la file' : 'Ouvrir la file'"
+                  class="queue-card"
+                  [class.queue-card--current]="isCurrentClient(item)"
+                  [class.queue-card--waiting]="!isCurrentClient(item)"
+                  (click)="goToQueue()"
                 >
-                  <span class="coiffeur-toggle__thumb"></span>
+                  <div class="queue-card__top">
+                    <div
+                      class="queue-card__pos-box"
+                      [class.queue-card__pos-box--current]="isCurrentClient(item)"
+                    >
+                      #{{ item.ticketNumber }}
+                    </div>
+
+                    <div class="queue-card__info">
+                      <strong class="queue-card__name">{{ item.ownerName }}</strong>
+                      <span class="queue-card__phone">{{ item.salonName }} &bull; Dakar</span>
+                    </div>
+
+                    <span
+                      class="queue-card__status-tag"
+                      [class.queue-card__status-tag--current]="isCurrentClient(item)"
+                      [class.queue-card__status-tag--waiting]="!isCurrentClient(item)"
+                    >
+                      {{ isCurrentClient(item) ? 'En cours' : 'En attente' }}
+                    </span>
+                  </div>
+
+                  <div class="queue-card__bottom">
+                    @if (isCurrentClient(item)) {
+                      <span class="queue-card__sub-badge queue-card__sub-badge--chair">
+                        <span class="pulse-indicator"></span> Au fauteuil
+                      </span>
+                    } @else {
+                      <span class="queue-card__sub-badge queue-card__sub-badge--waiting">
+                        {{ getQueuePositionText(item) }}
+                      </span>
+                    }
+
+                    <span class="queue-card__open-link">
+                      Ouvrir
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </span>
+                  </div>
                 </button>
-              </div>
+              } @empty {
+                <app-empty-state
+                  [icon]="searchQuery() ? 'search' : 'ticket'"
+                  [title]="searchQuery() ? 'Aucun client trouvé' : 'Aucun client en attente'"
+                  [description]="searchQuery() ? 'Essayez un autre nom ou numéro de ticket.' : 'Les clients apparaîtront ici en temps réel.'"
+                />
+              }
             </div>
-          </div>
+          }
         </section>
-
-        <!-- Stats Row Cards -->
-        <section class="coiffeur-stats">
-          <div class="coiffeur-stat-card">
-            <span class="coiffeur-stat-card__label">EN ATTENTE</span>
-            <span class="coiffeur-stat-card__val">{{ ticketService.activeCount() }}</span>
-            <div class="coiffeur-stat-card__bar-track">
-              <div class="coiffeur-stat-card__bar-fill coiffeur-stat-card__bar-fill--current" [style.width.%]="ticketService.activeCount() * 20"></div>
-            </div>
-          </div>
-
-          <div class="coiffeur-stat-card">
-            <span class="coiffeur-stat-card__label">SERVIS</span>
-            <span class="coiffeur-stat-card__val">{{ ticketService.historyCount() }}</span>
-            <div class="coiffeur-stat-card__bar-track">
-              <div class="coiffeur-stat-card__bar-fill coiffeur-stat-card__bar-fill--served" [style.width.%]="ticketService.historyCount() * 10"></div>
-            </div>
-          </div>
-
-          <div class="coiffeur-stat-card">
-            <span class="coiffeur-stat-card__label">ANNULÉS</span>
-            <span class="coiffeur-stat-card__val">{{ ticketService.cancelledCount() }}</span>
-            <div class="coiffeur-stat-card__bar-track">
-              <div class="coiffeur-stat-card__bar-fill coiffeur-stat-card__bar-fill--cancelled" [style.width.%]="ticketService.cancelledCount() * 10"></div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Action Grid Menu -->
-        <section class="coiffeur-actions">
-          <button type="button" class="coiffeur-action-btn" (click)="router.navigate(['/coiffeur/tickets'])">
-            <div class="coiffeur-action-btn__icon coiffeur-action-btn__icon--queue">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <div class="coiffeur-action-btn__text">
-              <strong>Gérer la File</strong>
-              <span>Appeler le prochain client</span>
-            </div>
-          </button>
-
-          <button type="button" class="coiffeur-action-btn" (click)="router.navigate(['/coiffeur/profile'])">
-            <div class="coiffeur-action-btn__icon coiffeur-action-btn__icon--salon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            </div>
-            <div class="coiffeur-action-btn__text">
-              <strong>Mon Salon</strong>
-              <span>Horaires &amp; profil</span>
-            </div>
-          </button>
-        </section>
-
-        <!-- Recent Activity Feed -->
-        <section class="coiffeur-activity">
-          <div class="coiffeur-activity__header">
-            <h3>Activité Récente</h3>
-            <span class="coiffeur-activity__badge">Aujourd'hui</span>
-          </div>
-
-          <div class="coiffeur-activity__list">
-            @for (item of recentActivities(); track item.id) {
-              <div class="activity-card">
-                <div class="activity-card__avatar" [style.background-color]="item.avatarBg">
-                  <span>{{ item.initial }}</span>
-                </div>
-
-                <div class="activity-card__info">
-                  <strong>{{ item.name }}</strong>
-                  <span class="activity-card__date">{{ item.date }}</span>
-                </div>
-
-                <span
-                  class="activity-card__badge"
-                  [class.activity-card__badge--served]="item.status === 'SERVI'"
-                  [class.activity-card__badge--cancelled]="item.status === 'ANNULÉ'"
-                >
-                  {{ item.status }}
-                </span>
-              </div>
-            } @empty {
-              <div class="coiffeur-activity__empty">
-                <p>Aucune activité récente</p>
-                <span>Les clients servis ou annulés s'afficheront ici en direct.</span>
-              </div>
-            }
-          </div>
-        </section>
-      </div>
+      </main>
     </app-client-layout>
   `,
   styleUrl: './coiffeur-home-page.scss'
@@ -172,54 +157,142 @@ export class CoiffeurHomePage {
   protected readonly salonService = inject(SalonService);
   protected readonly authSession = inject(AuthSessionService);
 
-  private readonly manualQueueState = signal<boolean | null>(null);
+  protected readonly queueBusy = signal(false);
+  protected readonly queueError = signal<string | null>(null);
+  protected readonly searchQuery = signal('');
 
   protected readonly currentSalon = computed(() => {
     const user = this.authSession.currentUser();
     const salonId = user?.salonId?.toString() || user?.salonSlug;
     if (salonId) {
-      return this.salonService.salons().find((s) => s.id === salonId || s.slug === salonId) || null;
+      return (
+        this.salonService.salons().find(
+          (salon) => salon.id === salonId || salon.slug === salonId || salon.numericId?.toString() === salonId
+        ) || null
+      );
     }
     return this.salonService.salons()[0] || null;
   });
 
-  protected readonly isQueueOpen = computed(() => {
-    if (this.manualQueueState() !== null) {
-      return this.manualQueueState()!;
-    }
-    const s = this.currentSalon();
-    return s ? s.status === 'open' : true;
-  });
+  protected readonly isQueueOpen = computed(() => this.currentSalon()?.status !== 'closed');
 
-  private readonly avatarColors = ['#eef2ff', '#fee2e2', '#fef3c7', '#f1f5f9', '#e0e7ff'];
+  protected readonly salonName = computed(() => this.currentSalon()?.name || 'Mon salon');
 
-  protected readonly recentActivities = computed<RecentActivity[]>(() => {
-    const historyTickets = this.ticketService.tickets().filter((t) => t.category === 'history');
-    if (historyTickets.length > 0) {
-      return historyTickets.slice(0, 5).map((t, idx) => ({
-        id: t.id,
-        initial: (t.ownerName || 'C').charAt(0).toUpperCase(),
-        name: t.ownerName || 'Client',
-        date: t.servedAt ? new Date(t.servedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : 'Récemment',
-        status: (t.status === 'served' || t.status === 'completed' ? 'SERVI' : 'ANNULÉ') as 'SERVI' | 'ANNULÉ',
-        avatarBg: this.avatarColors[idx % this.avatarColors.length]
-      }));
+  protected readonly greetingName = computed(() => {
+    const ownerName = this.ownerFirstName(this.currentSalon()?.ownerName || this.currentSalon()?.coiffeurName);
+    if (ownerName) {
+      return ownerName;
     }
 
-    return [];
+    const user = this.authSession.activeUser();
+    const name = user?.name?.trim();
+    if (!name || user.id === 'guest' || name === 'Espace Barbier' || this.looksLikeSalonName(name)) {
+      return 'Coiffeur';
+    }
+    return name.split(/\s+/)[0];
   });
+
+  protected readonly activeTickets = computed(() =>
+    [...this.ticketService.coiffeurActiveTickets()].sort(
+      (first, second) => (Number(first.ticketNumber) || 0) - (Number(second.ticketNumber) || 0)
+    )
+  );
+
+  protected readonly currentTicket = computed(() =>
+    this.activeTickets().find((ticket) => ticket.status === 'your_turn') || this.activeTickets()[0] || null
+  );
+
+  protected readonly filteredClients = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const list = this.activeTickets();
+    if (!query) {
+      return list;
+    }
+
+    return list.filter((ticket) => {
+      const ticketNumber = `#${ticket.ticketNumber}`.toLowerCase();
+      return (
+        ticket.ownerName.toLowerCase().includes(query) ||
+        ticket.salonName.toLowerCase().includes(query) ||
+        ticketNumber.includes(query) ||
+        ticket.ticketNumber.toString().includes(query)
+      );
+    });
+  });
+
+  protected readonly clientsCountLabel = computed(() => {
+    const total = this.activeTickets().length;
+    const visible = this.filteredClients().length;
+    if (this.searchQuery()) {
+      return `${visible} résultat(s) sur ${total}`;
+    }
+    return `${total} client(s)`;
+  });
+
+  constructor() {
+    this.salonService.loadSalons();
+    this.ticketService.loadTickets();
+  }
+
+  protected onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  protected reloadTickets(): void {
+    this.ticketService.loadTickets(true);
+  }
+
+  protected isCurrentClient(item: Ticket): boolean {
+    return this.currentTicket()?.id === item.id;
+  }
+
+  protected getQueuePositionText(item: Ticket): string {
+    const index = this.activeTickets().findIndex((ticket) => ticket.id === item.id);
+    if (index <= 0) return 'Au fauteuil';
+    return `${index + 1}e dans la file`;
+  }
 
   protected toggleQueue(): void {
-    const next = !this.isQueueOpen();
-    this.manualQueueState.set(next);
+    const salon = this.currentSalon();
+    if (!salon || this.queueBusy()) return;
 
-    const s = this.currentSalon();
-    if (s && s.id) {
-      this.salonService.toggleSalonStatus(s.id).subscribe();
-    }
+    this.queueError.set(null);
+    this.queueBusy.set(true);
+    this.salonService
+      .toggleSalonStatus(salon.numericId ?? salon.id)
+      .pipe(finalize(() => this.queueBusy.set(false)))
+      .subscribe({
+        next: () => this.queueError.set(null),
+        error: (err) => {
+          this.queueError.set(err instanceof Error ? err.message : 'Impossible de modifier le statut de la boutique.');
+        }
+      });
+  }
+
+  protected goToQueue(): void {
+    this.router.navigate(['/coiffeur/tickets']);
   }
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
+  }
+
+  private ownerFirstName(value?: string): string {
+    const cleaned = value?.trim();
+    if (!cleaned || this.looksLikeSalonName(cleaned)) {
+      return '';
+    }
+    return cleaned.split(/\s+/)[0] || '';
+  }
+
+  private looksLikeSalonName(value: string): boolean {
+    const normalized = value.trim().toLowerCase();
+    const salonName = this.currentSalon()?.name?.trim().toLowerCase();
+    return (
+      normalized === 'coiffeur propriétaire' ||
+      normalized === 'coiffeur proprietaire' ||
+      normalized === 'barbier fotolou' ||
+      (!!salonName && (normalized === salonName || normalized === `${salonName} propriétaire` || normalized === `${salonName} proprietaire`))
+    );
   }
 }

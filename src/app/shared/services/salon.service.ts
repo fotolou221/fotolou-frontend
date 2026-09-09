@@ -1,9 +1,10 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize, throwError } from 'rxjs';
 import { Salon } from '../models/salon';
 import { TicketOwner } from '../models/ticket-owner';
 import { API_CONFIG } from '../../core/config/api.config';
+import { HttpErrorMessageService } from './http-error-message.service';
 
 export const DEFAULT_TICKET_OWNERS: readonly TicketOwner[] = [
   {
@@ -27,6 +28,7 @@ export const DEFAULT_TICKET_OWNERS: readonly TicketOwner[] = [
 })
 export class SalonService {
   private readonly http = inject(HttpClient);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   // ── State Signals ───────────────────────────────────────────
@@ -106,8 +108,11 @@ export class SalonService {
       }),
       catchError((err) => {
         console.error('[SalonService] Error fetching salons:', err);
+        const message = this.errorMessages.message(err, 'Impossible de charger les salons. Verifiez votre connexion.');
         if (!hasData) {
-          this.error.set('Impossible de charger les salons de coiffure.');
+          this.error.set(message);
+        } else {
+          this.error.set(message);
         }
         return of([]);
       }),
@@ -158,22 +163,65 @@ export class SalonService {
 
   toggleSalonStatus(id: number | string): Observable<any> {
     const targetId = id.toString();
-    const salon = this.salons().find((s) => s.id === targetId || s.slug === targetId);
-    const newStatus = salon && salon.status === 'open' ? 'closed' : 'open';
+    const salon = this.salons().find((s) => this.matchesSalon(s, targetId));
+    const apiId = salon?.numericId?.toString() || salon?.id || targetId;
+    const previousStatus = salon?.status;
+    const newStatus = previousStatus === 'open' ? 'closed' : 'open';
 
     this.salons.update((list) =>
       list.map((s) =>
-        s.id === targetId || s.slug === targetId
+        this.matchesSalon(s, targetId) || this.matchesSalon(s, apiId)
           ? { ...s, status: newStatus as any }
           : s
       )
     );
 
-    return this.http.put(`${this.baseUrl}${API_CONFIG.endpoints.salons}/${targetId}/toggle-status`, {}).pipe(
+    return this.http.put<any>(`${this.baseUrl}${API_CONFIG.endpoints.salons}/${apiId}/toggle-status`, {}).pipe(
+      tap((updated) => {
+        if (!updated) return;
+        const updatedStatus = updated.status ? String(updated.status).toLowerCase() : newStatus;
+        const updatedId = updated.id ? updated.id.toString() : apiId;
+        const updatedSlug = updated.slug || salon?.slug;
+
+        this.salons.update((list) =>
+          list.map((s) =>
+            this.matchesSalon(s, targetId) ||
+            this.matchesSalon(s, apiId) ||
+            this.matchesSalon(s, updatedId) ||
+            (updatedSlug ? this.matchesSalon(s, updatedSlug) : false)
+              ? {
+                  ...s,
+                  numericId: typeof updated.id === 'number' ? updated.id : s.numericId,
+                  slug: updatedSlug || s.slug,
+                  status: updatedStatus as any
+                }
+              : s
+          )
+        );
+      }),
       catchError((err) => {
-        console.warn(`[SalonService] toggle-status API failed for salon ${targetId}:`, err);
-        return of(null);
+        if (previousStatus) {
+          this.salons.update((list) =>
+            list.map((s) =>
+              this.matchesSalon(s, targetId) || this.matchesSalon(s, apiId)
+                ? { ...s, status: previousStatus }
+                : s
+            )
+          );
+        }
+        console.warn(`[SalonService] toggle-status API failed for salon ${apiId}:`, err);
+        const message = this.errorMessages.message(err, 'Impossible de modifier le statut de la boutique. Verifiez votre connexion.');
+        this.error.set(message);
+        return throwError(() => new Error(message));
       })
+    );
+  }
+
+  private matchesSalon(salon: Salon, id: string): boolean {
+    return (
+      salon.id === id ||
+      salon.slug === id ||
+      (salon.numericId !== undefined && salon.numericId.toString() === id)
     );
   }
 }

@@ -1,10 +1,11 @@
-import { Injectable, inject, signal, computed, effect } from '@angular/core';
+import { Injectable, inject, signal, computed, effect, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { Order, OrderStatus, OrderType } from '../models/order';
 import { CartItem } from '../models/product';
 import { API_CONFIG } from '../../core/config/api.config';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
+import { HttpErrorMessageService } from './http-error-message.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,7 @@ import { AuthSessionService } from '../../features/auth/auth-session.service';
 export class OrderService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   // ── State Signals ───────────────────────────────────────────
@@ -23,6 +25,7 @@ export class OrderService {
   // ── Cache Strategy (SWR - 2 min TTL) ────────────────────────
   private lastFetchedAt: number | null = null;
   private readonly CACHE_TTL_MS = 2 * 60 * 1000;
+  private requestInFlight = false;
 
   readonly phoneNumber = '+221 77 862 70 52';
   readonly whatsappPhone = '221778627052';
@@ -39,15 +42,18 @@ export class OrderService {
   constructor() {
     effect(() => {
       const user = this.auth.currentUser();
-      if (user && user.id !== 'guest') {
-        this.loadOrders(true);
-      } else {
-        this.orders.set([]);
-        this.lastFetchedAt = null;
-        this.loading.set(false);
-        this.isRefreshing.set(false);
-        this.error.set(null);
-      }
+      untracked(() => {
+        if (user && user.id !== 'guest') {
+          this.loadOrders(true);
+        } else {
+          this.orders.set([]);
+          this.lastFetchedAt = null;
+          this.requestInFlight = false;
+          this.loading.set(false);
+          this.isRefreshing.set(false);
+          this.error.set(null);
+        }
+      });
     });
   }
 
@@ -69,12 +75,17 @@ export class OrderService {
       return;
     }
 
+    if (this.requestInFlight) {
+      return;
+    }
+
     if (hasData) {
       this.isRefreshing.set(true);
     } else {
       this.loading.set(true);
     }
     this.error.set(null);
+    this.requestInFlight = true;
 
     this.http.get<any[]>(`${this.baseUrl}${API_CONFIG.endpoints.orders}`).pipe(
       map((data) =>
@@ -104,12 +115,11 @@ export class OrderService {
       }),
       catchError((err) => {
         console.error('[OrderService] Error fetching orders:', err);
-        if (!hasData) {
-          this.error.set('Impossible de charger vos commandes.');
-        }
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger vos commandes. Verifiez votre connexion.'));
         return of([]);
       }),
       finalize(() => {
+        this.requestInFlight = false;
         this.loading.set(false);
         this.isRefreshing.set(false);
       })
@@ -133,6 +143,7 @@ export class OrderService {
       })),
       catchError((err) => {
         console.error(`[OrderService] Error fetching order ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger cette commande.'));
         return of(this.orders().find((o) => o.id === id) || null);
       })
     );
@@ -185,6 +196,7 @@ export class OrderService {
       }),
       catchError((err) => {
         console.warn('[OrderService] API post failed, keeping local order:', err);
+        this.error.set(this.errorMessages.message(err, 'Commande enregistree localement. Connexion instable, verifiez votre reseau.'));
         return of(newOrder);
       })
     );

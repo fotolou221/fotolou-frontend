@@ -3,12 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
 import { Product, ProductCategory } from '../models/product';
 import { API_CONFIG } from '../../core/config/api.config';
+import { HttpErrorMessageService } from './http-error-message.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
   private readonly http = inject(HttpClient);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   private readonly baseUrl = API_CONFIG.baseUrl;
 
   // ── State Signals ───────────────────────────────────────────
@@ -91,9 +93,7 @@ export class ProductService {
       }),
       catchError((err) => {
         console.error('[ProductService] Error loading products:', err);
-        if (!hasData) {
-          this.error.set('Impossible de charger les produits de la boutique.');
-        }
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger les produits de la boutique. Verifiez votre connexion.'));
         return of([]);
       }),
       finalize(() => {
@@ -126,6 +126,7 @@ export class ProductService {
       }),
       catchError((err) => {
         console.error('[ProductService] Error loading categories:', err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger les categories de la boutique.'));
         return of([]);
       })
     ).subscribe();
@@ -150,6 +151,7 @@ export class ProductService {
       })),
       catchError((err) => {
         console.error(`[ProductService] Error loading product ${id}:`, err);
+        this.error.set(this.errorMessages.message(err, 'Impossible de charger ce produit.'));
         return of(this.products().find((p) => p.id === id) || null);
       })
     );

@@ -20,7 +20,7 @@ import { AdminDataService } from '../../services/admin-data.service';
           
           <!-- Top Brand Header -->
           <div class="admin-auth__brand">
-            <img src="images/logoFotolou.png" alt="Fotolou" class="admin-auth__brand-logo" />
+            <img src="images/logoFotolou-small.png" alt="Fotolou" class="admin-auth__brand-logo" />
             <div>
               <span class="admin-auth__brand-name">Fotolou</span>
               <span class="admin-auth__brand-badge">ADMIN CONSOLE</span>
@@ -196,8 +196,7 @@ import { AdminDataService } from '../../services/admin-data.service';
               [disabled]="loading()"
             >
               @if (loading()) {
-                <span class="admin-auth__spinner"></span>
-                <span>Vérification des accès...</span>
+                <span>Vérification des accès</span><span class="loading-dots" aria-hidden="true"></span>
               } @else {
                 <span>Se connecter au tableau de bord</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

@@ -42,7 +42,7 @@ import { AdminUsersPage } from './features/admin/pages/users/admin-users-page';
 import { AdminCategoriesPage } from './features/admin/pages/categories/admin-categories-page';
 import { AdminSettingsPage } from './features/admin/pages/settings/admin-settings-page';
 import { adminAuthGuard } from './features/admin/services/admin-auth.service';
-import { clientAuthGuard, coiffeurAuthGuard, shopAuthGuard } from './core/guards/auth.guard';
+import { clientAuthGuard, coiffeurAuthGuard, guestOnlyAuthGuard, shopAuthGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: VitrinePage },
@@ -50,8 +50,8 @@ export const routes: Routes = [
   { path: 'app', redirectTo: 'onboarding', pathMatch: 'full' },
   { path: 'login', redirectTo: 'auth/login', pathMatch: 'full' },
   { path: 'onboarding', component: OnboardingPage },
-  { path: 'auth/login', component: LoginPage },
-  { path: 'auth/code', component: OtpPage },
+  { path: 'auth/login', component: LoginPage, canActivate: [guestOnlyAuthGuard] },
+  { path: 'auth/code', component: OtpPage, canActivate: [guestOnlyAuthGuard] },
 
   // ── Client Routes (Protected) ─────────────────────────────
   { path: 'client/home', component: ClientHomePage, canActivate: [clientAuthGuard] },
