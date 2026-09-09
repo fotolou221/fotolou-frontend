@@ -1,5 +1,8 @@
-import { Injectable, signal, computed, inject, PLATFORM_ID, OnDestroy } from '@angular/core';
+import { Injectable, signal, computed, inject, PLATFORM_ID, OnDestroy, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { SwUpdate } from '@angular/service-worker';
+import type { UnrecoverableStateEvent, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
+import { filter, fromEvent, interval, merge, Subject, takeUntil } from 'rxjs';
 
 export interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -14,6 +17,8 @@ export type PwaPlatform = 'ios' | 'android' | 'desktop' | 'other';
 })
 export class PwaService implements OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly swUpdate = inject(SwUpdate, { optional: true });
+  private readonly ngZone = inject(NgZone);
   private readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // ── Reactive State ──────────────────────────────────────────
@@ -22,6 +27,9 @@ export class PwaService implements OnDestroy {
   readonly isMobile = signal<boolean>(false);
   readonly canPromptNative = signal<boolean>(false);
   readonly showBanner = signal<boolean>(false);
+  readonly updateAvailable = signal<boolean>(false);
+  readonly updateInProgress = signal<boolean>(false);
+  readonly updateError = signal<string | null>(null);
 
   // ── Derived State ───────────────────────────────────────────
   readonly isInstalled = computed(() => this.isStandalone());
@@ -31,6 +39,13 @@ export class PwaService implements OnDestroy {
 
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
   private standaloneMediaQueryList: MediaQueryList | null = null;
+  private readonly destroy$ = new Subject<void>();
+  private readonly UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+  private readonly UPDATE_CHECK_THROTTLE_MS = 30 * 1000;
+  private readonly UPDATE_RELOAD_VERSION_KEY = 'fotolou_pwa_update_reload_version';
+  private readonly UNRECOVERABLE_RELOAD_KEY = 'fotolou_pwa_unrecoverable_reload';
+  private lastUpdateCheckAt = 0;
+  private isActivatingUpdate = false;
 
   constructor() {
     if (!this.isBrowser) return;
@@ -38,10 +53,13 @@ export class PwaService implements OnDestroy {
     this.detectPlatform();
     this.detectStandaloneMode();
     this.setupListeners();
+    this.setupUpdateManagement();
     this.evaluateBannerVisibility();
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     if (!this.isBrowser) return;
     this.cleanupListeners();
   }
@@ -136,6 +154,157 @@ export class PwaService implements OnDestroy {
     if (this.standaloneMediaQueryList) {
       this.standaloneMediaQueryList.removeEventListener('change', this.onDisplayModeChange);
     }
+  }
+
+  // Service Worker Updates
+  private setupUpdateManagement(): void {
+    if (!this.swUpdate?.isEnabled) return;
+
+    this.swUpdate.versionUpdates
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => this.handleVersionEvent(event));
+
+    this.swUpdate.unrecoverable
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => this.reloadAfterUnrecoverableState(event));
+
+    this.ngZone.runOutsideAngular(() => {
+      merge(
+        interval(this.UPDATE_CHECK_INTERVAL_MS),
+        fromEvent(window, 'online'),
+        fromEvent(window, 'focus'),
+        fromEvent(document, 'visibilitychange').pipe(
+          filter(() => document.visibilityState === 'visible')
+        )
+      )
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          void this.checkForUpdate();
+        });
+
+      void this.waitForServiceWorkerReady()
+        .then(() => this.checkForUpdate(true))
+        .catch((error: unknown) => this.handleUpdateError(error, 'ready'));
+    });
+  }
+
+  private async waitForServiceWorkerReady(): Promise<void> {
+    if (!('serviceWorker' in navigator)) return;
+    await navigator.serviceWorker.ready;
+  }
+
+  private async checkForUpdate(force = false): Promise<void> {
+    if (!this.swUpdate?.isEnabled || this.isActivatingUpdate) return;
+    if (navigator.onLine === false) return;
+
+    const now = Date.now();
+    if (!force && now - this.lastUpdateCheckAt < this.UPDATE_CHECK_THROTTLE_MS) return;
+    this.lastUpdateCheckAt = now;
+
+    try {
+      await this.swUpdate.checkForUpdate();
+    } catch (error) {
+      this.handleUpdateError(error, 'check');
+    }
+  }
+
+  private handleVersionEvent(event: VersionEvent): void {
+    switch (event.type) {
+      case 'VERSION_DETECTED':
+        this.ngZone.run(() => {
+          this.updateInProgress.set(true);
+          this.updateAvailable.set(false);
+          this.updateError.set(null);
+        });
+        break;
+
+      case 'VERSION_READY':
+        this.ngZone.run(() => {
+          this.updateInProgress.set(false);
+          this.updateAvailable.set(true);
+          this.updateError.set(null);
+        });
+        void this.activateAndReload(event);
+        break;
+
+      case 'VERSION_INSTALLATION_FAILED':
+        this.ngZone.run(() => {
+          this.updateInProgress.set(false);
+          this.updateError.set(event.error || 'Service worker update installation failed.');
+        });
+        console.warn('[PWA] Service worker update installation failed:', event.error);
+        break;
+
+      case 'NO_NEW_VERSION_DETECTED':
+        this.ngZone.run(() => {
+          this.updateInProgress.set(false);
+          this.updateError.set(null);
+        });
+        break;
+    }
+  }
+
+  private async activateAndReload(event: VersionReadyEvent): Promise<void> {
+    if (!this.swUpdate?.isEnabled || this.isActivatingUpdate) return;
+
+    const latestHash = event.latestVersion.hash;
+    if (this.readSessionStorage(this.UPDATE_RELOAD_VERSION_KEY) === latestHash) return;
+
+    this.isActivatingUpdate = true;
+    this.writeSessionStorage(this.UPDATE_RELOAD_VERSION_KEY, latestHash);
+
+    try {
+      await this.swUpdate.activateUpdate();
+      window.location.reload();
+    } catch (error) {
+      this.isActivatingUpdate = false;
+      this.removeSessionStorage(this.UPDATE_RELOAD_VERSION_KEY);
+      this.handleUpdateError(error, 'activate');
+    }
+  }
+
+  private reloadAfterUnrecoverableState(event: UnrecoverableStateEvent): void {
+    const reason = event.reason || 'unknown';
+    console.error('[PWA] Unrecoverable service worker state:', reason);
+
+    if (this.readSessionStorage(this.UNRECOVERABLE_RELOAD_KEY) === reason) return;
+
+    this.writeSessionStorage(this.UNRECOVERABLE_RELOAD_KEY, reason);
+    window.location.reload();
+  }
+
+  private handleUpdateError(error: unknown, phase: 'ready' | 'check' | 'activate'): void {
+    const message = this.formatError(error);
+    this.ngZone.run(() => {
+      this.updateInProgress.set(false);
+      this.updateError.set(message);
+    });
+    console.warn(`[PWA] Service worker update ${phase} failed:`, error);
+  }
+
+  private formatError(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    return String(error);
+  }
+
+  private readSessionStorage(key: string): string | null {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeSessionStorage(key: string, value: string): void {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {}
+  }
+
+  private removeSessionStorage(key: string): void {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {}
   }
 
   private readonly onBeforeInstallPrompt = (event: Event): void => {

@@ -17,6 +17,7 @@ describe('PwaService', () => {
   });
 
   afterEach(() => {
+    service.ngOnDestroy();
     localStorage.clear();
   });
 

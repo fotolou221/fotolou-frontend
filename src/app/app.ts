@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { InstallBanner } from './shared/components/install-banner/install-banner';
 import { DesktopRestriction } from './shared/components/desktop-restriction/desktop-restriction';
 import { RealtimeSyncService } from './shared/services/realtime-sync.service';
+import { PwaService } from './shared/services/pwa.service';
 
 @Component({
   selector: 'app-root',
@@ -13,5 +14,6 @@ import { RealtimeSyncService } from './shared/services/realtime-sync.service';
 export class App {
   // Injected eagerly to establish the real-time SSE stream across the entire app
   private readonly realtimeSync = inject(RealtimeSyncService);
+  // Injected eagerly to keep PWA install/update lifecycle active from startup
+  private readonly pwa = inject(PwaService);
 }
-

@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/@angular/service-worker/config/schema.json",
   "index": "/index.html",
+  "appData": {
+    "name": "Fotolou PWA"
+  },
   "assetGroups": [
     {
       "name": "app",
@@ -22,10 +25,12 @@
       "resources": {
         "files": [
           "/icons/**",
+          "/images/**",
           "/assets/**",
           "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
       }
     }
-  ]
+  ],
+  "navigationRequestStrategy": "performance"
 }
