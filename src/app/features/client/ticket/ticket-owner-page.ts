@@ -4,9 +4,10 @@ import { ClientLayout } from '../../../shared/components/client-layout/client-la
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { TicketOwnerCard } from '../../../shared/components/ticket-owner-card/ticket-owner-card';
 import { SalonService } from '../../../shared/services/salon.service';
-import { TicketService } from '../../../shared/services/ticket.service';
+import { TicketBeneficiaryPayload, TicketService } from '../../../shared/services/ticket.service';
 import { RelativeService } from '../../../shared/services/relative.service';
 import { TicketOwner } from '../../../shared/models/ticket-owner';
+import { RELATION_LABELS } from '../../../shared/models/relative';
 import { AuthSessionService } from '../../auth/auth-session.service';
 import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
@@ -44,9 +45,11 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
               [owner]="owner"
               [isSelected]="isOwnerSelected(owner.id)"
               [customName]="customOwnerName()"
+              [customPhone]="customOwnerPhone()"
               (cardClick)="toggleOwner(owner)"
               (cardLongPress)="onLongPress(owner)"
               (customNameChange)="onCustomNameChange($event)"
+              (customPhoneChange)="onCustomPhoneChange($event)"
             />
           }
         </section>
@@ -186,6 +189,7 @@ export class TicketOwnerPage implements OnInit {
   // Multi-selection state
   protected readonly selectedOwnerIds = signal<string[]>(['self']);
   protected readonly customOwnerName = signal<string>('');
+  protected readonly customOwnerPhone = signal<string>('');
   protected readonly errorMessage = signal<string | null>(null);
 
   // Modal State
@@ -209,6 +213,7 @@ export class TicketOwnerPage implements OnInit {
       type: 'self',
       name: selfName,
       subtitle: selfPhone,
+      phone: user?.phone || undefined,
       avatarInitials: selfInitial
     };
 
@@ -216,7 +221,8 @@ export class TicketOwnerPage implements OnInit {
       id: r.id,
       type: 'relative' as const,
       name: r.name,
-      subtitle: r.relation
+      subtitle: r.phone ? `${RELATION_LABELS[r.relation]} - ${r.phone}` : RELATION_LABELS[r.relation],
+      phone: r.phone
     }));
 
     const customPerson: TicketOwner = {
@@ -231,13 +237,7 @@ export class TicketOwnerPage implements OnInit {
   });
 
   protected readonly beneficiaryNamesList = computed(() => {
-    const selectedIds = this.selectedOwnerIds();
-    const allOwners = this.allTicketOwners();
-    return selectedIds.map(id => {
-      if (id === 'custom') return this.customOwnerName().trim() || 'Autre personne';
-      const found = allOwners.find(o => o.id === id);
-      return found ? found.name : 'Client';
-    }).join(', ');
+    return this.buildSelectedBeneficiaries().map((beneficiary) => beneficiary.name).join(', ');
   });
 
   protected readonly submitButtonLabel = computed(() => {
@@ -293,6 +293,10 @@ export class TicketOwnerPage implements OnInit {
     this.customOwnerName.set(name);
   }
 
+  protected onCustomPhoneChange(phone: string): void {
+    this.customOwnerPhone.set(phone);
+  }
+
   protected openConfirmModal(): void {
     const selectedIds = this.selectedOwnerIds();
     if (selectedIds.length === 0) return;
@@ -300,25 +304,118 @@ export class TicketOwnerPage implements OnInit {
     this.errorMessage.set(null);
     this.modalError.set(null);
 
-    const allOwners = this.allTicketOwners();
-    const targetNames = selectedIds.map(id => {
-      if (id === 'custom') {
-        return this.customOwnerName().trim() || 'Autre personne';
-      }
-      const found = allOwners.find(o => o.id === id);
-      return found ? found.name : 'Client';
-    });
+    const beneficiaries = this.buildSelectedBeneficiaries();
 
     // Validation 1: Empêcher les doublons de nom dans la même sélection
-    const lowerNames = targetNames.map(n => n.toLowerCase().trim());
+    const lowerNames = beneficiaries.map((beneficiary) => beneficiary.name.toLowerCase().trim());
     const hasDuplicate = lowerNames.some((name, idx) => lowerNames.indexOf(name) !== idx);
     if (hasDuplicate) {
       this.errorMessage.set('Impossible de sélectionner plusieurs fois la même personne dans la même file.');
       return;
     }
 
+    const validationError = this.validateBeneficiaries(beneficiaries);
+    if (validationError) {
+      this.errorMessage.set(validationError);
+      return;
+    }
+
     this.modalState.set('confirm');
     this.showModal.set(true);
+  }
+
+  private buildSelectedBeneficiaries(): TicketBeneficiaryPayload[] {
+    const allOwners = this.allTicketOwners();
+
+    return this.selectedOwnerIds().map((id) => {
+      if (id === 'self') {
+        return {
+          name: 'Moi',
+          type: 'SELF'
+        };
+      }
+
+      if (id === 'custom') {
+        const customName = this.customOwnerName().trim();
+        const customPhone = this.customOwnerPhone().trim();
+        return {
+          name: customName || (customPhone ? `Client (${customPhone})` : 'Autre personne'),
+          type: 'CUSTOM',
+          phone: customPhone || undefined
+        };
+      }
+
+      const owner = allOwners.find((item) => item.id === id);
+      const relativeId = Number(id);
+      return {
+        name: owner?.name || 'Client',
+        type: 'RELATIVE',
+        relativeId: Number.isFinite(relativeId) ? relativeId : undefined,
+        phone: owner?.phone
+      };
+    });
+  }
+
+  private validateBeneficiaries(beneficiaries: TicketBeneficiaryPayload[]): string | null {
+    const lowerNames = beneficiaries.map((beneficiary) => beneficiary.name.toLowerCase().trim());
+    const hasDuplicateName = lowerNames.some((name, idx) => lowerNames.indexOf(name) !== idx);
+    if (hasDuplicateName) {
+      return 'Impossible de selectionner plusieurs fois la meme personne dans la meme file.';
+    }
+
+    const currentUserPhone = this.normalizePhoneForCompare(this.auth.activeUser().phone);
+    const requestedPhones = new Set<string>();
+
+    for (const beneficiary of beneficiaries) {
+      const rawPhone = beneficiary.phone?.trim() || '';
+      const normalizedPhone = this.normalizePhoneForCompare(rawPhone);
+
+      if (rawPhone && !normalizedPhone) {
+        return 'Numero de telephone invalide. Utilisez un numero senegalais a 9 chiffres ou un format international.';
+      }
+
+      if (!normalizedPhone || beneficiary.type === 'SELF') {
+        continue;
+      }
+
+      if (currentUserPhone && normalizedPhone === currentUserPhone) {
+        return 'Vous ne pouvez pas utiliser votre propre numero pour une autre personne.';
+      }
+
+      if (requestedPhones.has(normalizedPhone)) {
+        return 'Le meme numero de telephone ne peut pas etre utilise pour plusieurs beneficiaires.';
+      }
+
+      requestedPhones.add(normalizedPhone);
+    }
+
+    return null;
+  }
+
+  private normalizePhoneForCompare(rawPhone: string | undefined): string {
+    if (!rawPhone) {
+      return '';
+    }
+
+    let normalized = rawPhone.replace(/[^0-9+]/g, '');
+    if (!normalized) {
+      return '';
+    }
+
+    if (normalized.startsWith('00')) {
+      normalized = `+${normalized.slice(2)}`;
+    }
+
+    if (!normalized.startsWith('+')) {
+      if (normalized.startsWith('221')) {
+        normalized = `+${normalized}`;
+      } else if (normalized.length === 9) {
+        normalized = `+221${normalized}`;
+      }
+    }
+
+    const digitsCount = normalized.replace(/\D/g, '').length;
+    return digitsCount >= 9 ? normalized : '';
   }
 
   protected closeModal(): void {
@@ -339,14 +436,13 @@ export class TicketOwnerPage implements OnInit {
     this.modalState.set('loading');
     this.modalError.set(null);
 
-    const allOwners = this.allTicketOwners();
-    const targetNames = selectedIds.map(id => {
-      if (id === 'custom') {
-        return this.customOwnerName().trim() || 'Autre personne';
-      }
-      const found = allOwners.find(o => o.id === id);
-      return found ? found.name : 'Client';
-    });
+    const beneficiaries = this.buildSelectedBeneficiaries();
+    const validationError = this.validateBeneficiaries(beneficiaries);
+    if (validationError) {
+      this.modalState.set('confirm');
+      this.modalError.set(validationError);
+      return;
+    }
 
     this.salonService.getSalonById(this.salonId).subscribe({
       next: (salon) => {
@@ -354,7 +450,7 @@ export class TicketOwnerPage implements OnInit {
         const effectiveSalonId = (salon?.numericId ? salon.numericId.toString() : this.salonId);
         const salonSlug = salon?.slug || this.salonId;
 
-        this.ticketService.createMultipleTickets(effectiveSalonId, salonName, targetNames, salonSlug).subscribe({
+        this.ticketService.createMultipleTickets(effectiveSalonId, salonName, beneficiaries, salonSlug).subscribe({
           next: () => {
             // SUCCESS STATE: Affiche l'icône validée en vert dans le même modal
             this.modalState.set('success');

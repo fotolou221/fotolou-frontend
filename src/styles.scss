@@ -287,14 +287,28 @@ button::after {
   text-shadow: none !important;
 }
 
+// Indicateur de focus clavier — conservé sur les éléments cliquables (accessibilité)
 button:focus-visible,
 a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible,
-body [class]:focus-visible {
+[role="button"]:focus-visible,
+[tabindex]:not(input):not(textarea):not(select):focus-visible {
   outline: 2px solid rgba(30, 90, 240, 0.72) !important;
   outline-offset: 2px;
+}
+
+// Champs de saisie : aucun contour / halo / fond bleu au focus (clic ou clavier)
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible,
+.search-bar:focus-within,
+.phone-field:focus-within,
+.admin-search-box input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-color, #e2e7ef) !important;
 }
 
 .loading-dots {

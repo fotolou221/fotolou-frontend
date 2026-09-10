@@ -370,17 +370,10 @@ export class TicketDetailPage implements OnInit {
       return this.ticket.currentTicketNumber;
     }
 
-    if (this.ticket.status === 'your_turn') {
-      return this.ticket.ticketNumber || 1;
-    }
-
-    const ticketNumber = this.ticket.ticketNumber || 1;
-    const peopleAhead =
-      this.ticket.peopleAhead !== undefined && this.ticket.peopleAhead !== null
-        ? this.ticket.peopleAhead
-        : Math.max(ticketNumber - 1, 0);
-
-    return Math.max(1, ticketNumber - peopleAhead);
+    // Le numéro du ticket est le compteur visible du jour : il ne reflète pas l'ordre
+    // de passage (basé sur l'arrivée en file). Sans valeur fournie par le backend, on ne
+    // peut pas deviner le ticket en cours : on affiche alors celui du client.
+    return this.ticket.ticketNumber || 1;
   }
 
   protected get salonStatus(): 'open' | 'closed' {

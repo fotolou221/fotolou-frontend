@@ -8,7 +8,7 @@ import { TicketService } from '../../../shared/services/ticket.service';
 import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
 import { FormsModule } from '@angular/forms';
-import { Ticket } from '../../../shared/models/ticket';
+import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
 import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 @Component({
@@ -399,14 +399,15 @@ export class CoiffeurTicketsPage implements OnInit {
 
   /**
    * Liste triée pour affichage :
-   * - File active : triée par ticketNumber croissant (le #1 au fauteuil est en haut, puis #2, #3...)
+   * - File active : ordre réel d'arrivée en file (createdAt puis id), pas le numéro affiché
+   *   (un #1 pris le lendemain ne doit pas passer devant un #999 de la veille encore actif)
    * - Historique : trié par date de création décroissante
    */
   protected readonly displayedTickets = computed(() => {
     const tab = this.activeTab();
     const list = this.allTickets().filter((t) => t.category === tab);
     if (tab === 'active') {
-      return [...list].sort((a, b) => (Number(a.ticketNumber) || 0) - (Number(b.ticketNumber) || 0));
+      return [...list].sort(compareTicketQueueOrder);
     }
     return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   });

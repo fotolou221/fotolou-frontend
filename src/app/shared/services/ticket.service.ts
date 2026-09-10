@@ -7,6 +7,13 @@ import { NotificationService } from './notification.service';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
 import { HttpErrorMessageService } from './http-error-message.service';
 
+export interface TicketBeneficiaryPayload {
+  readonly name: string;
+  readonly type: 'SELF' | 'RELATIVE' | 'CUSTOM';
+  readonly relativeId?: number;
+  readonly phone?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -119,6 +126,7 @@ export class TicketService {
             salonId: t.salonId || t.salon?.slug || (t.salon?.id ? t.salon.id.toString() : 'king-barber'),
             salonName: t.salonName || t.salon?.name || 'King Barber',
             ownerName: this.resolveOwnerName(t.ownerName || t.customerName || 'Moi', t),
+            ownerPhone: t.ownerPhone || undefined,
             ticketNumber: t.ticketNumber || t.dailySequenceNumber || 1,
             currentTicketNumber: this.normalizeCurrentTicketNumber(t.currentTicketNumber || t.currentQueueNumber),
             status: st as TicketStatus,
@@ -163,6 +171,7 @@ export class TicketService {
           salonId: t.salonId || t.salon?.slug || (t.salon?.id ? t.salon.id.toString() : 'king-barber'),
           salonName: t.salonName || t.salon?.name || 'King Barber',
           ownerName: this.resolveOwnerName(t.ownerName || t.customerName || 'Moi', t),
+          ownerPhone: t.ownerPhone || undefined,
           ticketNumber: t.ticketNumber || t.dailySequenceNumber || 1,
           currentTicketNumber: this.normalizeCurrentTicketNumber(t.currentTicketNumber || t.currentQueueNumber),
           status: st as TicketStatus,
@@ -200,6 +209,7 @@ export class TicketService {
           salonId,
           salonName: saved.salon?.name || salonName,
           ownerName: this.resolveOwnerName(saved.ownerName || ownerName || 'Moi', saved),
+          ownerPhone: saved.ownerPhone || undefined,
           ticketNumber: saved.ticketNumber || (activeCount + 1),
           currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
           status: st,
@@ -219,8 +229,13 @@ export class TicketService {
     );
   }
 
-  createMultipleTickets(salonId: string, salonName: string, ownerNames: string[], salonSlug?: string): Observable<Ticket[]> {
-    if (!ownerNames || ownerNames.length === 0) return of([]);
+  createMultipleTickets(
+    salonId: string,
+    salonName: string,
+    beneficiaries: TicketBeneficiaryPayload[],
+    salonSlug?: string
+  ): Observable<Ticket[]> {
+    if (!beneficiaries || beneficiaries.length === 0) return of([]);
 
     let activeCount = this.tickets().filter((t) => (t.category || 'active').toLowerCase() === 'active').length;
     const now = Date.now();
@@ -229,9 +244,11 @@ export class TicketService {
     const payload = {
       salonId: !isNaN(numericSalonId) ? numericSalonId : salonId,
       salonSlug: salonSlug || salonId,
-      beneficiaries: ownerNames.map((name) => ({
-        name: name,
-        type: name.toLowerCase().includes('moi') ? 'SELF' : 'RELATIVE'
+      beneficiaries: beneficiaries.map((beneficiary) => ({
+        name: beneficiary.name.trim(),
+        type: beneficiary.type,
+        relativeId: beneficiary.relativeId,
+        phone: beneficiary.phone?.trim() || undefined
       }))
     };
 
@@ -247,7 +264,8 @@ export class TicketService {
               id: saved.id ? saved.id.toString() : `t-${now}-${idx}`,
               salonId,
               salonName: saved.salon?.name || salonName,
-              ownerName: this.resolveOwnerName(saved.ownerName || ownerNames[idx] || 'Moi', saved),
+              ownerName: this.resolveOwnerName(saved.ownerName || beneficiaries[idx]?.name || 'Moi', saved),
+              ownerPhone: saved.ownerPhone || beneficiaries[idx]?.phone,
               ticketNumber: saved.ticketNumber || (activeCount + idx + 1),
               currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
               status: st,
@@ -285,6 +303,7 @@ export class TicketService {
           salonId: saved.salonId || (saved.salon?.id ? saved.salon.id.toString() : salonId.toString()),
           salonName: saved.salonName || saved.salon?.name || 'Mon Salon',
           ownerName: saved.ownerName || clientName || 'Client direct',
+          ownerPhone: saved.ownerPhone || clientPhone,
           ticketNumber: saved.ticketNumber || 1,
           currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
           status: st as TicketStatus,

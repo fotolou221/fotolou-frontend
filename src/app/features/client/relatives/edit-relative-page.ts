@@ -34,6 +34,17 @@ type RelationOption = { value: RelativeRelation; label: string };
             </p>
           </section>
 
+          @if (relativeService.error()) {
+            <div class="edit-relative-page__error-banner" role="alert">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ relativeService.error() }}</span>
+            </div>
+          }
+
           <!-- Form -->
           <form class="edit-relative-page__form" (ngSubmit)="saveChanges()">
 
@@ -163,7 +174,7 @@ type RelationOption = { value: RelativeRelation; label: string };
 export class EditRelativePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly relativeService = inject(RelativeService);
+  protected readonly relativeService = inject(RelativeService);
 
   protected readonly relative = signal<Relative | null>(null);
   protected readonly showDeleteModal = signal(false);
@@ -196,8 +207,13 @@ export class EditRelativePage implements OnInit {
       this.name,
       this.relation as RelativeRelation,
       this.phone || undefined
-    ).subscribe(() => {
-      this.router.navigate(['/client/proches']);
+    ).subscribe({
+      next: () => {
+        this.router.navigate(['/client/proches']);
+      },
+      error: () => {
+        // The service exposes the user-facing error through relativeService.error().
+      }
     });
   }
 

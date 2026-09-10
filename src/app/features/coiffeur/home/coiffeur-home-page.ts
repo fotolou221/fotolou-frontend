@@ -9,7 +9,7 @@ import { TicketService } from '../../../shared/services/ticket.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
-import { Ticket } from '../../../shared/models/ticket';
+import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
 
 @Component({
   selector: 'app-coiffeur-home-page',
@@ -193,9 +193,7 @@ export class CoiffeurHomePage {
   });
 
   protected readonly activeTickets = computed(() =>
-    [...this.ticketService.coiffeurActiveTickets()].sort(
-      (first, second) => (Number(first.ticketNumber) || 0) - (Number(second.ticketNumber) || 0)
-    )
+    [...this.ticketService.coiffeurActiveTickets()].sort(compareTicketQueueOrder)
   );
 
   protected readonly currentTicket = computed(() =>

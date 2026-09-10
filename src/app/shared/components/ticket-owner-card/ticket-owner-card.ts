@@ -60,13 +60,21 @@ import { TicketOwner } from '../../models/ticket-owner';
 
       <!-- Custom Name Input Field (when selected) -->
       @if (isSelected && owner.isCustomInput) {
-        <div class="ticket-owner-card__input-wrapper" (click)="$event.stopPropagation()">
+        <div class="ticket-owner-card__custom-fields" (click)="$event.stopPropagation()">
           <input
             type="text"
             class="ticket-owner-card__input"
             placeholder="Entrez le nom et prénom"
             [ngModel]="customName"
             (ngModelChange)="customNameChange.emit($event)"
+            (keydown.enter)="$event.preventDefault()"
+          />
+          <input
+            type="tel"
+            class="ticket-owner-card__input"
+            placeholder="Numero de telephone optionnel"
+            [ngModel]="customPhone"
+            (ngModelChange)="customPhoneChange.emit($event)"
             (keydown.enter)="$event.preventDefault()"
           />
         </div>
@@ -79,10 +87,12 @@ export class TicketOwnerCard implements OnDestroy {
   @Input({ required: true }) owner!: TicketOwner;
   @Input() isSelected = false;
   @Input() customName = '';
+  @Input() customPhone = '';
 
   @Output() cardClick = new EventEmitter<void>();
   @Output() cardLongPress = new EventEmitter<void>();
   @Output() customNameChange = new EventEmitter<string>();
+  @Output() customPhoneChange = new EventEmitter<string>();
 
   protected isPressing = false;
   private pressTimeout: ReturnType<typeof setTimeout> | null = null;

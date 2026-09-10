@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, effect, untracked } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, map, finalize } from 'rxjs';
+import { Observable, tap, catchError, of, map, finalize, throwError } from 'rxjs';
 import { Relative, RelativeRelation, RELATION_LABELS } from '../models/relative';
 import { API_CONFIG } from '../../core/config/api.config';
 import { AuthSessionService } from '../../features/auth/auth-session.service';
@@ -116,6 +116,8 @@ export class RelativeService {
   }
 
   addRelative(name: string, relation: RelativeRelation, phone?: string): Observable<Relative> {
+    this.error.set(null);
+
     const payload = {
       name: name.trim(),
       relation: relation.toUpperCase(),
@@ -133,8 +135,15 @@ export class RelativeService {
         this.relatives.update((prev) => [...prev.filter((r) => r.id !== savedRelative.id), savedRelative]);
       }),
       catchError((err) => {
+        const message = this.errorMessages.message(err, "Impossible d'ajouter ce proche.");
+        this.error.set(message);
+
+        if (!this.errorMessages.isConnectionIssue(err)) {
+          return throwError(() => new Error(message));
+        }
+
         console.warn('[RelativeService] API post failed, using local relative:', err);
-        this.error.set(this.errorMessages.message(err, 'Proche ajoute localement. Connexion instable, verifiez votre reseau.'));
+        this.error.set('Proche ajoute localement. Connexion instable, verifiez votre reseau.');
         const localRelative: Relative = {
           id: `r-${Date.now()}`,
           name: name.trim(),
@@ -149,6 +158,9 @@ export class RelativeService {
 
   updateRelative(id: string, name: string, relation: RelativeRelation, phone?: string): Observable<Relative | null> {
     const numericId = Number(id) || null;
+    const previousRelatives = this.relatives();
+    this.error.set(null);
+
     const payload = {
       id: numericId,
       name: name.trim(),
@@ -174,9 +186,20 @@ export class RelativeService {
         relation: (saved.relation ? saved.relation.toLowerCase() : relation) as RelativeRelation,
         phone: saved.phone || phone?.trim()
       })),
+      tap((savedRelative) => {
+        this.relatives.update((prev) => prev.map((r) => (r.id === id ? savedRelative : r)));
+      }),
       catchError((err) => {
+        const message = this.errorMessages.message(err, 'Impossible de modifier ce proche.');
+        this.error.set(message);
+
+        if (!this.errorMessages.isConnectionIssue(err)) {
+          this.relatives.set(previousRelatives);
+          return throwError(() => new Error(message));
+        }
+
         console.warn(`[RelativeService] API put failed for ${id}:`, err);
-        this.error.set(this.errorMessages.message(err, 'Modification gardee localement. Connexion instable, verifiez votre reseau.'));
+        this.error.set('Modification gardee localement. Connexion instable, verifiez votre reseau.');
         return of(updatedLocal);
       })
     );
