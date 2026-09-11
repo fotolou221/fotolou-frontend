@@ -167,8 +167,8 @@ import { AdminBadge } from '../../components/admin-badge/admin-badge';
                     <span>{{ order.items.length }} article(s) &bull; {{ formatPrice(order.totalPrice) }}</span>
                   </div>
                 </div>
-                <app-admin-badge [variant]="order.status === 'livre' ? 'success' : 'warning'">
-                  {{ order.status === 'livre' ? 'Livrée' : 'En cours' }}
+                <app-admin-badge [variant]="orderBadgeVariant(order.status)">
+                  {{ orderStatusLabel(order.status) }}
                 </app-admin-badge>
               </div>
             } @empty {
@@ -220,5 +220,25 @@ export class AdminDashboardPage implements OnInit {
 
   protected formatPrice(amount: number): string {
     return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+  }
+
+  protected orderStatusLabel(status: string): string {
+    switch (status) {
+      case 'en_attente': return 'En attente';
+      case 'en_cours': return 'En cours';
+      case 'livre': return 'Livrée';
+      case 'annule': return 'Annulée';
+      default: return status;
+    }
+  }
+
+  protected orderBadgeVariant(status: string): 'success' | 'warning' | 'primary' | 'danger' | 'neutral' {
+    switch (status) {
+      case 'livre': return 'success';
+      case 'en_cours': return 'primary';
+      case 'en_attente': return 'warning';
+      case 'annule': return 'danger';
+      default: return 'neutral';
+    }
   }
 }

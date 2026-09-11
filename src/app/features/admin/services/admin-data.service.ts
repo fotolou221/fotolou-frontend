@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, of, tap, Observable, map, throwError } from 'rxjs';
 
 export function generateSlug(text: string): string {
@@ -17,9 +17,15 @@ import { TicketService } from '../../../shared/services/ticket.service';
 import { ProductService } from '../../../shared/services/product.service';
 import { Salon } from '../../../shared/models/salon';
 import { Ticket, TicketStatus } from '../../../shared/models/ticket';
-import { Product, ProductCategory } from '../../../shared/models/product';
+import { Product } from '../../../shared/models/product';
 import { Order, OrderStatus } from '../../../shared/models/order';
 import { API_CONFIG } from '../../../core/config/api.config';
+
+export interface SalonOperationResult {
+  success: boolean;
+  message?: string;
+  fieldErrors?: Record<string, string>;
+}
 
 export interface AdminCoiffeur {
   id: string;
@@ -96,24 +102,7 @@ export class AdminDataService {
     this.loadProducts();
 
     // 5. Orders
-    this.http.get<any[]>(`${this.baseUrl}/orders`).pipe(
-      tap((orders) => {
-        if (Array.isArray(orders)) {
-          this.orders.set(orders.map((o: any) => ({
-            id: o.id ? o.id.toString() : `ord-${Date.now()}`,
-            orderNumber: o.orderNumber || 'CMD-2026-001',
-            status: (o.status ? o.status.toLowerCase() : 'en_cours') as OrderStatus,
-            orderType: (o.orderType ? o.orderType.toLowerCase() : 'whatsapp') as any,
-            items: Array.isArray(o.items) ? o.items : [],
-            subtotal: Number(o.subtotal) || 0,
-            deliveryFee: Number(o.deliveryFee) || 2000,
-            totalPrice: Number(o.totalPrice) || 0,
-            createdAt: o.createdAt || o.createdDate || new Date().toISOString()
-          })));
-        }
-      }),
-      catchError(() => of([]))
-    ).subscribe();
+    this.loadOrders();
 
     // 6. Tickets
     this.http.get<any[]>(`${this.baseUrl}/tickets`).pipe(
@@ -251,7 +240,7 @@ export class AdminDataService {
   }
 
   // ── Salon CRUD ────────────────────────────────────────────
-  addSalon(salon: Salon, ownerInfo?: { firstName?: string; lastName?: string; phone?: string; avatarUrl?: string }): Observable<boolean> {
+  addSalon(salon: Salon, ownerInfo?: { firstName?: string; lastName?: string; phone?: string; avatarUrl?: string }): Observable<SalonOperationResult> {
     const slug = salon.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     const payload = {
       name: salon.name,
@@ -306,10 +295,54 @@ export class AdminDataService {
           ).subscribe();
         }
       }),
-      map(() => true),
-      catchError((err) => {
+      map(() => ({ success: true })),
+      catchError((err: HttpErrorResponse) => {
         console.error('[AdminDataService] addSalon backend error:', err);
-        return of(false);
+        const fieldErrors: Record<string, string> = {};
+        let message = "Impossible d'enregistrer le salon sur le serveur.";
+
+        if (err.error) {
+          const errorBody = err.error;
+
+          // Erreur doublon téléphone
+          if (
+            errorBody.message === 'error.phonealreadyused' ||
+            errorBody.detail?.includes('phonealreadyused') ||
+            errorBody.title?.includes('phonealreadyused') ||
+            (typeof errorBody.detail === 'string' && errorBody.detail.toLowerCase().includes('téléphone'))
+          ) {
+            const phoneMsg = 'Ce numéro de téléphone est déjà associé à un autre salon ou compte.';
+            fieldErrors['phone'] = phoneMsg;
+            fieldErrors['ownerPhone'] = phoneMsg;
+            message = phoneMsg;
+          }
+
+          // Erreurs de validation Spring Bean Validation (fieldErrors)
+          if (Array.isArray(errorBody.fieldErrors)) {
+            for (const fe of errorBody.fieldErrors) {
+              if (fe.field) {
+                const label = fe.field === 'name' ? 'Nom du salon' :
+                              fe.field === 'district' ? 'Quartier' :
+                              fe.field === 'location' ? 'Localisation' :
+                              fe.field === 'phone' ? 'Téléphone' : fe.field;
+                fieldErrors[fe.field] = `${label} : ${fe.message || 'Valeur invalide'}`;
+                if (fe.field === 'phone') {
+                  fieldErrors['ownerPhone'] = fieldErrors['phone'];
+                }
+              }
+            }
+          }
+
+          if (errorBody.detail && typeof errorBody.detail === 'string' && errorBody.detail !== 'null' && !fieldErrors['phone']) {
+            message = errorBody.detail;
+          }
+        }
+
+        return of({
+          success: false,
+          message,
+          fieldErrors
+        });
       })
     );
   }
@@ -745,9 +778,123 @@ export class AdminDataService {
   }
 
   // ── Order Management ──────────────────────────────────────
-  updateOrderStatus(orderId: string, status: OrderStatus): void {
-    this.orders.update(list =>
-      list.map(o => (o.id === orderId ? { ...o, status } : o))
+  private mapAdminOrder(o: any): Order {
+    const lines: any[] = Array.isArray(o.items) ? o.items : Array.isArray(o.itemses) ? o.itemses : [];
+    const items = lines.map((it: any) => {
+      const productId = (it.productId ?? it.product?.id ?? '').toString();
+      const found = this.products().find(p => p.id === productId);
+      const title = it.productTitle || it.product?.title || found?.title || 'Produit';
+      const unitPrice = Number(it.unitPrice ?? it.product?.price ?? found?.price ?? 0);
+      return {
+        product: found || {
+          id: productId,
+          brand: 'Fotolou',
+          title,
+          description: '',
+          price: unitPrice,
+          rating: 5,
+          images: ['https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=200&q=80'],
+          categoryId: '',
+          inStock: true
+        },
+        quantity: Number(it.quantity) || 1
+      };
+    });
+    return {
+      id: o.id ? o.id.toString() : `ord-${Date.now()}`,
+      orderNumber: o.orderNumber || 'CMD-2026-000',
+      status: (o.status ? o.status.toLowerCase() : 'en_attente') as OrderStatus,
+      orderType: (o.orderType ? o.orderType.toLowerCase() : 'whatsapp') as any,
+      items,
+      subtotal: Number(o.subtotal) || 0,
+      deliveryFee: Number(o.deliveryFee) || 0,
+      totalPrice: Number(o.totalPrice) || 0,
+      createdAt: o.createdAt || o.createdDate || new Date().toISOString(),
+      customerName: o.customerName || undefined,
+      customerPhone: o.customerPhone || undefined,
+      deliveryAddress: o.deliveryAddress || undefined,
+      deliveryDistrict: o.deliveryDistrict || undefined
+    };
+  }
+
+  loadOrders(): void {
+    const token = localStorage.getItem('fotolou_jwt_token') || localStorage.getItem('jhi-authenticationtoken');
+    if (!token) {
+      return;
+    }
+    this.http.get<any[]>(`${this.baseUrl}/orders`).pipe(
+      tap((orders) => {
+        if (Array.isArray(orders)) {
+          this.orders.set(
+            orders
+              .map(o => this.mapAdminOrder(o))
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          );
+        }
+      }),
+      catchError((err) => {
+        console.error('[AdminDataService] Error loading orders:', err);
+        return of([]);
+      })
+    ).subscribe();
+  }
+
+  upsertOrder(o: any): void {
+    const mapped = this.mapAdminOrder(o);
+    this.orders.update(list => {
+      const rest = list.filter(x => x.id !== mapped.id);
+      return [mapped, ...rest].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    });
+  }
+
+  updateOrderStatus(orderId: string, status: OrderStatus): Observable<any> {
+    const previous = this.orders().find(o => o.id === orderId)?.status;
+    // maj optimiste
+    this.orders.update(list => list.map(o => (o.id === orderId ? { ...o, status } : o)));
+
+    return this.http.patch<any>(`${this.baseUrl}/orders/${orderId}/status`, { status: status.toUpperCase() }).pipe(
+      tap((dto) => this.upsertOrder(dto)),
+      catchError((err) => {
+        console.error('[AdminDataService] updateOrderStatus failed:', err);
+        // rollback
+        if (previous) {
+          this.orders.update(list => list.map(o => (o.id === orderId ? { ...o, status: previous } : o)));
+        }
+        return throwError(() => err);
+      })
+    );
+  }
+
+  confirmOrder(orderId: string): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/orders/${orderId}/confirm`, {}).pipe(
+      tap((dto) => this.upsertOrder(dto)),
+      catchError((err) => {
+        console.error('[AdminDataService] confirmOrder failed:', err);
+        return throwError(() => err);
+      })
+    );
+  }
+
+  adminCreateOrder(payload: {
+    items: { productId: number; quantity: number }[];
+    customerName: string;
+    customerPhone: string;
+    deliveryAddress?: string;
+    deliveryDistrict?: string;
+    orderType?: 'WHATSAPP' | 'CALL';
+    status?: 'EN_ATTENTE' | 'EN_COURS';
+    notes?: string;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/orders/admin-create`, {
+      orderType: 'CALL',
+      status: 'EN_COURS',
+      ...payload
+    }).pipe(
+      tap((dto) => this.upsertOrder(dto)),
+      catchError((err) => {
+        console.error('[AdminDataService] adminCreateOrder failed:', err);
+        return throwError(() => err);
+      })
     );
   }
 

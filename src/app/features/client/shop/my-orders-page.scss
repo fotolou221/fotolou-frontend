@@ -79,9 +79,14 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 
+  &--pending {
+    background: #fef9c3;
+    color: #a16207;
+  }
+
   &--active {
-    background: #dcfce7;
-    color: #16a34a;
+    background: #dbeafe;
+    color: #1d4ed8;
   }
 
   &--delivered {

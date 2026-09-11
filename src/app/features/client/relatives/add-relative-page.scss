@@ -3,7 +3,7 @@
   flex-direction: column;
   padding: 24px 20px 32px;
   gap: 28px;
-  background: #ffffff;
+  background: var(--bg-page, #ffffff);
   min-height: 100%;
 }
 
@@ -118,6 +118,19 @@
   &--phone {
     padding-right: 44px;
   }
+
+  &--error {
+    background: #fef2f2 !important;
+    box-shadow: 0 0 0 2px #ef4444 !important;
+  }
+}
+
+.add-relative-page__field-error {
+  color: #dc2626;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-top: 2px;
 }
 
 // ── Select ────────────────────────────────────────────────
@@ -259,5 +272,53 @@
 
   &:hover {
     color: #1d4ed8;
+  }
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .add-relative-page {
+    background: #0b132b !important;
+  }
+
+  .add-relative-page__label {
+    color: #cbd5e1;
+  }
+
+  .add-relative-page__input,
+  .add-relative-page__select {
+    background: #1c2541 !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155;
+
+    &::placeholder {
+      color: #64748b;
+    }
+
+    &:focus {
+      border-color: #3b82f6;
+    }
+  }
+
+  .add-relative-page__footer {
+    background: rgba(28, 37, 65, 0.95);
+    border-top-color: #334155;
+  }
+
+  .add-relative-page__hero-icon {
+    background: #1c2541;
+    color: #60a5fa;
+  }
+
+  .add-relative-page__hero-text {
+    color: #94a3b8;
+  }
+
+  .add-relative-page__mandatory-note {
+    color: #64748b;
+  }
+
+  .add-relative-page__hint {
+    color: #94a3b8;
   }
 }

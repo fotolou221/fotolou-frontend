@@ -62,10 +62,23 @@ import { FavoritesService } from '../../../shared/services/favorites.service';
               <div class="salon-detail__header-title-row">
                 <div>
                   <h1>{{ salon.name }}</h1>
-                  <p>📍 {{ salon.location }}</p>
+                  <p class="salon-detail__location">
+                    <svg class="salon-detail__meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    <span>{{ salon.location }}</span>
+                  </p>
                   @if (salon.ownerName || salon.coiffeurName) {
-                    <div class="salon-detail__owner-tag" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 8px; background: rgba(30, 90, 240, 0.08); color: #1E5AF0; padding: 6px 14px; border-radius: 999px; font-size: 0.8125rem; font-weight: 700;">
-                      <span>✂️ Coiffeur Propriétaire : {{ salon.ownerName || salon.coiffeurName }}</span>
+                    <div class="salon-detail__owner-tag">
+                      <svg class="salon-detail__meta-icon salon-detail__meta-icon--scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="6" cy="6" r="3"/>
+                        <circle cx="6" cy="18" r="3"/>
+                        <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+                        <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+                        <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+                      </svg>
+                      <span>Coiffeur Propriétaire : {{ salon.ownerName || salon.coiffeurName }}</span>
                     </div>
                   }
                 </div>

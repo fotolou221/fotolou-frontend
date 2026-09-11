@@ -203,3 +203,42 @@
     height: 18px;
   }
 }
+
+/* ── Champs de livraison (ajout boutique A→Z) ─────────────── */
+.order-confirm-page__field-label {
+  display: block;
+  margin: 12px 0 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+}
+
+.order-confirm-page__field {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  background: var(--bg-page, #f8fafc);
+  font-size: 0.9rem;
+  color: var(--text-primary, #0f172a);
+  box-sizing: border-box;
+}
+
+.order-confirm-page__geo-hint {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.order-confirm-page__error {
+  margin: 12px 4px 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 600;
+}

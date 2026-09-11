@@ -88,6 +88,15 @@ import { AuthSessionService } from '../../auth/auth-session.service';
               <div class="ticket-detail-page__number-display">
                 <span>Votre ticket</span>
                 <strong>{{ ticket.ticketNumber || '-' }}</strong>
+                @if (isMyTicketFromYesterday) {
+                  <span class="ticket-detail-page__yesterday-badge ticket-detail-page__yesterday-badge--mine" title="Votre ticket a été pris hier">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Pris hier</span>
+                  </span>
+                }
               </div>
             </div>
           </section>
@@ -96,7 +105,18 @@ import { AuthSessionService } from '../../auth/auth-session.service';
           @if (!isHistory) {
             <section class="ticket-detail-page__stats">
               <app-stat-card label="NUMERO EN COURS">
-                {{ queueNumberDisplay }}
+                <div class="ticket-detail-page__current-num-wrap">
+                  <span class="ticket-detail-page__current-num">{{ queueNumberDisplay }}</span>
+                  @if (isCurrentTicketFromYesterday) {
+                    <span class="ticket-detail-page__yesterday-badge" title="Ce ticket a été pris hier lors de la journée précédente">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      <span>Hier</span>
+                    </span>
+                  }
+                </div>
               </app-stat-card>
 
               <app-stat-card label="STATUT">
@@ -134,7 +154,11 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                   <p>Ce ticket a été <strong>annulé</strong>.</p>
                 }
                 @default {
-                  <p>Un SMS sera envoyé à <strong>+221 77 862 70 52</strong> dès que votre tour approchera.</p>
+                  @if (targetSmsPhone) {
+                    <p>Un SMS sera envoyé à <strong>{{ targetSmsPhone }}</strong> dès que votre tour approchera.</p>
+                  } @else {
+                    <p>Un SMS vous sera envoyé dès que votre tour approchera.</p>
+                  }
                 }
               }
               @if (isHistory && formattedServedAt) {
@@ -364,6 +388,30 @@ export class TicketDetailPage implements OnInit {
     return `${this.currentQueueNumber}`;
   }
 
+  protected get isCurrentTicketFromYesterday(): boolean {
+    if (!this.ticket) return false;
+    if (this.ticket.currentTicketIsYesterday !== undefined) {
+      return !!this.ticket.currentTicketIsYesterday;
+    }
+    if (this.currentQueueNumber === this.ticket.ticketNumber && this.ticket.createdAt) {
+      return this.isDateBeforeToday(this.ticket.createdAt);
+    }
+    return false;
+  }
+
+  protected get isMyTicketFromYesterday(): boolean {
+    if (!this.ticket?.createdAt) return false;
+    return this.isDateBeforeToday(this.ticket.createdAt);
+  }
+
+  private isDateBeforeToday(dateValue: string | Date): boolean {
+    const d = new Date(dateValue);
+    if (isNaN(d.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d < today;
+  }
+
   protected get currentQueueNumber(): number {
     if (!this.ticket) return 1;
     if (this.ticket.currentTicketNumber) {
@@ -391,6 +439,18 @@ export class TicketDetailPage implements OnInit {
     }
 
     return ownerName;
+  }
+
+  protected get targetSmsPhone(): string | null {
+    const raw =
+      this.ticket?.ownerPhone?.trim() ||
+      this.auth.currentUser()?.phone?.trim() ||
+      this.auth.activeUser()?.phone?.trim() ||
+      (this.ticket?.user?.login && !this.ticket.user.login.includes('@') ? this.ticket.user.login.trim() : null) ||
+      null;
+
+    if (!raw) return null;
+    return this.auth.formatPhone(raw);
   }
 
   protected confirmLeaveQueue(): void {

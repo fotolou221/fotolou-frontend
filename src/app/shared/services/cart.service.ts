@@ -11,6 +11,11 @@ export class CartService {
   readonly deliveryFee = signal(2000);
   readonly discount = signal(0);
 
+  // ── Infos de livraison saisies au moment du checkout ──────────
+  readonly deliveryAddress = signal<string>('');
+  readonly deliveryDistrict = signal<string>('');
+  readonly deliveryCoords = signal<{ lat: number; lng: number } | null>(null);
+
   readonly cartCount = computed(() => {
     return this.cartItems().reduce((acc, item) => acc + item.quantity, 0);
   });
@@ -69,6 +74,9 @@ export class CartService {
 
   clearCart(): void {
     this.cartItems.set([]);
+    this.deliveryAddress.set('');
+    this.deliveryDistrict.set('');
+    this.deliveryCoords.set(null);
   }
 
   private readInitialCart(): CartItem[] {

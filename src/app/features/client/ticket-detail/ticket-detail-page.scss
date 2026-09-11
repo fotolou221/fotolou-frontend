@@ -129,6 +129,49 @@
   margin-bottom: 24px;
 }
 
+.ticket-detail-page__current-num-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ticket-detail-page__current-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary, #0f172a);
+  line-height: 1;
+}
+
+.ticket-detail-page__yesterday-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    stroke: currentColor;
+    flex-shrink: 0;
+  }
+
+  &--mine {
+    margin-top: 4px;
+    font-size: 0.625rem;
+    padding: 2px 7px;
+  }
+}
+
 .ticket-detail-page__sms-card {
   display: flex;
   align-items: flex-start;
@@ -294,3 +337,12 @@
     height: 20px;
   }
 }
+
+:host-context(body.dark-theme) {
+  .ticket-detail-page__yesterday-badge {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+}
+

@@ -37,6 +37,42 @@
   }
 }
 
+.salon-detail__location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.salon-detail__meta-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: var(--text-secondary, #64748b);
+
+  &--scissors {
+    width: 14px;
+    height: 14px;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+.salon-detail__owner-tag {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card-hover, rgba(100, 116, 139, 0.08));
+  color: var(--text-secondary, #64748b);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
 .salon-detail__fav-btn {
   display: grid;
   place-items: center;

@@ -329,9 +329,11 @@ export class TicketOwnerPage implements OnInit {
 
     return this.selectedOwnerIds().map((id) => {
       if (id === 'self') {
+        const selfPhone = this.auth.currentUser()?.phone?.trim() || this.auth.activeUser()?.phone?.trim() || undefined;
         return {
           name: 'Moi',
-          type: 'SELF'
+          type: 'SELF',
+          phone: selfPhone
         };
       }
 

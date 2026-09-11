@@ -75,7 +75,7 @@ export interface ImagePreset {
         @if (activeTab() === 'upload') {
           @if (isUploading()) {
             <div class="admin-uploader__loading">
-              <span>Téléversement sur Cloudinary CDN en cours</span><span class="loading-dots" aria-hidden="true"></span>
+              <span>Téléversement de l'image en cours</span><span class="loading-dots" aria-hidden="true"></span>
             </div>
           } @else {
             <div
@@ -95,7 +95,7 @@ export interface ImagePreset {
               </div>
               <div class="admin-uploader__drop-text">
                 <strong>Cliquez ou glissez une photo ici</strong>
-                <span>JPG, PNG, WebP — Stockage Cloudinary CDN</span>
+                <span>JPG, PNG, WebP — 15 Mo maximum</span>
               </div>
             </div>
             @if (uploadError()) {
@@ -154,6 +154,7 @@ export class AdminImageUploader {
 
   @Input() label = 'Photo / Image';
   @Input() imageUrl = '';
+  @Input() folder = 'boutique';
   @Output() imageUrlChange = new EventEmitter<string>();
 
   protected readonly activeTab = signal<'upload' | 'presets' | 'url'>('upload');
@@ -240,25 +241,46 @@ export class AdminImageUploader {
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('folder', 'boutique');
+    formData.append('folder', this.folder);
 
     this.http.post<any>(`${API_CONFIG.baseUrl}/storage/upload`, formData).pipe(
       tap((res) => {
         this.isUploading.set(false);
-        if (res && res.url) {
-          this.imageUrl = res.url;
-          this.imageUrlChange.emit(res.url);
+        const url = this.normalizeUrl(res?.url);
+        if (url) {
+          this.imageUrl = url;
+          this.imageUrlChange.emit(url);
+          this.uploadError.set(null);
+        } else {
+          this.uploadError.set('Le serveur n\'a pas renvoyé d\'URL d\'image. Réessayez.');
         }
       }),
       catchError((err) => {
         this.isUploading.set(false);
         console.error('[AdminImageUploader] Upload error:', err);
         const detail = err?.error?.error || err?.error?.detail;
-        const msg = detail || (err?.status === 413 ? 'Le fichier dépasse la taille maximale autorisée.' : 'Échec du téléversement sur le serveur. Veuillez réessayer ou choisir une image dans la galerie.');
+        let msg: string;
+        if (err?.status === 401 || err?.status === 403) {
+          msg = 'Session expirée. Reconnectez-vous puis réessayez le téléversement.';
+        } else if (err?.status === 413) {
+          msg = 'Le fichier dépasse la taille maximale autorisée (15 Mo).';
+        } else if (err?.status === 0) {
+          msg = 'Serveur injoignable. Vérifiez votre connexion et réessayez.';
+        } else {
+          msg = detail || 'Échec du téléversement. Réessayez ou choisissez une image dans la galerie.';
+        }
         this.uploadError.set(msg);
         return of(null);
       })
     ).subscribe();
+  }
+
+  /** Résout une URL relative (ex: /api/files/...) contre l'origine de l'API. */
+  private normalizeUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+    const apiOrigin = API_CONFIG.baseUrl.replace(/\/api\/?$/, '');
+    return apiOrigin + (url.startsWith('/') ? url : '/' + url);
   }
 
   protected selectPreset(url: string): void {

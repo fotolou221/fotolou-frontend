@@ -132,7 +132,7 @@ import { CartService } from '../../../shared/services/cart.service';
     <!-- Geolocation Permission Modal -->
     <app-geolocation-modal
       [isOpen]="showGeoModal()"
-      (authorize)="proceedToConfirmation()"
+      (authorize)="onAuthorizeGeo()"
       (later)="proceedToConfirmation()"
     />
   `,
@@ -154,6 +154,23 @@ export class CartPage {
 
   protected openGeoModal(): void {
     this.showGeoModal.set(true);
+  }
+
+  /** Autoriser la géoloc = uniquement capter la position pour pré-remplir la livraison.
+   *  Cela NE valide PAS la commande. */
+  protected onAuthorizeGeo(): void {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.cartService.deliveryCoords.set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          this.proceedToConfirmation();
+        },
+        () => this.proceedToConfirmation(),
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      this.proceedToConfirmation();
+    }
   }
 
   protected proceedToConfirmation(): void {

@@ -1,10 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { RelativeService } from '../../../shared/services/relative.service';
 import { RelativeRelation, RELATION_LABELS } from '../../../shared/models/relative';
+import { AuthSessionService } from '../../auth/auth-session.service';
+import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 type RelationOption = { value: RelativeRelation; label: string };
 
@@ -57,11 +59,16 @@ type RelationOption = { value: RelativeRelation; label: string };
               id="relative-name"
               type="text"
               class="add-relative-page__input"
+              [class.add-relative-page__input--error]="fieldErrors()['name']"
               placeholder="Ex: Maman, Papa, Ibrahim..."
               [(ngModel)]="name"
+              (input)="clearFieldError('name')"
               name="name"
               autocomplete="off"
             />
+            @if (fieldErrors()['name']) {
+              <div class="add-relative-page__field-error">{{ fieldErrors()['name'] }}</div>
+            }
           </div>
 
           <!-- Phone Field (Optional if Name is set) -->
@@ -74,8 +81,10 @@ type RelationOption = { value: RelativeRelation; label: string };
                 id="relative-phone"
                 type="tel"
                 class="add-relative-page__input add-relative-page__input--phone"
+                [class.add-relative-page__input--error]="fieldErrors()['phone']"
                 placeholder="+221 -- --- -- --"
                 [(ngModel)]="phone"
+                (input)="clearFieldError('phone')"
                 name="phone"
                 autocomplete="tel"
               />
@@ -85,6 +94,9 @@ type RelationOption = { value: RelativeRelation; label: string };
                 </svg>
               </span>
             </div>
+            @if (fieldErrors()['phone']) {
+              <div class="add-relative-page__field-error">{{ fieldErrors()['phone'] }}</div>
+            }
             <small class="add-relative-page__hint">
               📲 Si renseigné, les notifications de tickets lui seront envoyées par SMS.
             </small>
@@ -143,20 +155,50 @@ type RelationOption = { value: RelativeRelation; label: string };
 })
 export class AddRelativePage {
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   protected readonly relativeService = inject(RelativeService);
 
   protected name = '';
   protected relation: RelativeRelation | '' = 'autre';
   protected phone = '';
+  protected readonly fieldErrors = signal<{ [key: string]: string }>({});
 
   protected readonly relationOptions: readonly RelationOption[] = (
     Object.entries(RELATION_LABELS) as [RelativeRelation, string][]
   ).map(([value, label]) => ({ value, label }));
 
   protected saveRelative(): void {
+    this.fieldErrors.set({});
+    this.relativeService.clearError();
+
     const trimmedName = this.name.trim();
     const trimmedPhone = this.phone.trim();
-    if (!trimmedName && !trimmedPhone) return;
+    if (!trimmedName && !trimmedPhone) {
+      this.fieldErrors.set({ name: 'Veuillez saisir au moins un nom ou un numéro de téléphone.' });
+      return;
+    }
+
+    if (trimmedPhone) {
+      const digits = trimmedPhone.replace(/\D/g, '');
+      if (digits.length < 9) {
+        this.fieldErrors.set({ phone: 'Numéro invalide (au moins 9 chiffres requis, ex: +221 77 000 00 00).' });
+        return;
+      }
+
+      const currentUserPhone = (
+        this.auth.currentUser()?.phone ||
+        this.auth.activeUser()?.phone ||
+        ''
+      ).replace(/\D/g, '');
+
+      if (currentUserPhone && currentUserPhone.length >= 9 && digits.length >= 9) {
+        if (digits.slice(-9) === currentUserPhone.slice(-9)) {
+          this.fieldErrors.set({ phone: 'Vous ne pouvez pas ajouter votre propre numéro comme proche.' });
+          return;
+        }
+      }
+    }
 
     const finalName = trimmedName || `Proche (${trimmedPhone})`;
     const finalRelation = (this.relation as RelativeRelation) || 'autre';
@@ -169,10 +211,29 @@ export class AddRelativePage {
       next: () => {
         this.router.navigate(['/client/proches']);
       },
-      error: () => {
-        // The service exposes the user-facing error through relativeService.error().
+      error: (err) => {
+        const msg = this.errorMessages.message(err, "Impossible d'ajouter ce proche.");
+        const lower = msg.toLowerCase();
+        if (lower.includes('propre numero') || lower.includes('propre numéro')) {
+          this.fieldErrors.set({ phone: 'Vous ne pouvez pas ajouter votre propre numéro comme proche.' });
+        } else if (lower.includes('deja utilise') || lower.includes('déjà utilisé')) {
+          this.fieldErrors.set({ phone: 'Ce numéro de téléphone est déjà utilisé par un autre proche.' });
+        } else if (lower.includes('invalide')) {
+          this.fieldErrors.set({ phone: msg });
+        }
       }
     });
+  }
+
+  protected clearFieldError(field: string): void {
+    this.relativeService.clearError();
+    if (this.fieldErrors()[field]) {
+      this.fieldErrors.update((curr) => {
+        const copy = { ...curr };
+        delete copy[field];
+        return copy;
+      });
+    }
   }
 
   protected cancel(): void {

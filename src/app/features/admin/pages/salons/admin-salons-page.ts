@@ -224,6 +224,14 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
         </div>
 
         <form class="admin-form" (ngSubmit)="currentStep() === 2 ? saveSalon() : nextStep()">
+
+          <!-- Message d'erreur global / retour serveur -->
+          @if (formErrorMessage()) {
+            <div class="admin-form-alert admin-form-alert--danger" role="alert" style="margin-bottom: 16px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>{{ formErrorMessage() }}</span>
+            </div>
+          }
           
           <!-- ── ÉTAPE 1 : Coiffeur Propriétaire (Simple & Épuré) ── -->
           @if (currentStep() === 1) {
@@ -234,19 +242,58 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
               </div>
 
               <div class="admin-form__row">
-                <div class="admin-form__field">
+                <div class="admin-form__field" [class.admin-form__field--error]="fieldErrors()['ownerFirstName']">
                   <label>Prénom *</label>
-                  <input type="text" [(ngModel)]="formOwnerFirstName" name="ownerFirstName" required placeholder="Ex: Abdoulaye" />
+                  <input
+                    type="text"
+                    [(ngModel)]="formOwnerFirstName"
+                    name="ownerFirstName"
+                    required
+                    placeholder="Ex: Abdoulaye"
+                    (input)="clearFieldError('ownerFirstName')"
+                  />
+                  @if (fieldErrors()['ownerFirstName']) {
+                    <span class="admin-form__error">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {{ fieldErrors()['ownerFirstName'] }}
+                    </span>
+                  }
                 </div>
-                <div class="admin-form__field">
+                <div class="admin-form__field" [class.admin-form__field--error]="fieldErrors()['ownerLastName']">
                   <label>Nom *</label>
-                  <input type="text" [(ngModel)]="formOwnerLastName" name="ownerLastName" required placeholder="Ex: Diouf" />
+                  <input
+                    type="text"
+                    [(ngModel)]="formOwnerLastName"
+                    name="ownerLastName"
+                    required
+                    placeholder="Ex: Diouf"
+                    (input)="clearFieldError('ownerLastName')"
+                  />
+                  @if (fieldErrors()['ownerLastName']) {
+                    <span class="admin-form__error">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {{ fieldErrors()['ownerLastName'] }}
+                    </span>
+                  }
                 </div>
               </div>
 
-              <div class="admin-form__field">
+              <div class="admin-form__field" [class.admin-form__field--error]="fieldErrors()['ownerPhone']">
                 <label>Numéro de téléphone direct (WhatsApp / Appel) *</label>
-                <input type="tel" [(ngModel)]="formOwnerPhone" name="ownerPhone" required placeholder="+221 77 123 45 67" />
+                <input
+                  type="tel"
+                  [(ngModel)]="formOwnerPhone"
+                  name="ownerPhone"
+                  required
+                  placeholder="+221 77 000 00 00"
+                  (input)="clearFieldError('ownerPhone')"
+                />
+                @if (fieldErrors()['ownerPhone']) {
+                  <span class="admin-form__error">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    {{ fieldErrors()['ownerPhone'] }}
+                  </span>
+                }
               </div>
 
               <app-admin-image-uploader
@@ -265,13 +312,39 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
               </div>
 
               <div class="admin-form__row">
-                <div class="admin-form__field">
+                <div class="admin-form__field" [class.admin-form__field--error]="fieldErrors()['name']">
                   <label>Nom du salon *</label>
-                  <input type="text" [(ngModel)]="formName" name="name" required placeholder="Ex: Dakar Barber Lounge" />
+                  <input
+                    type="text"
+                    [(ngModel)]="formName"
+                    name="name"
+                    required
+                    placeholder="Ex: Dakar Barber Lounge"
+                    (input)="clearFieldError('name')"
+                  />
+                  @if (fieldErrors()['name']) {
+                    <span class="admin-form__error">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {{ fieldErrors()['name'] }}
+                    </span>
+                  }
                 </div>
-                <div class="admin-form__field">
+                <div class="admin-form__field" [class.admin-form__field--error]="fieldErrors()['district']">
                   <label>Quartier / Zone *</label>
-                  <input type="text" [(ngModel)]="formDistrict" name="district" required placeholder="Ex: Mermoz, Almadies, Plateau..." />
+                  <input
+                    type="text"
+                    [(ngModel)]="formDistrict"
+                    name="district"
+                    required
+                    placeholder="Ex: Mermoz, Almadies, Plateau..."
+                    (input)="clearFieldError('district')"
+                  />
+                  @if (fieldErrors()['district']) {
+                    <span class="admin-form__error">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {{ fieldErrors()['district'] }}
+                    </span>
+                  }
                 </div>
               </div>
 
@@ -360,9 +433,21 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                   <label>Adresse descriptive / Repère</label>
                   <input type="text" [(ngModel)]="formLocation" name="location" placeholder="Ex: Route de Ouakam, en face Brioche Dorée" />
                 </div>
-                <div class="admin-form__field">
+                <div class="admin-form__field" [class.admin-form__field--error]="fieldErrors()['phone']">
                   <label>Téléphone du salon</label>
-                  <input type="tel" [(ngModel)]="formPhone" name="phone" placeholder="+221 33 800 00 00" />
+                  <input
+                    type="tel"
+                    [(ngModel)]="formPhone"
+                    name="phone"
+                    placeholder="+221 33 800 00 00"
+                    (input)="clearFieldError('phone')"
+                  />
+                  @if (fieldErrors()['phone']) {
+                    <span class="admin-form__error">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {{ fieldErrors()['phone'] }}
+                    </span>
+                  }
                 </div>
               </div>
 
@@ -396,11 +481,18 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                 Suivant : Salon &amp; Position →
               </button>
             } @else {
-              <button type="button" class="admin-btn admin-btn--primary" (click)="saveSalon()">
-                @if (editingSalonId()) {
-                  Enregistrer les modifications
+              <button
+                type="button"
+                class="admin-btn admin-btn--primary"
+                (click)="saveSalon()"
+                [disabled]="isSaving()"
+              >
+                @if (isSaving()) {
+                  <span>Enregistrement en cours...</span>
+                } @else if (editingSalonId()) {
+                  <span>Enregistrer les modifications</span>
                 } @else {
-                  Créer le Salon
+                  <span>Créer le Salon</span>
                 }
               </button>
             }
@@ -426,6 +518,9 @@ export class AdminSalonsPage {
   protected readonly isModalOpen = signal<boolean>(false);
   protected readonly editingSalonId = signal<string | null>(null);
   protected readonly currentStep = signal<number>(1);
+  protected readonly isSaving = signal<boolean>(false);
+  protected readonly fieldErrors = signal<Record<string, string>>({});
+  protected readonly formErrorMessage = signal<string>('');
 
   // ── Step 1 : Coiffeur Propriétaire ────────────────────────
   protected formOwnerFirstName = '';
@@ -446,6 +541,62 @@ export class AdminSalonsPage {
   protected readonly isGpsLoading = signal<boolean>(false);
   protected readonly gpsSuccessMessage = signal<string>('');
   protected pastedLocationInput = '';
+
+  protected clearFieldError(field: string): void {
+    const current = { ...this.fieldErrors() };
+    if (current[field]) {
+      delete current[field];
+      this.fieldErrors.set(current);
+    }
+    if (this.formErrorMessage()) {
+      this.formErrorMessage.set('');
+    }
+  }
+
+  protected validateStep1(): boolean {
+    const errors: Record<string, string> = {};
+    if (!this.formOwnerFirstName.trim()) {
+      errors['ownerFirstName'] = 'Le prénom du coiffeur est requis.';
+    }
+    if (!this.formOwnerLastName.trim()) {
+      errors['ownerLastName'] = 'Le nom de famille est requis.';
+    }
+    const cleanPhone = this.formOwnerPhone.replace(/\D/g, '');
+    if (!this.formOwnerPhone.trim()) {
+      errors['ownerPhone'] = 'Le numéro de téléphone direct du coiffeur est obligatoire.';
+    } else if (cleanPhone.length < 9) {
+      errors['ownerPhone'] = 'Numéro invalide (au moins 9 chiffres requis, ex: +221 77 000 00 00).';
+    }
+    this.fieldErrors.set(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  protected validateStep2(): boolean {
+    const errors: Record<string, string> = { ...this.fieldErrors() };
+    delete errors['name'];
+    delete errors['district'];
+    delete errors['phone'];
+
+    if (!this.formName.trim()) {
+      errors['name'] = 'Le nom du salon est obligatoire.';
+    } else if (this.formName.trim().length < 2) {
+      errors['name'] = 'Le nom doit comporter au moins 2 caractères.';
+    }
+
+    if (!this.formDistrict.trim()) {
+      errors['district'] = 'Le quartier ou la zone est obligatoire.';
+    }
+
+    if (this.formPhone.trim()) {
+      const cleanPhone = this.formPhone.replace(/\D/g, '');
+      if (cleanPhone.length < 9) {
+        errors['phone'] = 'Numéro de téléphone invalide (au moins 9 chiffres).';
+      }
+    }
+
+    this.fieldErrors.set(errors);
+    return !errors['name'] && !errors['district'] && !errors['phone'];
+  }
 
   protected getOwnerFullName(): string {
     const full = `${this.formOwnerFirstName} ${this.formOwnerLastName}`.trim();
@@ -478,9 +629,11 @@ export class AdminSalonsPage {
 
   protected nextStep(): void {
     if (this.currentStep() === 1) {
-      if (!this.formOwnerFirstName.trim() && !this.formOwnerLastName.trim()) {
-        this.formOwnerFirstName = 'Abdoulaye';
-        this.formOwnerLastName = 'Diouf';
+      if (!this.validateStep1()) {
+        return;
+      }
+      if (!this.formPhone.trim()) {
+        this.formPhone = this.formOwnerPhone;
       }
       this.currentStep.set(2);
     }
@@ -594,15 +747,18 @@ export class AdminSalonsPage {
   protected openAddModal(): void {
     this.editingSalonId.set(null);
     this.currentStep.set(1);
+    this.fieldErrors.set({});
+    this.formErrorMessage.set('');
+
     this.formOwnerFirstName = '';
     this.formOwnerLastName = '';
-    this.formOwnerPhone = '+221 77 123 45 67';
+    this.formOwnerPhone = '';
     this.formOwnerAvatarUrl = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
 
     this.formName = '';
     this.formDistrict = 'Mermoz';
     this.formLocation = 'Route de Ouakam, Dakar, Sénégal';
-    this.formPhone = '+221 77 123 45 67';
+    this.formPhone = '';
     this.formCoverUrl = 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80';
     this.formStatus = 'open';
     this.formLatitude = 14.716677;
@@ -615,6 +771,8 @@ export class AdminSalonsPage {
   protected openEditModal(salon: Salon): void {
     this.editingSalonId.set(salon.id);
     this.currentStep.set(1);
+    this.fieldErrors.set({});
+    this.formErrorMessage.set('');
 
     const parts = (salon.ownerName || salon.coiffeurName || '').split(' ');
     this.formOwnerFirstName = parts[0] || '';
@@ -636,7 +794,11 @@ export class AdminSalonsPage {
   }
 
   protected saveSalon(): void {
-    if (!this.formName.trim()) {
+    if (!this.validateStep1()) {
+      this.currentStep.set(1);
+      return;
+    }
+    if (!this.validateStep2()) {
       this.currentStep.set(2);
       return;
     }
@@ -648,7 +810,7 @@ export class AdminSalonsPage {
         name: this.formName,
         district: this.formDistrict,
         location: this.formLocation,
-        phone: this.formPhone,
+        phone: this.formPhone || this.formOwnerPhone,
         ownerName: ownerFullName,
         coverUrl: this.formCoverUrl,
         avatarUrl: this.formOwnerAvatarUrl || this.formCoverUrl,
@@ -656,6 +818,7 @@ export class AdminSalonsPage {
         longitude: this.formLongitude || -17.467686,
         status: this.formStatus
       });
+      this.isModalOpen.set(false);
     } else {
       const slug = this.formName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const newSalon: Salon = {
@@ -677,22 +840,33 @@ export class AdminSalonsPage {
           { label: 'Partager', icon: 'share', href: '#' }
         ]
       };
+
+      this.isSaving.set(true);
       this.data.addSalon(newSalon, {
         firstName: this.formOwnerFirstName,
         lastName: this.formOwnerLastName,
         phone: this.formOwnerPhone || this.formPhone,
         avatarUrl: this.formOwnerAvatarUrl
-      }).subscribe((success) => {
-        if (success) {
+      }).subscribe((res: any) => {
+        this.isSaving.set(false);
+        if (res.success) {
+          this.fieldErrors.set({});
+          this.formErrorMessage.set('');
           this.isModalOpen.set(false);
         } else {
-          alert("Erreur : impossible d'enregistrer le salon sur le serveur. Veuillez vérifier les informations saisies.");
+          if (res.fieldErrors && Object.keys(res.fieldErrors).length > 0) {
+            this.fieldErrors.set(res.fieldErrors);
+            if (res.fieldErrors['ownerPhone'] || res.fieldErrors['ownerFirstName'] || res.fieldErrors['ownerLastName']) {
+              this.currentStep.set(1);
+            }
+          }
+          if (res.message) {
+            this.formErrorMessage.set(res.message);
+          }
         }
       });
       return;
     }
-
-    this.isModalOpen.set(false);
   }
 
   protected async deleteSalon(salon: Salon): Promise<void> {

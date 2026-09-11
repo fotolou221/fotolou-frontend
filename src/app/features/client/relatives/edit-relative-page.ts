@@ -6,6 +6,8 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { RelativeService } from '../../../shared/services/relative.service';
 import { Relative, RelativeRelation, RELATION_LABELS } from '../../../shared/models/relative';
+import { AuthSessionService } from '../../auth/auth-session.service';
+import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
 
 type RelationOption = { value: RelativeRelation; label: string };
 
@@ -101,8 +103,10 @@ type RelationOption = { value: RelativeRelation; label: string };
                   id="edit-phone"
                   type="tel"
                   class="edit-relative-page__input edit-relative-page__input--phone"
+                  [class.edit-relative-page__input--error]="fieldErrors()['phone']"
                   placeholder="+221 -- --- -- --"
                   [(ngModel)]="phone"
+                  (input)="clearFieldError('phone')"
                   name="phone"
                   autocomplete="tel"
                 />
@@ -112,6 +116,9 @@ type RelationOption = { value: RelativeRelation; label: string };
                   </svg>
                 </span>
               </div>
+              @if (fieldErrors()['phone']) {
+                <div class="edit-relative-page__field-error">{{ fieldErrors()['phone'] }}</div>
+              }
               <small class="edit-relative-page__hint">
                 Optionnel. Pour envoyer les notifications de ticket par SMS.
               </small>
@@ -174,6 +181,8 @@ type RelationOption = { value: RelativeRelation; label: string };
 export class EditRelativePage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly auth = inject(AuthSessionService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
   protected readonly relativeService = inject(RelativeService);
 
   protected readonly relative = signal<Relative | null>(null);
@@ -182,6 +191,7 @@ export class EditRelativePage implements OnInit {
   protected name = '';
   protected relation: RelativeRelation | '' = '';
   protected phone = '';
+  protected readonly fieldErrors = signal<{ [key: string]: string }>({});
 
   protected readonly relationOptions: readonly RelationOption[] = (
     Object.entries(RELATION_LABELS) as [RelativeRelation, string][]
@@ -199,20 +209,75 @@ export class EditRelativePage implements OnInit {
     });
   }
 
+  protected clearFieldError(field: string): void {
+    this.relativeService.clearError();
+    if (this.fieldErrors()[field]) {
+      this.fieldErrors.update((curr) => {
+        const copy = { ...curr };
+        delete copy[field];
+        return copy;
+      });
+    }
+  }
+
   protected saveChanges(): void {
+    this.fieldErrors.set({});
+    this.relativeService.clearError();
+
     const rel = this.relative();
-    if (!rel || !this.name.trim() || !this.relation) return;
+    if (!rel) return;
+
+    const trimmedName = this.name.trim();
+    if (!trimmedName) {
+      this.fieldErrors.set({ name: 'Le nom ou surnom est requis.' });
+      return;
+    }
+
+    if (!this.relation) {
+      return;
+    }
+
+    const trimmedPhone = this.phone.trim();
+    if (trimmedPhone) {
+      const digits = trimmedPhone.replace(/\D/g, '');
+      if (digits.length < 9) {
+        this.fieldErrors.set({ phone: 'Numéro invalide (au moins 9 chiffres requis, ex: +221 77 000 00 00).' });
+        return;
+      }
+
+      const currentUserPhone = (
+        this.auth.currentUser()?.phone ||
+        this.auth.activeUser()?.phone ||
+        ''
+      ).replace(/\D/g, '');
+
+      if (currentUserPhone && currentUserPhone.length >= 9 && digits.length >= 9) {
+        if (digits.slice(-9) === currentUserPhone.slice(-9)) {
+          this.fieldErrors.set({ phone: 'Vous ne pouvez pas ajouter votre propre numéro comme proche.' });
+          return;
+        }
+      }
+    }
+
     this.relativeService.updateRelative(
       rel.id,
-      this.name,
+      trimmedName,
       this.relation as RelativeRelation,
-      this.phone || undefined
+      trimmedPhone || undefined
     ).subscribe({
       next: () => {
         this.router.navigate(['/client/proches']);
       },
-      error: () => {
-        // The service exposes the user-facing error through relativeService.error().
+      error: (err) => {
+        const msg = this.errorMessages.message(err, 'Impossible de modifier ce proche.');
+        const lower = msg.toLowerCase();
+        if (lower.includes('propre numero') || lower.includes('propre numéro')) {
+          this.fieldErrors.set({ phone: 'Vous ne pouvez pas ajouter votre propre numéro comme proche.' });
+        } else if (lower.includes('deja utilise') || lower.includes('déjà utilisé')) {
+          this.fieldErrors.set({ phone: 'Ce numéro de téléphone est déjà utilisé par un autre proche.' });
+        } else if (lower.includes('invalide')) {
+          this.fieldErrors.set({ phone: msg });
+        }
       }
     });
   }

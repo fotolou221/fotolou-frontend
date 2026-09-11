@@ -76,6 +76,7 @@ type OrderTab = 'active' | 'history';
 
                   <span
                     class="order-card__badge"
+                    [class.order-card__badge--pending]="order.status === 'en_attente'"
                     [class.order-card__badge--active]="order.status === 'en_cours'"
                     [class.order-card__badge--delivered]="order.status === 'livre'"
                     [class.order-card__badge--cancelled]="order.status === 'annule'"
@@ -157,6 +158,8 @@ export class MyOrdersPage {
 
   protected getStatusText(status: string): string {
     switch (status) {
+      case 'en_attente':
+        return 'EN ATTENTE';
       case 'en_cours':
         return 'EN COURS';
       case 'livre':
@@ -164,7 +167,7 @@ export class MyOrdersPage {
       case 'annule':
         return 'ANNULÉ';
       default:
-        return 'EN COURS';
+        return 'EN ATTENTE';
     }
   }
 }

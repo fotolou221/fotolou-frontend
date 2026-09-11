@@ -113,9 +113,43 @@
 }
 
 .salon-list-card__location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   color: var(--text-secondary, #64748b);
   font-size: 0.8125rem;
   font-weight: 500;
+  min-width: 0;
+
+  .salon-list-card__location-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.salon-list-card__meta-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--text-secondary, #64748b);
+
+  &--scissors {
+    width: 13px;
+    height: 13px;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+.salon-list-card__owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+  margin-top: 2px;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

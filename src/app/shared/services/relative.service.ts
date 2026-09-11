@@ -115,6 +115,10 @@ export class RelativeService {
     );
   }
 
+  clearError(): void {
+    this.error.set(null);
+  }
+
   addRelative(name: string, relation: RelativeRelation, phone?: string): Observable<Relative> {
     this.error.set(null);
 

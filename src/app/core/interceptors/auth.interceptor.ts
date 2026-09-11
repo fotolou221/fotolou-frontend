@@ -34,8 +34,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   const httpBackend = inject(HttpBackend);
 
+  // Les téléversements de fichiers (images produits/catégories) peuvent être lents
+  // sur mobile : on ne leur applique pas le timeout court des requêtes API classiques.
+  const isFileUpload = authReq.url.includes('/storage/upload') || authReq.url.includes('/files/upload');
   const isApiRequest = authReq.url.startsWith(API_CONFIG.baseUrl) || authReq.url.includes('/api/');
-  const handledRequest = isApiRequest ? next(authReq).pipe(timeout(API_CONFIG.timeoutMs)) : next(authReq);
+  const handledRequest =
+    isApiRequest && !isFileUpload ? next(authReq).pipe(timeout(API_CONFIG.timeoutMs)) : next(authReq);
 
   return handledRequest.pipe(
     catchError((error: HttpErrorResponse) => {

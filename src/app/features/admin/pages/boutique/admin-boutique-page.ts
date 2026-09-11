@@ -8,6 +8,7 @@ import { AdminPagination } from '../../components/admin-pagination/admin-paginat
 import { AdminViewToggle, AdminViewMode } from '../../components/admin-view-toggle/admin-view-toggle';
 import { Product } from '../../../../shared/models/product';
 import { AdminConfirmService } from '../../services/admin-confirm.service';
+import { HttpErrorMessageService } from '../../../../shared/services/http-error-message.service';
 
 @Component({
   selector: 'app-admin-boutique-page',
@@ -295,6 +296,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 
           <app-admin-image-uploader
             label="Photo du produit"
+            folder="produits"
             [(imageUrl)]="formImageUrl"
           />
         </form>
@@ -332,6 +334,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 export class AdminBoutiquePage {
   protected readonly data = inject(AdminDataService);
   private readonly confirmService = inject(AdminConfirmService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
 
   protected searchQuery = '';
   protected categoryFilter = 'all';
@@ -387,7 +390,7 @@ export class AdminBoutiquePage {
     this.formPrice = 25000;
     this.formCategoryId = this.data.categories()[0]?.id || '';
     this.formDesc = '';
-    this.formImageUrl = 'https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=400&q=80';
+    this.formImageUrl = '';
     this.formError.set(null);
     this.isSubmitting.set(false);
     this.isModalOpen.set(true);
@@ -514,18 +517,6 @@ export class AdminBoutiquePage {
   }
 
   private extractError(err: any, fallback: string): string {
-    if (err?.status === 0) {
-      return 'Impossible de contacter le serveur backend. Vérifiez que le serveur est démarré.';
-    }
-    if (err?.error?.detail) {
-      return err.error.detail;
-    }
-    if (err?.error?.message) {
-      return err.error.message;
-    }
-    if (err?.message && !err?.message.includes('Http failure')) {
-      return err.message;
-    }
-    return fallback;
+    return this.errorMessages.message(err, fallback);
   }
 }

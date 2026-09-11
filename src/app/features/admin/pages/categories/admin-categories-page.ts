@@ -6,6 +6,7 @@ import { AdminImageUploader } from '../../components/admin-image-uploader/admin-
 import { AdminPagination } from '../../components/admin-pagination/admin-pagination';
 import { AdminViewToggle, AdminViewMode } from '../../components/admin-view-toggle/admin-view-toggle';
 import { AdminConfirmService } from '../../services/admin-confirm.service';
+import { HttpErrorMessageService } from '../../../../shared/services/http-error-message.service';
 
 @Component({
   selector: 'app-admin-categories-page',
@@ -203,6 +204,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 
           <app-admin-image-uploader
             label="Image de couverture de la catégorie"
+            folder="categories"
             [(imageUrl)]="formImage"
           />
         </form>
@@ -240,6 +242,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 export class AdminCategoriesPage {
   protected readonly data = inject(AdminDataService);
   private readonly confirmService = inject(AdminConfirmService);
+  private readonly errorMessages = inject(HttpErrorMessageService);
 
   protected searchQuery = '';
   protected viewMode: AdminViewMode = 'grid';
@@ -282,7 +285,7 @@ export class AdminCategoriesPage {
     this.formName = '';
     this.formIcon = 'category';
     this.formDescription = '';
-    this.formImage = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80';
+    this.formImage = '';
     this.formError.set(null);
     this.isSubmitting.set(false);
     this.isModalOpen.set(true);
@@ -383,21 +386,6 @@ export class AdminCategoriesPage {
   }
 
   private extractError(err: any, fallback: string): string {
-    if (err?.status === 0) {
-      return 'Impossible de contacter le serveur. Vérifiez que le backend est bien démarré.';
-    }
-    if (err?.status === 409 || (err?.error?.message && err?.error?.message.includes('unique'))) {
-      return 'Une catégorie avec ce nom ou cet identifiant existe déjà.';
-    }
-    if (err?.error?.detail) {
-      return err.error.detail;
-    }
-    if (err?.error?.message) {
-      return err.error.message;
-    }
-    if (err?.message && !err?.message.includes('Http failure')) {
-      return err.message;
-    }
-    return fallback;
+    return this.errorMessages.message(err, fallback);
   }
 }

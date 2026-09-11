@@ -104,13 +104,69 @@
   border: 0;
   padding: 0 14px;
   color: var(--text);
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
   font-size: 0.94rem;
-  outline: none;
+  outline: none !important;
+  box-shadow: none !important;
+
+  &:focus,
+  &:active {
+    background: transparent !important;
+    background-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 .phone-field input::placeholder {
   color: #c8d4e4;
+}
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .phone-field {
+    background: #1c2541 !important;
+    border-color: #334155 !important;
+  }
+
+  .phone-field__country {
+    color: #f8fafc !important;
+  }
+
+  .phone-field__divider {
+    background: #334155 !important;
+  }
+
+  .phone-field input {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #f8fafc !important;
+
+    &::placeholder {
+      color: #64748b !important;
+    }
+  }
+
+  .login-page__label {
+    color: #f8fafc !important;
+  }
+
+  .login-page__header h1 {
+    color: #ffffff !important;
+  }
+
+  .login-page__header p {
+    color: #94a3b8 !important;
+  }
+
+  .login-page__separator {
+    color: #64748b !important;
+
+    span {
+      background: #334155 !important;
+    }
+  }
 }
 
 .login-page__separator {

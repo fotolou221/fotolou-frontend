@@ -1,6 +1,6 @@
 import { CartItem } from './product';
 
-export type OrderStatus = 'en_cours' | 'livre' | 'annule';
+export type OrderStatus = 'en_attente' | 'en_cours' | 'livre' | 'annule';
 export type OrderType = 'whatsapp' | 'call';
 
 export interface Order {
@@ -13,4 +13,17 @@ export interface Order {
   readonly status: OrderStatus;
   readonly orderType: OrderType;
   readonly createdAt: string;
+  readonly customerName?: string;
+  readonly customerPhone?: string;
+  readonly deliveryAddress?: string;
+  readonly deliveryDistrict?: string;
+  /** Lien WhatsApp pré-rempli renvoyé par le backend au moment du checkout. */
+  readonly whatsAppUrl?: string;
 }
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  en_attente: 'En attente',
+  en_cours: 'En cours',
+  livre: 'Livrée',
+  annule: 'Annulée'
+};

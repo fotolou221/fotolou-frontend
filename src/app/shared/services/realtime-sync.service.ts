@@ -5,6 +5,8 @@ import { SalonService } from './salon.service';
 import { TicketService } from './ticket.service';
 import { AdminDataService } from '../../features/admin/services/admin-data.service';
 import { NotificationService } from './notification.service';
+import { ProductService } from './product.service';
+import { OrderService } from './order.service';
 import { Salon } from '../models/salon';
 
 /**
@@ -23,6 +25,8 @@ export class RealtimeSyncService {
   private readonly ticketService = inject(TicketService);
   private readonly adminDataService = inject(AdminDataService);
   private readonly notificationService = inject(NotificationService);
+  private readonly productService = inject(ProductService);
+  private readonly orderService = inject(OrderService);
 
   private eventSource: EventSource | null = null;
   private reconnectTimer: any = null;
@@ -123,6 +127,37 @@ export class RealtimeSyncService {
           this.notificationService.loadNotifications(true);
         });
       });
+
+      // ── Boutique : produits & catégories ──────────────────
+      const refreshCatalog = () => {
+        this.ngZone.run(() => {
+          this.productService.loadAll(true);
+          this.adminDataService.loadProducts();
+          this.adminDataService.loadCategories();
+        });
+      };
+      ['PRODUCT_UPDATED', 'PRODUCT_DELETED', 'CATEGORY_UPDATED', 'CATEGORY_DELETED'].forEach((evt) => {
+        this.eventSource!.addEventListener(evt, refreshCatalog);
+      });
+
+      // ── Boutique : commandes ──────────────────────────────
+      const refreshOrders = (e: MessageEvent) => {
+        this.ngZone.run(() => {
+          this.adminDataService.loadOrders();
+          this.orderService.loadOrders(true);
+          this.notificationService.loadNotifications(true);
+          try {
+            const dto = JSON.parse(e.data);
+            if (dto && dto.id) {
+              this.adminDataService.upsertOrder(dto);
+            }
+          } catch {
+            // payload non-json : le rechargement suffit
+          }
+        });
+      };
+      this.eventSource.addEventListener('ORDER_CREATED', refreshOrders);
+      this.eventSource.addEventListener('ORDER_UPDATED', refreshOrders);
 
       this.eventSource.onerror = () => {
         // Déconnexion naturelle due au timeout du proxy cloud (Render / Cloudflare)

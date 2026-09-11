@@ -138,16 +138,18 @@ export class OrderDetailPage implements OnInit {
   }
 
   protected get statusLabel(): string {
-    if (!this.order) return 'En livraison';
+    if (!this.order) return 'En attente';
     switch (this.order.status) {
+      case 'en_attente':
+        return 'En attente de confirmation';
       case 'en_cours':
-        return 'En livraison';
+        return 'En préparation / livraison';
       case 'livre':
         return 'Livré';
       case 'annule':
         return 'Annulé';
       default:
-        return 'En cours';
+        return 'En attente';
     }
   }
 

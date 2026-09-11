@@ -10,6 +10,7 @@ export interface Ticket {
   readonly ownerType?: 'SELF' | 'RELATIVE' | 'CUSTOM' | 'self' | 'relative' | 'custom' | string;
   readonly ticketNumber: number;
   readonly currentTicketNumber?: number;
+  readonly currentTicketIsYesterday?: boolean;
   readonly status: TicketStatus;
   readonly category: TicketTab;
   readonly createdAt: string;

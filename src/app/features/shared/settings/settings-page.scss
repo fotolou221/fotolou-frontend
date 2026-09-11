@@ -167,3 +167,53 @@
     transform: translateX(22px);
   }
 }
+
+// ── Dark Mode ────────────────────────────────────────────────
+:host-context(body.dark-theme) {
+  .settings-section__title {
+    color: #f8fafc;
+  }
+
+  .settings-section__subtitle {
+    color: #94a3b8;
+  }
+
+  .settings-theme-selector {
+    background: #1c2541;
+  }
+
+  .settings-theme-btn {
+    color: #94a3b8;
+
+    &--active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+  }
+
+  .settings-card {
+    background: #1c2541;
+    border-color: #334155;
+    box-shadow: none;
+  }
+
+  .settings-row {
+    &--link:hover {
+      background: #243056;
+    }
+  }
+
+  .settings-row__info strong {
+    color: #f8fafc;
+  }
+
+  .settings-row__info span {
+    color: #94a3b8;
+  }
+
+  .settings-divider {
+    background: #334155;
+  }
+}

@@ -53,21 +53,33 @@
   --radius-full: 9999px;
 
   font-family: var(--font-family);
-  background: #ffffff !important;
-  background-color: #ffffff !important;
   color: var(--text-primary);
 }
 
-// ── Dark Theme Overrides (White Backgrounds Enforced Everywhere) ──
-body.dark-theme {
-  --bg-page: #ffffff !important;
-  --bg-primary: #ffffff !important;
-  --bg-secondary: #ffffff !important;
-  --bg-surface: #ffffff !important;
-  --bg-header: #ffffff !important;
-  background-color: #ffffff !important;
-  background: #ffffff !important;
-  color: #f8f9fa !important;
+// ── Dark Theme Overrides ──
+body.dark-theme,
+html.dark-theme {
+  color-scheme: dark;
+  --bg-page: #0b132b;
+  --bg-primary: #0b132b;
+  --bg-secondary: #1c2541;
+  --bg-surface: #1c2541;
+  --bg-card: #1c2541;
+  --bg-card-hover: #243056;
+  --bg-header: #0b132b;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  --border-color: #334155;
+  --border-subtle: #1e293b;
+  --divider: #334155;
+
+  background-color: #0b132b !important;
+  background: #0b132b !important;
+  color: #f8fafc !important;
 
   // Global dark mode text & surfaces
   p, span, label, input, textarea, select, strong, b, h1, h2, h3, h4, h5, h6, div, button, a, li {
@@ -118,11 +130,13 @@ body.dark-theme {
   .order-confirm-page__fixed-footer,
   .order-detail-page__fixed-footer,
   .relatives-page__card,
+  .relative-card,
   .stat-card,
   .settings-card,
   .faq-card,
   .settings-theme-selector,
   .salon-card,
+  .salon-list-card,
   .ticket-owner-card {
     background-color: #1c2541 !important;
     border-color: #334155 !important;
@@ -204,19 +218,36 @@ body.dark-theme {
     color: #94a3b8 !important;
   }
 
-  // Form Inputs
-  input, textarea, select {
-    background-color: #0b132b !important;
+  // Form Inputs (Dark Mode)
+  input:not(.phone-field input):not(.search-bar input):not(.search-bar__input):not(.admin-search-box input),
+  textarea,
+  select {
+    background-color: #1c2541 !important;
     border-color: #334155 !important;
-    color: #ffffff !important;
+    color: #f8fafc !important;
 
     &::placeholder {
       color: #94a3b8 !important;
     }
   }
 
+  // Composite field inputs (Phone, Search, etc.) must NEVER have a blue background in dark mode
+  .phone-field input,
+  .search-bar input,
+  .search-bar__input,
+  .admin-search-box input {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #f8fafc !important;
+
+    &::placeholder {
+      color: #64748b !important;
+    }
+  }
+
   // Layout Containers Background
   .client-layout__body,
+  .client-layout,
   .profile-page,
   .client-home__content,
   .shop-page__content,
@@ -226,8 +257,15 @@ body.dark-theme {
   .coiffeur-home,
   .coiffeur-tickets,
   .settings-page__content,
-  .support-page__content {
-    background-color: #ffffff !important;
+  .support-page__content,
+  .relatives-page,
+  .add-relative-page,
+  .edit-relative-page,
+  .favorites-page,
+  .salon-detail,
+  .ticket-detail,
+  .ticket-owner-page {
+    background-color: #0b132b !important;
   }
 
   // Bottom Navigation Bar
@@ -296,7 +334,7 @@ a:focus-visible,
   outline-offset: 2px;
 }
 
-// Champs de saisie : aucun contour / halo / fond bleu au focus (clic ou clavier)
+// ── Champs de saisie : aucun contour / halo / fond bleu au focus (clic ou clavier) ──
 input:focus,
 input:focus-visible,
 textarea:focus,
@@ -308,7 +346,91 @@ select:focus-visible,
 .admin-search-box input:focus {
   outline: none !important;
   box-shadow: none !important;
-  border-color: var(--border-color, #e2e7ef) !important;
+  border-color: var(--border-color, #e2e8f0) !important;
+}
+
+// ── Les champs intégrés (téléphone, recherche, etc.) restent 100% transparents sans fond bleu ──
+.phone-field input,
+.search-bar input,
+.search-bar__input,
+.admin-search-box input,
+.search-box input {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-appearance: none;
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    background: transparent !important;
+    background-color: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// ── Suppression absolue du fond bleu d'autocomplétion / saisie du navigateur (Chrome / Safari / Edge) ──
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+textarea:-webkit-autofill:active,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus,
+select:-webkit-autofill:active {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: inherit !important;
+  caret-color: inherit !important;
+  transition: background-color 5000000s ease-in-out 0s, color 5000000s ease-in-out 0s !important;
+}
+
+body:not(.dark-theme) {
+  .phone-field input:-webkit-autofill,
+  .phone-field input:-webkit-autofill:hover,
+  .phone-field input:-webkit-autofill:focus,
+  .phone-field input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+  }
+
+  .search-bar input:-webkit-autofill,
+  .search-bar input:-webkit-autofill:hover,
+  .search-bar input:-webkit-autofill:focus,
+  .search-bar input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #f4f5f7 inset !important;
+    box-shadow: 0 0 0 1000px #f4f5f7 inset !important;
+  }
+
+  .search-bar:focus-within input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+  }
+}
+
+body.dark-theme {
+  .phone-field input:-webkit-autofill,
+  .phone-field input:-webkit-autofill:hover,
+  .phone-field input:-webkit-autofill:focus,
+  .phone-field input:-webkit-autofill:active,
+  .search-bar input:-webkit-autofill,
+  .search-bar input:-webkit-autofill:hover,
+  .search-bar input:-webkit-autofill:focus,
+  .search-bar input:-webkit-autofill:active,
+  .admin-search-box input:-webkit-autofill,
+  .admin-search-box input:-webkit-autofill:hover,
+  .admin-search-box input:-webkit-autofill:focus,
+  .admin-search-box input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #1c2541 inset !important;
+    box-shadow: 0 0 0 1000px #1c2541 inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+  }
 }
 
 .loading-dots {
@@ -362,88 +484,143 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-overflow-scrolling: touch;
-  background-color: #ffffff !important;
-  background: #ffffff !important;
 }
 
 body {
   margin: 0;
   min-height: 100svh;
-  background-color: #ffffff !important;
-  background: #ffffff !important;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-// ── Universal Pure White Background Across All Fotolou Pages ──
-html,
-body,
-app-root,
-.client-layout,
-.client-layout__header,
-.client-layout__body,
-.client-layout__main-content,
-.client-home,
-.client-home__pinned-header,
-.client-home__scroll-content,
-.profile-page,
-.my-tickets-page,
-.my-tickets-page__content,
-.my-orders-page,
-.my-orders-page__content,
-.notifications-page,
-.notifications-page__content,
-.shop-page,
-.shop-page__content,
-.shop-header,
-.cart-page,
-.cart-page__content,
-.order-confirm-page,
-.order-detail-page,
-.product-detail-page,
-.product-detail-page__content,
-.salon-detail,
-.salon-detail__content,
-.ticket-detail,
-.ticket-detail__content,
-.ticket-owner,
-.ticket-owner-page,
-.ticket-owner-page__content,
-.relatives-page,
-.add-relative-page,
-.edit-relative-page,
-.favorites-page,
-.favorites-page__content,
-.coiffeur-home,
-.coiffeur-tickets,
-.coiffeur-photos,
-.coiffeur-profile,
-.coiffeur-notifications,
-.settings-page,
-.settings-page__content,
-.support-page,
-.support-page__content,
-.admin-shell,
-.admin-main,
-.admin-topbar,
-.admin-content,
-.admin-page,
-.admin-auth,
-.auth-shell,
-.auth-shell__content,
-.login-page,
-.otp-page,
-.vitrine,
-.vitrine-hero,
-.vitrine-stats,
-.vitrine-steps,
-.vitrine-benefits,
-.vitrine-faq,
-.vitrine-phone__screen,
-.vitrine-phone__statusbar,
-.vitrine-phone__preview-header,
-.mobile-app-shell {
+html:not(.dark-theme),
+body:not(.dark-theme) {
   background-color: #ffffff !important;
   background: #ffffff !important;
+}
+
+html.dark-theme,
+body.dark-theme {
+  background-color: #0b132b !important;
+  background: #0b132b !important;
+}
+
+// ── Universal Pure White Background Across All Fotolou Pages (Light Mode) ──
+body:not(.dark-theme) .client-layout,
+body:not(.dark-theme) .client-layout__header,
+body:not(.dark-theme) .client-layout__body,
+body:not(.dark-theme) .client-layout__main-content,
+body:not(.dark-theme) .client-home,
+body:not(.dark-theme) .client-home__pinned-header,
+body:not(.dark-theme) .client-home__scroll-content,
+body:not(.dark-theme) .profile-page,
+body:not(.dark-theme) .my-tickets-page,
+body:not(.dark-theme) .my-tickets-page__content,
+body:not(.dark-theme) .my-orders-page,
+body:not(.dark-theme) .my-orders-page__content,
+body:not(.dark-theme) .notifications-page,
+body:not(.dark-theme) .notifications-page__content,
+body:not(.dark-theme) .shop-page,
+body:not(.dark-theme) .shop-page__content,
+body:not(.dark-theme) .shop-header,
+body:not(.dark-theme) .cart-page,
+body:not(.dark-theme) .cart-page__content,
+body:not(.dark-theme) .order-confirm-page,
+body:not(.dark-theme) .order-detail-page,
+body:not(.dark-theme) .product-detail-page,
+body:not(.dark-theme) .product-detail-page__content,
+body:not(.dark-theme) .salon-detail,
+body:not(.dark-theme) .salon-detail__content,
+body:not(.dark-theme) .ticket-detail,
+body:not(.dark-theme) .ticket-detail__content,
+body:not(.dark-theme) .ticket-owner,
+body:not(.dark-theme) .ticket-owner-page,
+body:not(.dark-theme) .ticket-owner-page__content,
+body:not(.dark-theme) .relatives-page,
+body:not(.dark-theme) .add-relative-page,
+body:not(.dark-theme) .edit-relative-page,
+body:not(.dark-theme) .favorites-page,
+body:not(.dark-theme) .favorites-page__content,
+body:not(.dark-theme) .coiffeur-home,
+body:not(.dark-theme) .coiffeur-tickets,
+body:not(.dark-theme) .coiffeur-photos,
+body:not(.dark-theme) .coiffeur-profile,
+body:not(.dark-theme) .coiffeur-notifications,
+body:not(.dark-theme) .settings-page,
+body:not(.dark-theme) .settings-page__content,
+body:not(.dark-theme) .support-page,
+body:not(.dark-theme) .support-page__content,
+body:not(.dark-theme) .admin-shell,
+body:not(.dark-theme) .admin-main,
+body:not(.dark-theme) .admin-topbar,
+body:not(.dark-theme) .admin-content,
+body:not(.dark-theme) .admin-page,
+body:not(.dark-theme) .admin-auth,
+body:not(.dark-theme) .auth-shell,
+body:not(.dark-theme) .auth-shell__content,
+body:not(.dark-theme) .login-page,
+body:not(.dark-theme) .otp-page,
+body:not(.dark-theme) .vitrine,
+body:not(.dark-theme) .vitrine-hero,
+body:not(.dark-theme) .vitrine-stats,
+body:not(.dark-theme) .vitrine-steps,
+body:not(.dark-theme) .vitrine-benefits,
+body:not(.dark-theme) .vitrine-faq,
+body:not(.dark-theme) .vitrine-phone__screen,
+body:not(.dark-theme) .vitrine-phone__statusbar,
+body:not(.dark-theme) .vitrine-phone__preview-header,
+body:not(.dark-theme) .mobile-app-shell {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+// ── Universal Dark Background Across All Fotolou Pages (Dark Mode) ──
+body.dark-theme .client-layout,
+body.dark-theme .client-layout__header,
+body.dark-theme .client-layout__body,
+body.dark-theme .client-layout__main-content,
+body.dark-theme .client-home,
+body.dark-theme .client-home__pinned-header,
+body.dark-theme .client-home__scroll-content,
+body.dark-theme .profile-page,
+body.dark-theme .my-tickets-page,
+body.dark-theme .my-tickets-page__content,
+body.dark-theme .my-orders-page,
+body.dark-theme .my-orders-page__content,
+body.dark-theme .notifications-page,
+body.dark-theme .notifications-page__content,
+body.dark-theme .shop-page,
+body.dark-theme .shop-page__content,
+body.dark-theme .shop-header,
+body.dark-theme .cart-page,
+body.dark-theme .cart-page__content,
+body.dark-theme .order-confirm-page,
+body.dark-theme .order-detail-page,
+body.dark-theme .product-detail-page,
+body.dark-theme .product-detail-page__content,
+body.dark-theme .salon-detail,
+body.dark-theme .salon-detail__content,
+body.dark-theme .ticket-detail,
+body.dark-theme .ticket-detail__content,
+body.dark-theme .ticket-owner,
+body.dark-theme .ticket-owner-page,
+body.dark-theme .ticket-owner-page__content,
+body.dark-theme .relatives-page,
+body.dark-theme .add-relative-page,
+body.dark-theme .edit-relative-page,
+body.dark-theme .favorites-page,
+body.dark-theme .favorites-page__content,
+body.dark-theme .coiffeur-home,
+body.dark-theme .coiffeur-tickets,
+body.dark-theme .coiffeur-photos,
+body.dark-theme .coiffeur-profile,
+body.dark-theme .coiffeur-notifications,
+body.dark-theme .settings-page,
+body.dark-theme .settings-page__content,
+body.dark-theme .support-page,
+body.dark-theme .support-page__content,
+body.dark-theme .mobile-app-shell {
+  background-color: #0b132b !important;
+  background: #0b132b !important;
 }
 
 button,
