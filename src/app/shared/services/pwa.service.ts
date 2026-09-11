@@ -40,8 +40,8 @@ export class PwaService implements OnDestroy {
   private deferredPrompt: BeforeInstallPromptEvent | null = null;
   private standaloneMediaQueryList: MediaQueryList | null = null;
   private readonly destroy$ = new Subject<void>();
-  private readonly UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
-  private readonly UPDATE_CHECK_THROTTLE_MS = 30 * 1000;
+  private readonly UPDATE_CHECK_INTERVAL_MS = 60 * 1000;
+  private readonly UPDATE_CHECK_THROTTLE_MS = 10 * 1000;
   private readonly UPDATE_RELOAD_VERSION_KEY = 'fotolou_pwa_update_reload_version';
   private readonly UNRECOVERABLE_RELOAD_KEY = 'fotolou_pwa_unrecoverable_reload';
   private lastUpdateCheckAt = 0;
@@ -247,18 +247,13 @@ export class PwaService implements OnDestroy {
   private async activateAndReload(event: VersionReadyEvent): Promise<void> {
     if (!this.swUpdate?.isEnabled || this.isActivatingUpdate) return;
 
-    const latestHash = event.latestVersion.hash;
-    if (this.readSessionStorage(this.UPDATE_RELOAD_VERSION_KEY) === latestHash) return;
-
     this.isActivatingUpdate = true;
-    this.writeSessionStorage(this.UPDATE_RELOAD_VERSION_KEY, latestHash);
-
     try {
+      console.info('[PWA] Activation automatique de la nouvelle version PWA:', event.latestVersion.hash);
       await this.swUpdate.activateUpdate();
       window.location.reload();
     } catch (error) {
       this.isActivatingUpdate = false;
-      this.removeSessionStorage(this.UPDATE_RELOAD_VERSION_KEY);
       this.handleUpdateError(error, 'activate');
     }
   }
