@@ -41,7 +41,7 @@ import { FavoritesService } from '../../services/favorites.service';
           </svg>
           <span class="salon-list-card__location-text">{{ salon.location }}</span>
         </span>
-        @if (salon.ownerName || salon.coiffeurName) {
+        @if (salon.ownerName || salon.coiffeurName || salon.name) {
           <span class="salon-list-card__owner">
             <svg class="salon-list-card__meta-icon salon-list-card__meta-icon--scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="6" cy="6" r="3"/>
@@ -50,7 +50,7 @@ import { FavoritesService } from '../../services/favorites.service';
               <line x1="14.47" y1="14.48" x2="20" y2="20"/>
               <line x1="8.12" y1="8.12" x2="12" y2="12"/>
             </svg>
-            <span>{{ salon.ownerName || salon.coiffeurName }}</span>
+            <span>{{ salon.ownerName || salon.coiffeurName || salon.name }}</span>
           </span>
         }
         

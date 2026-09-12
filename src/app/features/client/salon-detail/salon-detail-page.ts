@@ -69,7 +69,7 @@ import { FavoritesService } from '../../../shared/services/favorites.service';
                     </svg>
                     <span>{{ salon.location }}</span>
                   </p>
-                  @if (salon.ownerName || salon.coiffeurName) {
+                  @if (salon.ownerName || salon.coiffeurName || salon.name) {
                     <div class="salon-detail__owner-tag">
                       <svg class="salon-detail__meta-icon salon-detail__meta-icon--scissors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="6" cy="6" r="3"/>
@@ -78,7 +78,7 @@ import { FavoritesService } from '../../../shared/services/favorites.service';
                         <line x1="14.47" y1="14.48" x2="20" y2="20"/>
                         <line x1="8.12" y1="8.12" x2="12" y2="12"/>
                       </svg>
-                      <span>Coiffeur Propriétaire : {{ salon.ownerName || salon.coiffeurName }}</span>
+                      <span>Coiffeur Propriétaire : {{ salon.ownerName || salon.coiffeurName || salon.name }}</span>
                     </div>
                   }
                 </div>
