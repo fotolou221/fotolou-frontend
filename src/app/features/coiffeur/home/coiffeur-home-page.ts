@@ -87,8 +87,7 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
           } @else {
             <div class="coiffeur-home__client-list">
               @for (item of filteredClients(); track item.id) {
-                <button
-                  type="button"
+                <div
                   class="queue-card"
                   [class.queue-card--current]="isCurrentClient(item)"
                   [class.queue-card--waiting]="!isCurrentClient(item)"
@@ -127,14 +126,31 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
                       </span>
                     }
 
-                    <span class="queue-card__open-link">
-                      Ouvrir
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6" />
-                      </svg>
-                    </span>
+                    <div class="queue-card__bottom-actions">
+                      @if (getClientPhone(item)) {
+                        <button
+                          type="button"
+                          class="queue-card__quick-call"
+                          (click)="callClient($event, item)"
+                          title="Appeler directement"
+                          aria-label="Appeler le client"
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                          </svg>
+                          <span>Appeler</span>
+                        </button>
+                      }
+
+                      <span class="queue-card__open-link">
+                        Ouvrir
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </span>
+                    </div>
                   </div>
-                </button>
+                </div>
               } @empty {
                 <app-empty-state
                   [icon]="searchQuery() ? 'search' : 'ticket'"
@@ -273,6 +289,29 @@ export class CoiffeurHomePage {
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
+  }
+
+  protected getClientPhone(item: Ticket): string {
+    const raw = item.ownerPhone || (item.user && !item.user.login?.includes('@') ? item.user.login : '');
+    if (!raw) return '';
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('221') && digits.length > 9) {
+      return `+${digits}`;
+    }
+    if (digits.length === 9) {
+      return `+221${digits}`;
+    }
+    return raw.trim();
+  }
+
+  protected callClient(event: Event, item: Ticket): void {
+    event.stopPropagation();
+    const phone = this.getClientPhone(item);
+    if (!phone) return;
+
+    window.location.href = `tel:${phone.replace(/\s+/g, '')}`;
+    this.ticketService.callTicket(item.id).subscribe();
   }
 
   private ownerFirstName(value?: string): string {

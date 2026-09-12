@@ -135,7 +135,8 @@ export class AuthSessionService {
       }
 
       if (res.user) {
-        const roleClean: UserRole = res.user.role === 'coiffeur' ? 'coiffeur' : 'client';
+        const rawRole = `${res.user.role || ''}`.toLowerCase();
+        const roleClean: UserRole = rawRole === 'coiffeur' ? 'coiffeur' : 'client';
         const profile: AuthUserProfile = {
           id: res.user.id || Date.now(),
           name: res.user.name || 'Utilisateur Fotolou',

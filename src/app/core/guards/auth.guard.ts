@@ -18,10 +18,6 @@ export const guestOnlyAuthGuard: CanActivateFn = () => {
   const user = auth.currentUser();
 
   if (token && user && user.id !== 'guest') {
-    if (user.role === 'coiffeur' && !hasLinkedSalon(user)) {
-      auth.logout();
-      return router.createUrlTree(['/auth/login']);
-    }
     return router.createUrlTree([auth.getHomeRoute()]);
   }
 
@@ -45,11 +41,7 @@ export const clientAuthGuard: CanActivateFn = () => {
   }
 
   if (user && user.role === 'coiffeur') {
-    if (hasLinkedSalon(user)) {
-      return router.createUrlTree(['/coiffeur/home']);
-    }
-    auth.logout();
-    return router.createUrlTree(['/auth/login']);
+    return router.createUrlTree(['/coiffeur/home']);
   }
 
   return true;
@@ -73,11 +65,6 @@ export const coiffeurAuthGuard: CanActivateFn = () => {
 
   if (user && user.role !== 'coiffeur') {
     return router.createUrlTree(['/client/home']);
-  }
-
-  if (user && !hasLinkedSalon(user)) {
-    auth.logout();
-    return router.createUrlTree(['/auth/login']);
   }
 
   return true;
