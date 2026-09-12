@@ -111,6 +111,7 @@ export class OrderService {
       customerPhone: o.customerPhone || undefined,
       deliveryAddress: o.deliveryAddress || undefined,
       deliveryDistrict: o.deliveryDistrict || undefined,
+      notes: o.notes || undefined,
       whatsAppUrl: o.whatsAppUrl || undefined
     };
   }

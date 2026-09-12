@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal, effect, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { SearchBar } from '../../../shared/components/search-bar/search-bar';
@@ -117,7 +117,7 @@ import { NotificationService } from '../../../shared/services/notification.servi
             />
           } @else {
             <div class="shop-page__products-grid">
-              @for (product of productService.filteredProducts(); track product.id) {
+              @for (product of displayedProducts(); track product.id) {
                 <app-product-card [product]="product" />
               }
             </div>
@@ -131,6 +131,22 @@ import { NotificationService } from '../../../shared/services/notification.servi
                 (action)="resetFilters()"
               />
             }
+
+            <!-- Bottom Infinite Scroll Sentinel & Indicator -->
+            @if (displayedProducts().length > 0) {
+              <div #scrollSentinel class="shop-page__sentinel">
+                @if (loadingMore()) {
+                  <div class="shop-page__loading-more">
+                    <div class="shop-page__spinner"></div>
+                    <span>Chargement d'autres produits…</span>
+                  </div>
+                } @else if (!hasMoreToLoad()) {
+                  <div class="shop-page__end-message">
+                    <span>✨ Vous avez vu tous les produits disponibles</span>
+                  </div>
+                }
+              </div>
+            }
           }
         </section>
       </div>
@@ -138,11 +154,92 @@ import { NotificationService } from '../../../shared/services/notification.servi
   `,
   styleUrl: './shop-page.scss'
 })
-export class ShopPage {
+export class ShopPage implements AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   protected readonly productService = inject(ProductService);
   protected readonly cartService = inject(CartService);
   protected readonly notificationService = inject(NotificationService);
+
+  @ViewChild('scrollSentinel') sentinelRef?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
+
+  // ── Infinite Scroll State (Lazy Load by 10) ─────────────────
+  protected readonly pageSize = 10;
+  protected readonly displayedLimit = signal<number>(10);
+  protected readonly loadingMore = signal<boolean>(false);
+
+  protected readonly allProducts = computed(() => this.productService.filteredProducts());
+
+  protected readonly displayedProducts = computed(() => {
+    return this.allProducts().slice(0, this.displayedLimit());
+  });
+
+  protected readonly hasMoreToLoad = computed(() => {
+    return this.displayedLimit() < this.allProducts().length;
+  });
+
+  constructor() {
+    effect(() => {
+      // Watch search or category filter changes to reset limit to 10
+      this.productService.searchQuery();
+      this.productService.selectedCategory();
+      this.displayedLimit.set(this.pageSize);
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', this.onWindowScroll, { passive: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this.onWindowScroll);
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting && this.hasMoreToLoad() && !this.loadingMore()) {
+          this.loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (this.sentinelRef?.nativeElement) {
+      this.observer.observe(this.sentinelRef.nativeElement);
+    }
+  }
+
+  private readonly onWindowScroll = (): void => {
+    if (typeof window === 'undefined') return;
+    const scrollBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+    if (scrollBottom < 250 && this.hasMoreToLoad() && !this.loadingMore()) {
+      this.loadMore();
+    }
+  };
+
+  protected loadMore(): void {
+    if (!this.hasMoreToLoad() || this.loadingMore()) return;
+    this.loadingMore.set(true);
+
+    setTimeout(() => {
+      this.displayedLimit.update((prev) => prev + this.pageSize);
+      this.loadingMore.set(false);
+
+      if (this.sentinelRef?.nativeElement && this.observer) {
+        this.observer.disconnect();
+        this.observer.observe(this.sentinelRef.nativeElement);
+      }
+    }, 300);
+  }
 
   protected readonly emptyTitle = computed(() => {
     return this.productService.products().length === 0

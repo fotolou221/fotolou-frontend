@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -37,7 +37,7 @@ type OrderTab = 'active' | 'history';
             type="button"
             class="my-orders-page__tab"
             [class.my-orders-page__tab--active]="activeTab() === 'active'"
-            (click)="activeTab.set('active')"
+            (click)="selectTab('active')"
             role="tab"
           >
             En cours ({{ orderService.activeOrders().length }})
@@ -47,7 +47,7 @@ type OrderTab = 'active' | 'history';
             type="button"
             class="my-orders-page__tab"
             [class.my-orders-page__tab--active]="activeTab() === 'history'"
-            (click)="activeTab.set('history')"
+            (click)="selectTab('history')"
             role="tab"
           >
             Historique ({{ orderService.historyOrders().length }})
@@ -120,15 +120,34 @@ type OrderTab = 'active' | 'history';
               />
             }
           </div>
+
+          <!-- Bottom Infinite Scroll Sentinel & Indicator -->
+          @if (displayedOrders().length > 0) {
+            <div #scrollSentinel class="my-orders-page__sentinel">
+              @if (loadingMore()) {
+                <div class="my-orders-page__loading-more">
+                  <div class="my-orders-page__spinner"></div>
+                  <span>Chargement d'autres commandes…</span>
+                </div>
+              } @else if (!hasMoreToLoad()) {
+                <div class="my-orders-page__end-message">
+                  <span>✨ Vous avez vu toutes vos commandes</span>
+                </div>
+              }
+            </div>
+          }
         }
       </div>
     </app-client-layout>
   `,
   styleUrl: './my-orders-page.scss'
 })
-export class MyOrdersPage {
+export class MyOrdersPage implements AfterViewInit, OnDestroy {
   protected readonly orderService = inject(OrderService);
   private readonly auth = inject(AuthSessionService);
+
+  @ViewChild('scrollSentinel') sentinelRef?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
 
   protected readonly backRoute = computed(() =>
     this.auth.activeRole() === 'coiffeur' ? '/coiffeur/profile' : '/client/profile'
@@ -136,11 +155,83 @@ export class MyOrdersPage {
 
   protected readonly activeTab = signal<OrderTab>('active');
 
-  protected readonly displayedOrders = computed(() => {
+  // ── Infinite Scroll State (Lazy Load by 10) ─────────────────
+  protected readonly pageSize = 10;
+  protected readonly displayedLimit = signal<number>(10);
+  protected readonly loadingMore = signal<boolean>(false);
+
+  protected readonly allTabOrders = computed(() => {
     return this.activeTab() === 'active'
       ? this.orderService.activeOrders()
       : this.orderService.historyOrders();
   });
+
+  protected readonly displayedOrders = computed(() => {
+    return this.allTabOrders().slice(0, this.displayedLimit());
+  });
+
+  protected readonly hasMoreToLoad = computed(() => {
+    return this.displayedLimit() < this.allTabOrders().length;
+  });
+
+  protected selectTab(tab: OrderTab): void {
+    this.activeTab.set(tab);
+    this.displayedLimit.set(this.pageSize);
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', this.onWindowScroll, { passive: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this.onWindowScroll);
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting && this.hasMoreToLoad() && !this.loadingMore()) {
+          this.loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (this.sentinelRef?.nativeElement) {
+      this.observer.observe(this.sentinelRef.nativeElement);
+    }
+  }
+
+  private readonly onWindowScroll = (): void => {
+    if (typeof window === 'undefined') return;
+    const scrollBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+    if (scrollBottom < 250 && this.hasMoreToLoad() && !this.loadingMore()) {
+      this.loadMore();
+    }
+  };
+
+  protected loadMore(): void {
+    if (!this.hasMoreToLoad() || this.loadingMore()) return;
+    this.loadingMore.set(true);
+
+    setTimeout(() => {
+      this.displayedLimit.update((prev) => prev + this.pageSize);
+      this.loadingMore.set(false);
+
+      if (this.sentinelRef?.nativeElement && this.observer) {
+        this.observer.disconnect();
+        this.observer.observe(this.sentinelRef.nativeElement);
+      }
+    }, 300);
+  }
 
   protected formatPrice(val: number): string {
     return val.toLocaleString('fr-FR');

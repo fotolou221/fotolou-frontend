@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -47,7 +47,7 @@ import { AppNotification } from '../../../shared/models/notification';
           />
         } @else if (notificationService.coiffeurNotifications().length > 0) {
           <div class="notifications-page__list">
-            @for (notification of notificationService.coiffeurNotifications(); track notification.id) {
+            @for (notification of displayedNotifications(); track notification.id) {
               <div
                 class="notification-card"
                 [class.notification-card--unread]="!notification.isRead"
@@ -113,10 +113,26 @@ import { AppNotification } from '../../../shared/models/notification';
               </div>
             }
           </div>
+
+          <!-- Bottom Infinite Scroll Sentinel & Indicator -->
+          @if (displayedNotifications().length > 0) {
+            <div #scrollSentinel class="notifications-page__sentinel">
+              @if (loadingMore()) {
+                <div class="notifications-page__loading-more">
+                  <div class="notifications-page__spinner"></div>
+                  <span>Chargement d'autres notifications…</span>
+                </div>
+              } @else if (!hasMoreToLoad()) {
+                <div class="notifications-page__end-message">
+                  <span>✨ Vous avez vu toutes vos notifications</span>
+                </div>
+              }
+            </div>
+          }
         } @else {
           <app-empty-state
             icon="notification"
-            title="Aucune notification pro"
+            title="Aucune alerte reçue"
             description="Toutes vos alertes salon et file d'attente apparaîtront ici."
           />
         }
@@ -125,12 +141,82 @@ import { AppNotification } from '../../../shared/models/notification';
   `,
   styleUrl: '../../client/notifications/notifications-page.scss'
 })
-export class CoiffeurNotificationsPage implements OnInit {
+export class CoiffeurNotificationsPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   protected readonly notificationService = inject(NotificationService);
 
+  @ViewChild('scrollSentinel') sentinelRef?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
+
+  // ── Infinite Scroll State (Lazy Load by 10) ─────────────────
+  protected readonly pageSize = 10;
+  protected readonly displayedLimit = signal<number>(10);
+  protected readonly loadingMore = signal<boolean>(false);
+
+  protected readonly displayedNotifications = computed(() => {
+    return this.notificationService.coiffeurNotifications().slice(0, this.displayedLimit());
+  });
+
+  protected readonly hasMoreToLoad = computed(() => {
+    return this.displayedLimit() < this.notificationService.coiffeurNotifications().length;
+  });
+
   ngOnInit(): void {
     this.notificationService.loadNotifications();
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', this.onWindowScroll, { passive: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('scroll', this.onWindowScroll);
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting && this.hasMoreToLoad() && !this.loadingMore()) {
+          this.loadMore();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (this.sentinelRef?.nativeElement) {
+      this.observer.observe(this.sentinelRef.nativeElement);
+    }
+  }
+
+  private readonly onWindowScroll = (): void => {
+    if (typeof window === 'undefined') return;
+    const scrollBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+    if (scrollBottom < 250 && this.hasMoreToLoad() && !this.loadingMore()) {
+      this.loadMore();
+    }
+  };
+
+  protected loadMore(): void {
+    if (!this.hasMoreToLoad() || this.loadingMore()) return;
+    this.loadingMore.set(true);
+
+    setTimeout(() => {
+      this.displayedLimit.update((prev) => prev + this.pageSize);
+      this.loadingMore.set(false);
+
+      if (this.sentinelRef?.nativeElement && this.observer) {
+        this.observer.disconnect();
+        this.observer.observe(this.sentinelRef.nativeElement);
+      }
+    }, 300);
   }
 
   protected onNotificationClick(notification: AppNotification): void {

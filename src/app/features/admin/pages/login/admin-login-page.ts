@@ -107,17 +107,6 @@ import { AdminDataService } from '../../services/admin-data.service';
             <p>Saisissez vos identifiants pour vous connecter à votre espace de gestion.</p>
           </div>
 
-          <!-- Quick Demo Account Shortcut Pill -->
-          <div class="admin-auth__demo-banner">
-            <div class="admin-auth__demo-text">
-              <span class="admin-auth__demo-dot"></span>
-              <span>Identifiants démo : <strong>admin&#64;fotolou.sn</strong> / <strong>fotolou2026</strong></span>
-            </div>
-            <button type="button" class="admin-auth__demo-btn" (click)="fillDemoCredentials()">
-              Remplir automatiquement
-            </button>
-          </div>
-
           <!-- Error Alert -->
           @if (errorMessage()) {
             <div class="admin-auth__error-alert" role="alert">
@@ -147,7 +136,7 @@ import { AdminDataService } from '../../services/admin-data.service';
                   name="email"
                   type="text"
                   [(ngModel)]="email"
-                  placeholder="admin@fotolou.sn"
+                  placeholder="Identifiant ou adresse e-mail"
                   required
                   autocomplete="username"
                 />
@@ -228,16 +217,11 @@ export class AdminLoginPage {
   private readonly adminDataService = inject(AdminDataService);
   private readonly router = inject(Router);
 
-  protected email = 'admin@fotolou.sn';
-  protected password = 'admin_fotolou_2026';
+  protected email = '';
+  protected password = '';
   protected readonly showPassword = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
   protected readonly errorMessage = signal<string>('');
-
-  protected fillDemoCredentials(): void {
-    this.email = 'admin@fotolou.sn';
-    this.password = 'admin_fotolou_2026';
-  }
 
   protected onSubmit(): void {
     this.errorMessage.set('');

@@ -4,7 +4,7 @@ import { AdminDataService } from '../../services/admin-data.service';
 import { AdminBadge } from '../../components/admin-badge/admin-badge';
 import { AdminModal } from '../../components/admin-modal/admin-modal';
 import { AdminPagination } from '../../components/admin-pagination/admin-pagination';
-import type { OrderStatus } from '../../../../shared/models/order';
+import type { Order, OrderStatus } from '../../../../shared/models/order';
 import { AdminConfirmService } from '../../services/admin-confirm.service';
 
 interface DraftLine {
@@ -56,7 +56,7 @@ interface DraftLine {
                 <th>Canal</th>
                 <th>Total TTC</th>
                 <th>Statut</th>
-                <th style="text-align: right;">Action</th>
+                <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -80,9 +80,9 @@ interface DraftLine {
                     </div>
                   </td>
                   <td>
-                    <span class="admin-badge admin-badge--info">
+                    <app-admin-badge variant="info">
                       {{ order.orderType === 'whatsapp' ? 'WhatsApp' : 'Appel' }}
-                    </span>
+                    </app-admin-badge>
                   </td>
                   <td><strong class="admin-price-tag">{{ formatPrice(order.totalPrice) }}</strong></td>
                   <td>
@@ -92,6 +92,19 @@ interface DraftLine {
                   </td>
                   <td style="text-align: right;">
                     <div class="admin-table__actions" style="justify-content: flex-end; gap: 8px;">
+                      <button
+                        type="button"
+                        class="admin-btn admin-btn--sm admin-btn--whatsapp"
+                        (click)="shareOrderOnWhatsApp(order)"
+                        title="Partager la commande et la position sur WhatsApp"
+                        aria-label="Partager sur WhatsApp"
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 14px; height: 14px;">
+                          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm5.82 14.1c-.25.7-1.46 1.34-2.02 1.4-.53.07-1.22.1-1.96-.14-.45-.15-1.03-.34-1.78-.67-3.14-1.36-5.18-4.54-5.34-4.75-.16-.21-1.29-1.72-1.29-3.28 0-1.56.82-2.33 1.11-2.65.29-.32.64-.4.85-.4.21 0 .42.01.6.01.2 0 .46-.07.72.55.26.63.89 2.17.97 2.32.08.16.13.35.03.56-.1.21-.16.34-.31.52-.16.18-.33.4-.47.54-.15.15-.31.31-.13.62.18.3.8 1.32 1.72 2.14 1.18 1.05 2.18 1.38 2.49 1.54.31.16.49.13.67-.08.18-.21.77-.9 1-.1.21.23.21.37.05.78.7.16.41.32.82.32 1.23 0 .41-.25.82-1.02.82z"/>
+                        </svg>
+                        <span>Partager</span>
+                      </button>
+
                       @if (order.status === 'en_attente') {
                         <button type="button" class="admin-btn admin-btn--sm admin-btn--primary" (click)="confirmOrder(order.id)">
                           Confirmer
@@ -270,6 +283,56 @@ export class AdminCommandesPage {
   private showToast(msg: string): void {
     this.toast.set(msg);
     setTimeout(() => this.toast.set(null), 3000);
+  }
+
+  protected shareOrderOnWhatsApp(order: Order): void {
+    let msg = `📦 *COMMANDE FOTOLOU : ${order.orderNumber}*\n`;
+    msg += `📅 *Date :* ${this.formatDate(order.createdAt)}\n`;
+    msg += `👤 *Client :* ${order.customerName || 'Non renseigné'}\n`;
+    msg += `📞 *Téléphone :* ${order.customerPhone || 'Non renseigné'}\n`;
+    msg += `📌 *Statut :* ${this.getOrderStatusLabel(order.status)}\n\n`;
+
+    msg += `🛒 *Articles commandés :*\n`;
+    if (order.items && order.items.length > 0) {
+      order.items.forEach(it => {
+        const title = it.product?.title || 'Article';
+        const price = (it.product?.price || 0) * it.quantity;
+        msg += `• ${it.quantity}x ${title} - ${this.formatPrice(price)}\n`;
+      });
+    } else {
+      msg += `• Aucun article\n`;
+    }
+
+    msg += `\n💰 *Total TTC :* ${this.formatPrice(order.totalPrice)}\n`;
+
+    if (order.deliveryAddress || order.deliveryDistrict) {
+      const addr = [order.deliveryAddress, order.deliveryDistrict].filter(Boolean).join(', ');
+      msg += `🏠 *Adresse de livraison :* ${addr}\n`;
+    }
+
+    if (order.notes && order.notes.trim()) {
+      const notes = order.notes.trim();
+      msg += `📝 *Notes :* ${notes}\n`;
+
+      // Lien de localisation Google Maps : présent uniquement si la note n'est pas vide
+      let mapUrl = '';
+      const gpsMatch = notes.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      if (gpsMatch) {
+        mapUrl = `https://maps.google.com/?q=${gpsMatch[1]},${gpsMatch[2]}`;
+      } else if (notes.includes('http')) {
+        const urlMatch = notes.match(/https?:\/\/[^\s]+/);
+        if (urlMatch) mapUrl = urlMatch[0];
+      } else {
+        mapUrl = `https://maps.google.com/?q=${encodeURIComponent(notes)}`;
+      }
+
+      if (mapUrl) {
+        msg += `📍 *Position client (Google Maps) :*\n${mapUrl}\n`;
+      }
+    }
+
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
   }
 
   protected confirmOrder(orderId: string): void {

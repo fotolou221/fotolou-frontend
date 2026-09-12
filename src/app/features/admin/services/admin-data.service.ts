@@ -813,7 +813,8 @@ export class AdminDataService {
       customerName: o.customerName || undefined,
       customerPhone: o.customerPhone || undefined,
       deliveryAddress: o.deliveryAddress || undefined,
-      deliveryDistrict: o.deliveryDistrict || undefined
+      deliveryDistrict: o.deliveryDistrict || undefined,
+      notes: o.notes || undefined
     };
   }
 

@@ -17,6 +17,7 @@ export interface Order {
   readonly customerPhone?: string;
   readonly deliveryAddress?: string;
   readonly deliveryDistrict?: string;
+  readonly notes?: string;
   /** Lien WhatsApp pré-rempli renvoyé par le backend au moment du checkout. */
   readonly whatsAppUrl?: string;
 }

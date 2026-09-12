@@ -30,32 +30,8 @@ import { CartItem } from '../../../shared/models/product';
           </div>
           <h1>Confirmez votre commande</h1>
           <p>
-            Votre commande sera enregistrée <strong>en attente</strong>. Elle sera préparée
-            dès que notre équipe l'aura confirmée (WhatsApp ou appel).
+            Votre commande sera enregistrée et préparée par l'équipe Fotolou.
           </p>
-        </section>
-
-        <!-- Adresse de livraison -->
-        <section class="order-confirm-page__card">
-          <label class="order-confirm-page__field-label" for="delivery-address">Adresse de livraison</label>
-          <input
-            id="delivery-address"
-            type="text"
-            class="order-confirm-page__field"
-            [(ngModel)]="deliveryAddress"
-            placeholder="Ex : Sacré-Cœur 3, Villa 123, Dakar"
-          />
-          <label class="order-confirm-page__field-label" for="delivery-district">Quartier</label>
-          <input
-            id="delivery-district"
-            type="text"
-            class="order-confirm-page__field"
-            [(ngModel)]="deliveryDistrict"
-            placeholder="Ex : Sacré-Cœur"
-          />
-          @if (cartService.deliveryCoords()) {
-            <span class="order-confirm-page__geo-hint">📍 Position GPS enregistrée pour la livraison</span>
-          }
         </section>
 
         <section class="order-confirm-page__card">
@@ -90,21 +66,46 @@ import { CartItem } from '../../../shared/models/product';
       </div>
 
       <div slot="footer" class="order-confirm-page__fixed-footer">
-        <button type="button" class="order-confirm-page__whatsapp-btn" [disabled]="submitting()" (click)="orderByWhatsApp()">
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm5.82 14.1c-.25.7-1.46 1.34-2.02 1.4-.53.07-1.22.1-1.96-.14-.45-.15-1.03-.34-1.78-.67-3.14-1.36-5.18-4.54-5.34-4.75-.16-.21-1.29-1.72-1.29-3.28 0-1.56.82-2.33 1.11-2.65.29-.32.64-.4.85-.4.21 0 .42.01.6.01.2 0 .46-.07.72.55.26.63.89 2.17.97 2.32.08.16.13.35.03.56-.1.21-.16.34-.31.52-.16.18-.33.4-.47.54-.15.15-.31.31-.13.62.18.3.8 1.32 1.72 2.14 1.18 1.05 2.18 1.38 2.49 1.54.31.16.49.13.67-.08.18-.21.77-.9 1-.1.21.23.21.37.05.78.7.16.41.32.82.32 1.23 0 .41-.25.82-1.02.82z"/>
-          </svg>
-          <span>{{ submitting() ? 'Enregistrement…' : 'Commander sur WhatsApp' }}</span>
-        </button>
-
-        <button type="button" class="order-confirm-page__call-btn" [disabled]="submitting()" (click)="orderByCall()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.65 3.38 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 7.55 7.55l.91-.91a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-          </svg>
-          <span>Appeler ({{ orderService.phoneNumber }})</span>
+        <button
+          type="button"
+          class="order-confirm-page__validate-btn"
+          [disabled]="submitting() || orderValidated()"
+          (click)="validateOrder()"
+        >
+          @if (submitting()) {
+            <div class="order-confirm-page__spinner"></div>
+            <span>Validation en cours…</span>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Valider ma commande</span>
+          }
         </button>
       </div>
     </app-client-layout>
+
+    <!-- Modal Ticket Validé (style identique au ticket validé) -->
+    @if (orderValidated()) {
+      <div class="booking-modal__backdrop" role="presentation">
+        <div class="booking-modal__card" role="dialog" aria-modal="true">
+          <div class="booking-modal__success-state">
+            <div class="booking-modal__success-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h3 class="booking-modal__success-title">Commande validée !</h3>
+            <p class="booking-modal__success-desc">
+              Votre commande {{ validatedOrderNumber() }} a été enregistrée avec succès.
+            </p>
+            <div class="booking-modal__success-progress">
+              <div class="booking-modal__success-bar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `,
   styleUrl: './order-confirmation-page.scss'
 })
@@ -116,10 +117,9 @@ export class OrderConfirmationPage implements OnInit {
 
   protected readonly items = signal<readonly CartItem[]>([]);
   protected readonly submitting = signal(false);
+  protected readonly orderValidated = signal(false);
+  protected readonly validatedOrderNumber = signal('');
   protected readonly errorMsg = signal<string | null>(null);
-
-  protected deliveryAddress = '';
-  protected deliveryDistrict = '';
 
   ngOnInit(): void {
     const cartItems = this.cartService.cartItems();
@@ -128,8 +128,17 @@ export class OrderConfirmationPage implements OnInit {
       return;
     }
     this.items.set([...cartItems]);
-    this.deliveryAddress = this.cartService.deliveryAddress();
-    this.deliveryDistrict = this.cartService.deliveryDistrict();
+
+    // Active la géolocalisation pour enregistrer automatiquement la position du client
+    if (!this.cartService.deliveryCoords() && typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.cartService.deliveryCoords.set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
   }
 
   protected formatPrice(val: number): string {
@@ -139,18 +148,33 @@ export class OrderConfirmationPage implements OnInit {
   private buildDelivery() {
     const user = this.auth.currentUser();
     const coords = this.cartService.deliveryCoords();
-    const notes = coords ? `Position GPS: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` : undefined;
+    const notes = coords
+      ? `Position GPS: ${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
+      : undefined;
     return {
-      address: this.deliveryAddress.trim() || undefined,
-      district: this.deliveryDistrict.trim() || undefined,
+      address: undefined,
+      district: 'Dakar',
       customerName: user && user.id !== 'guest' ? user.name : undefined,
       customerPhone: user && user.id !== 'guest' ? user.phone : undefined,
       notes
     };
   }
 
-  private submit(channel: 'whatsapp' | 'call'): void {
-    if (this.submitting() || this.items().length === 0) return;
+  protected async validateOrder(): Promise<void> {
+    if (this.submitting() || this.items().length === 0 || this.orderValidated()) return;
+
+    // Tente de récupérer les coordonnées en direct si pas encore capturées
+    if (!this.cartService.deliveryCoords() && typeof navigator !== 'undefined' && navigator.geolocation) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 2500 });
+        });
+        this.cartService.deliveryCoords.set({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      } catch {
+        // En cas de refus ou timeout, on continue avec la position par défaut
+      }
+    }
+
     this.submitting.set(true);
     this.errorMsg.set(null);
 
@@ -159,31 +183,24 @@ export class OrderConfirmationPage implements OnInit {
       this.cartService.subtotal(),
       this.cartService.deliveryFee(),
       this.cartService.totalPrice(),
-      channel,
+      'whatsapp',
       this.buildDelivery()
     ).subscribe({
       next: (order) => {
         this.submitting.set(false);
         this.cartService.clearCart();
-        if (channel === 'whatsapp') {
-          window.open(this.orderService.getNewOrderWhatsAppUrl(order), '_blank');
-        } else {
-          window.location.href = this.orderService.getCallUrl();
-        }
-        this.router.navigate(['/client/boutique/commandes']);
+        this.validatedOrderNumber.set(order.orderNumber ? `(${order.orderNumber})` : '');
+        this.orderValidated.set(true);
+
+        // Disparaît après 2s avec redirection vers la liste des commandes
+        setTimeout(() => {
+          this.router.navigate(['/client/boutique/commandes']);
+        }, 2000);
       },
       error: () => {
         this.submitting.set(false);
         this.errorMsg.set('Impossible d\'enregistrer la commande. Vérifiez votre connexion et réessayez.');
       }
     });
-  }
-
-  protected orderByWhatsApp(): void {
-    this.submit('whatsapp');
-  }
-
-  protected orderByCall(): void {
-    this.submit('call');
   }
 }
