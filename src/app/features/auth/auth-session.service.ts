@@ -157,8 +157,22 @@ export class AuthSessionService {
     } catch (e) {
       console.warn('[AuthSessionService] Backend OTP verify fallback to dev code:', e);
       if (code === '123456') {
-        this.activeRoleSignal.set('client');
-        this.persistActiveRole();
+        const loginRole = this.pendingLoginRoleSignal();
+        const roleClean: UserRole = loginRole === 'coiffeur' ? 'coiffeur' : 'client';
+        const fakeToken = 'dev_mock_jwt_token_' + Date.now();
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(this.tokenKey, fakeToken);
+        }
+        const profile: AuthUserProfile = {
+          id: Date.now(),
+          name: roleClean === 'coiffeur' ? 'Barbier Fotolou' : 'Client Fotolou',
+          phone: this.pendingPhoneSignal(),
+          role: roleClean,
+          homeRoute: roleClean === 'coiffeur' ? '/coiffeur/home' : '/client/home'
+        };
+        this.currentUserSignal.set(profile);
+        this.activeRoleSignal.set(roleClean);
+        this.persistUser(profile);
         return true;
       }
       if (this.errorMessages.isConnectionIssue(e)) {
