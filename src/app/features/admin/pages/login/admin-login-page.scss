@@ -2,13 +2,17 @@
   display: block;
   min-height: 100vh;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .admin-auth {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   min-height: 100vh;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
   background: var(--bg-card, #ffffff);
 
   @media (min-width: 1024px) {
@@ -190,8 +194,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 32px;
+  padding: 40px 24px;
   background: var(--bg-page, #f8fafc);
+
+  @media (max-width: 639px) {
+    padding: 20px 16px 36px;
+    align-items: flex-start;
+  }
 
   @media (min-width: 1024px) {
     padding: 60px 48px;
@@ -204,6 +213,46 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+
+  @media (max-width: 639px) {
+    gap: 18px;
+  }
+}
+
+.admin-auth__top-nav {
+  display: flex;
+  align-items: center;
+  margin-bottom: -4px;
+}
+
+.admin-auth__top-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-secondary, #64748b);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    background: #ffffff;
+    color: var(--primary, #1E5AF0);
+    border-color: var(--primary, #1E5AF0);
+    transform: translateX(-2px);
+  }
 }
 
 .admin-auth__form-header {
@@ -438,15 +487,23 @@
   text-align: center;
 }
 
+.admin-auth__back-btn,
 .admin-auth__back-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: 0.875rem;
   font-weight: 600;
+  font-family: inherit;
   color: var(--text-secondary, #64748b);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: all 0.15s ease;
 
   svg {
     width: 16px;
@@ -455,6 +512,6 @@
 
   &:hover {
     color: var(--primary, #1E5AF0);
-    text-decoration: underline;
+    background: rgba(30, 90, 240, 0.05);
   }
 }

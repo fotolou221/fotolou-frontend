@@ -191,3 +191,20 @@
     }
   }
 }
+
+@media (max-width: 640px) {
+  .admin-card {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .admin-form__row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .admin-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

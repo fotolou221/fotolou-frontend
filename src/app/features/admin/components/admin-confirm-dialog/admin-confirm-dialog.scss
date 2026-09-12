@@ -160,3 +160,33 @@
     transform: scale(1);
   }
 }
+
+@media (max-width: 480px) {
+  .confirm-backdrop {
+    padding: 12px;
+  }
+
+  .confirm-dialog {
+    padding: 20px 16px;
+    gap: 16px;
+    border-radius: 16px;
+  }
+
+  .confirm-dialog__header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .confirm-dialog__actions {
+    flex-direction: column-reverse;
+    width: 100%;
+    gap: 8px;
+
+    .confirm-dialog__btn {
+      width: 100%;
+      height: 44px;
+    }
+  }
+}

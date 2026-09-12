@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { AdminAuthService } from '../../services/admin-auth.service';
 import { AdminDataService } from '../../services/admin-data.service';
 
 @Component({
   selector: 'app-admin-login-page',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   template: `
     <div class="admin-auth">
       
@@ -100,6 +100,22 @@ import { AdminDataService } from '../../services/admin-data.service';
         
         <div class="admin-auth__form-box">
           
+          <!-- Top Return Button for Mobile & Desktop -->
+          <div class="admin-auth__top-nav">
+            <button
+              type="button"
+              class="admin-auth__top-back-btn"
+              (click)="goToVitrine($event)"
+              aria-label="Retour au site public Fotolou"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+              </svg>
+              <span>Retour à la vitrine</span>
+            </button>
+          </div>
+
           <!-- Form Header -->
           <div class="admin-auth__form-header">
             <span class="admin-auth__subtag">AUTHENTIFICATION ADMINISTRATEUR</span>
@@ -198,10 +214,15 @@ import { AdminDataService } from '../../services/admin-data.service';
 
           <!-- Back to Vitrine -->
           <div class="admin-auth__footer-links">
-            <a routerLink="/" class="admin-auth__back-link">
+            <button
+              type="button"
+              class="admin-auth__back-btn"
+              (click)="goToVitrine($event)"
+              aria-label="Retourner au site public Fotolou"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
               <span>Retourner au site public Fotolou</span>
-            </a>
+            </button>
           </div>
 
         </div>
@@ -222,6 +243,26 @@ export class AdminLoginPage {
   protected readonly showPassword = signal<boolean>(false);
   protected readonly loading = signal<boolean>(false);
   protected readonly errorMessage = signal<string>('');
+
+  protected goToVitrine(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.router.navigate(['/']).then((success) => {
+      if (!success) {
+        this.router.navigateByUrl('/vitrine').then((s2) => {
+          if (!s2 && typeof window !== 'undefined') {
+            window.location.href = '/';
+          }
+        });
+      }
+    }).catch(() => {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
+    });
+  }
 
   protected onSubmit(): void {
     this.errorMessage.set('');

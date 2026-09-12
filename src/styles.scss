@@ -807,3 +807,297 @@ h1, h2, h3, h4, h5, h6, p {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// ── Global Admin 100% Responsive Engine (Mobile & Tablet) ────
+// ══════════════════════════════════════════════════════════════
+
+// Prevent any horizontal overflow on the whole document
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+app-root {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+// Global Admin Structure & Containers
+.admin-shell,
+.admin-main,
+.admin-content,
+.admin-page {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.admin-card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.admin-table-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  overflow-x: auto !important;
+  display: block !important;
+  -webkit-overflow-scrolling: touch !important;
+
+  &::-webkit-scrollbar {
+    height: 5px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+}
+
+// Tablet Breakpoint (768px to 1023px)
+@media (max-width: 1023px) {
+  .admin-page {
+    gap: 20px !important;
+  }
+
+  .admin-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-grid-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-settings-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 20px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-categories-grid,
+  .admin-grid-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+// Mobile Breakpoint (under 768px)
+@media (max-width: 767px) {
+  .admin-page {
+    gap: 16px !important;
+  }
+
+  .admin-page__header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+
+    h1 {
+      font-size: 1.35rem !important;
+      line-height: 1.25 !important;
+    }
+
+    p {
+      font-size: 0.8125rem !important;
+    }
+
+    .admin-page__header-actions {
+      width: 100% !important;
+
+      .admin-btn {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+    }
+
+    .admin-btn {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+
+  .admin-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+
+    .admin-search-box {
+      max-width: 100% !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    .admin-filter-group,
+    .admin-filter-select,
+    .admin-toolbar__right,
+    select {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
+
+  .admin-grid-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-stat-card {
+    padding: 14px 12px !important;
+    border-radius: 14px !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+
+    &__value {
+      font-size: 1.15rem !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    &__label {
+      font-size: 0.72rem !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    &__subtext {
+      font-size: 0.68rem !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+  }
+
+  .admin-card {
+    padding: 16px 14px !important;
+    border-radius: 16px !important;
+    gap: 14px !important;
+
+    &__header {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 10px !important;
+
+      .admin-btn {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+    }
+  }
+
+  .admin-categories-grid,
+  .admin-grid-cards {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .admin-table {
+    min-width: 580px !important;
+
+    th, td {
+      padding: 11px 12px !important;
+      font-size: 0.8rem !important;
+    }
+
+    &__actions {
+      display: inline-flex !important;
+      flex-wrap: nowrap !important;
+      gap: 6px !important;
+    }
+  }
+
+  // Modals on mobile
+  .admin-modal-backdrop {
+    padding: 10px !important;
+  }
+
+  .admin-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 94vh !important;
+    max-height: 94dvh !important;
+    border-radius: 18px !important;
+
+    &__header {
+      padding: 16px 18px !important;
+
+      h3 {
+        font-size: 1.1rem !important;
+      }
+    }
+
+    &__body {
+      padding: 16px 18px !important;
+    }
+
+    &__footer {
+      padding: 14px 18px !important;
+      flex-direction: column-reverse !important;
+      gap: 8px !important;
+
+      .admin-btn,
+      .admin-modal__btn-cancel {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+    }
+  }
+
+  .admin-form__row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+}
+
+// Smartphone Breakpoint (under 540px)
+@media (max-width: 540px) {
+  .admin-grid-stats {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .admin-page__header h1 {
+    font-size: 1.25rem !important;
+  }
+
+  .admin-card {
+    padding: 14px 12px !important;
+    border-radius: 14px !important;
+  }
+}
+

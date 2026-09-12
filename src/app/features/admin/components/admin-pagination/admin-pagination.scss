@@ -114,3 +114,23 @@
   color: var(--text-muted, #94a3b8);
   font-weight: 700;
 }
+
+@media (max-width: 640px) {
+  .admin-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .admin-pagination__info {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .admin-pagination__nav {
+    justify-content: center;
+    width: 100%;
+    overflow-x: auto;
+  }
+}

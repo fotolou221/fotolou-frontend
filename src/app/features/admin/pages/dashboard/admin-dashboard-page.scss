@@ -307,3 +307,9 @@
     transform: translateY(-1px);
   }
 }
+
+@media (max-width: 640px) {
+  .admin-card__shortcuts-grid {
+    grid-template-columns: 1fr;
+  }
+}

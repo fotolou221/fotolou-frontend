@@ -841,4 +841,27 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@media (max-width: 640px) {
+  .admin-stepper {
+    padding: 8px 10px;
+    gap: 4px;
+  }
+
+  .modal-footer-nav {
+    flex-direction: column-reverse;
+    gap: 8px;
+
+    .admin-btn,
+    .admin-btn-secondary,
+    .admin-btn--outline {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .gps-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
