@@ -1,18 +1,21 @@
 import { Component, inject, OnInit, signal, computed, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
+import { LocationHeader } from '../../../shared/components/location-header/location-header';
 import { TicketCard } from '../../../shared/components/ticket-card/ticket-card';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { TicketService } from '../../../shared/services/ticket.service';
 import { NotificationService } from '../../../shared/services/notification.service';
+import { SalonService } from '../../../shared/services/salon.service';
 import { TicketTab } from '../../../shared/models/ticket';
 
 @Component({
   selector: 'app-my-tickets-page',
   imports: [
     ClientLayout,
+    LocationHeader,
     TicketCard,
     SkeletonLoaderComponent,
     EmptyStateComponent,
@@ -20,26 +23,14 @@ import { TicketTab } from '../../../shared/models/ticket';
   ],
   template: `
     <app-client-layout activeNav="tickets" [hasHeaderSlot]="true">
-      <!-- Fixed Header Slot -->
-      <header slot="header" class="tickets-header">
-        <h1 class="tickets-header__title">Mes tickets</h1>
-
-        <!-- Header Actions: Notification Bell -->
-        <button
-          type="button"
-          class="tickets-header__icon-btn"
-          (click)="goToNotifications()"
-          aria-label="Notifications"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          @if (notificationService.unreadCount() > 0) {
-            <span class="tickets-header__notif-badge">{{ notificationService.unreadCount() > 99 ? '99+' : notificationService.unreadCount() }}</span>
-          }
-        </button>
-      </header>
+      <!-- Standard App Header -->
+      <app-location-header
+        slot="header"
+        [location]="salonService.currentLocation()"
+        [hasNotification]="notificationService.unreadCount() > 0"
+        (notificationClick)="goToNotifications()"
+        (favoritesClick)="goToFavorites()"
+      />
 
       <!-- Main Scrollable Content -->
       <div class="my-tickets-page__content">
@@ -126,6 +117,7 @@ export class MyTicketsPage implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   protected readonly ticketService = inject(TicketService);
   protected readonly notificationService = inject(NotificationService);
+  protected readonly salonService = inject(SalonService);
   protected readonly activeTab = this.ticketService.activeTab;
 
   @ViewChild('scrollSentinel') sentinelRef?: ElementRef<HTMLDivElement>;
@@ -209,5 +201,9 @@ export class MyTicketsPage implements OnInit, AfterViewInit, OnDestroy {
 
   protected goToNotifications(): void {
     this.router.navigate(['/client/notifications']);
+  }
+
+  protected goToFavorites(): void {
+    this.router.navigate(['/client/favoris']);
   }
 }
