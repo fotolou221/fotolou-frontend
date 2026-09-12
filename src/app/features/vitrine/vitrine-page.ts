@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { PwaService } from '../../shared/services/pwa.service';
 import { AuthSessionService } from '../auth/auth-session.service';
+import { VitrineStatsService, PublicStats, DEFAULT_VITRINE_STATS } from './services/vitrine-stats.service';
 
 interface FaqItem {
   question: string;
@@ -230,7 +231,7 @@ interface FaqItem {
               </svg>
             </div>
             <div class="vitrine-stat-item__content">
-              <strong>+10 000</strong>
+              <strong>{{ stats().activeUsersFormatted }}</strong>
               <span>Utilisateurs actifs</span>
             </div>
           </div>
@@ -247,7 +248,7 @@ interface FaqItem {
               </svg>
             </div>
             <div class="vitrine-stat-item__content">
-              <strong>+500</strong>
+              <strong>{{ stats().totalSalonsFormatted }}</strong>
               <span>Salons partenaires</span>
             </div>
           </div>
@@ -260,7 +261,7 @@ interface FaqItem {
               </svg>
             </div>
             <div class="vitrine-stat-item__content">
-              <strong>98%</strong>
+              <strong>{{ stats().satisfactionRateFormatted }}</strong>
               <span>Taux de satisfaction</span>
             </div>
           </div>
@@ -274,7 +275,7 @@ interface FaqItem {
               </svg>
             </div>
             <div class="vitrine-stat-item__content">
-              <strong>24/7</strong>
+              <strong>{{ stats().serviceAvailability }}</strong>
               <span>Service disponible</span>
             </div>
           </div>
@@ -896,7 +897,10 @@ export class VitrinePage implements OnInit {
   private readonly router = inject(Router);
   private readonly pwa = inject(PwaService);
   private readonly authSession = inject(AuthSessionService);
+  private readonly statsService = inject(VitrineStatsService);
   private readonly platformId = inject(PLATFORM_ID);
+
+  protected readonly stats = signal<PublicStats>(DEFAULT_VITRINE_STATS);
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -904,6 +908,13 @@ export class VitrinePage implements OnInit {
       if (this.pwa.isStandalone() || window.location.search.includes('source=pwa')) {
         void this.router.navigateByUrl('/onboarding');
       }
+
+      // Chargement en temps réel des statistiques publiques depuis le backend Fotolou
+      this.statsService.getPublicStats().subscribe((data) => {
+        if (data) {
+          this.stats.set(data);
+        }
+      });
     }
   }
 
