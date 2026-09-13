@@ -105,7 +105,7 @@ export class AdminDataService {
     this.loadOrders();
 
     // 6. Tickets
-    this.http.get<any[]>(`${this.baseUrl}/tickets`).pipe(
+    this.http.get<any[]>(`${this.baseUrl}/tickets?page=0&size=1000`).pipe(
       tap((tickets) => {
         if (Array.isArray(tickets)) {
           this.tickets.set(tickets.map((t: any) => ({
@@ -113,12 +113,16 @@ export class AdminDataService {
             salonId: t.salon?.slug || t.salon?.id?.toString() || 'salon',
             salonName: t.salon?.name || 'Salon Fotolou',
             ownerName: t.ownerName || 'Client',
+            ownerPhone: t.ownerPhone,
+            ownerType: t.ownerType,
+            user: t.user ? { id: t.user.id, login: t.user.login } : undefined,
             ticketNumber: Number(t.ticketNumber) || 1,
             status: (t.status ? t.status.toLowerCase() : 'waiting') as TicketStatus,
             category: (t.status === 'served' || t.status === 'completed' || t.status === 'cancelled') ? 'history' : 'active',
             createdAt: t.createdAt || t.createdDate || new Date().toISOString(),
             servedAt: t.servedAt
           })));
+          this.syncTicketsCountsToClients();
         }
       }),
       catchError(() => of([]))
@@ -919,24 +923,87 @@ export class AdminDataService {
       return;
     }
 
-    this.http.get<any[]>(`${this.baseUrl}/admin/users`).pipe(
+    this.http.get<any[]>(`${this.baseUrl}/admin/users?page=0&size=1000`).pipe(
       tap((users) => {
         if (Array.isArray(users)) {
           this.clients.set(users.map((u: any) => ({
             id: u.id ? u.id.toString() : `u-${Date.now()}`,
             name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.login || 'Utilisateur',
-            phone: u.login || '+221 77 000 00 00',
+            phone: u.phone || u.login || '+221 77 000 00 00',
             district: u.district || 'Dakar',
             avatarUrl: u.imageUrl,
             role: u.authorities?.includes('ROLE_ADMIN') ? 'admin' : (u.authorities?.includes('ROLE_COIFFEUR') ? 'coiffeur' : 'client'),
-            ticketsCount: u.ticketsCount || 0,
-            relativesCount: u.relativesCount || 0,
+            ticketsCount: Number(u.ticketsCount) || 0,
+            relativesCount: Number(u.relativesCount) || 0,
             createdAt: u.createdDate || new Date().toISOString()
           })));
+          this.syncTicketsCountsToClients();
+          this.loadRelatives();
         }
       }),
       catchError(() => of([]))
     ).subscribe();
+  }
+
+  loadRelatives(): void {
+    const token = localStorage.getItem('fotolou_jwt_token') || localStorage.getItem('jhi-authenticationtoken');
+    if (!token) return;
+
+    this.http.get<any[]>(`${this.baseUrl}/relatives?page=0&size=1000`).pipe(
+      tap((relatives) => {
+        if (Array.isArray(relatives) && relatives.length > 0) {
+          const relCountsById = new Map<string, number>();
+          const relCountsByLogin = new Map<string, number>();
+
+          for (const r of relatives) {
+            const uid = r.user?.id ? r.user.id.toString() : null;
+            const ulog = r.user?.login;
+            if (uid) relCountsById.set(uid, (relCountsById.get(uid) || 0) + 1);
+            if (ulog) relCountsByLogin.set(ulog, (relCountsByLogin.get(ulog) || 0) + 1);
+          }
+
+          this.clients.update((clients) =>
+            clients.map((c) => {
+              const cleanPhone = c.phone ? c.phone.replace(/\s+/g, '') : '';
+              const countFromRel =
+                (relCountsById.get(c.id) || 0) +
+                (c.phone ? (relCountsByLogin.get(c.phone) || 0) : 0) +
+                (cleanPhone && cleanPhone !== c.phone ? (relCountsByLogin.get(cleanPhone) || 0) : 0);
+
+              return {
+                ...c,
+                relativesCount: Math.max(c.relativesCount || 0, countFromRel)
+              };
+            })
+          );
+        }
+      }),
+      catchError(() => of([]))
+    ).subscribe();
+  }
+
+  private syncTicketsCountsToClients(): void {
+    const tickets = this.tickets();
+    if (tickets.length === 0) return;
+
+    this.clients.update((clients) =>
+      clients.map((c) => {
+        const cleanPhone = c.phone ? c.phone.replace(/\s+/g, '') : '';
+        const countFromTickets = tickets.filter((t) => {
+          const tPhone = t.ownerPhone ? t.ownerPhone.replace(/\s+/g, '') : '';
+          return (
+            (t.user?.id && t.user.id.toString() === c.id) ||
+            (t.user?.login && (t.user.login === c.phone || t.user.login === cleanPhone)) ||
+            (cleanPhone && tPhone && (cleanPhone === tPhone || tPhone.endsWith(cleanPhone.slice(-9))))
+          );
+        }).length;
+
+        return {
+          ...c,
+          ticketsCount: Math.max(c.ticketsCount || 0, countFromTickets)
+        };
+      })
+    );
   }
 
   addUser(user: AdminClientUser): void {

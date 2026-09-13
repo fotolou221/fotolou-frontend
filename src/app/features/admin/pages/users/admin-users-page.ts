@@ -99,14 +99,14 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                   <td><strong>{{ user.phone }}</strong></td>
                   <td>{{ user.district }}</td>
                   <td>
-                    @if (user.role === 'client') {
+                    @if (user.role === 'client' || user.ticketsCount > 0) {
                       <strong>{{ user.ticketsCount }}</strong> ticket(s)
                     } @else {
                       <span style="color: #94a3b8; font-size: 0.8125rem;">—</span>
                     }
                   </td>
                   <td>
-                    @if (user.role === 'client') {
+                    @if (user.role === 'client' || user.relativesCount > 0) {
                       <span class="admin-badge admin-badge--neutral">
                         {{ user.relativesCount }} proche(s)
                       </span>
@@ -239,6 +239,7 @@ export class AdminUsersPage implements OnInit {
 
   ngOnInit(): void {
     this.data.loadUsers();
+    this.data.loadRelatives();
   }
 
   protected readonly filteredUsers = computed(() => {
