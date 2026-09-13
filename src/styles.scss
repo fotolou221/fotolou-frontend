@@ -811,13 +811,13 @@ h1, h2, h3, h4, h5, h6, p {
 // ── Global Admin 100% Responsive Engine (Mobile & Tablet) ────
 // ══════════════════════════════════════════════════════════════
 
-// Prevent any horizontal overflow on the whole document
+// Prevent any horizontal overflow on the whole document without breaking position: sticky
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -825,7 +825,7 @@ app-root {
   display: block;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 // Global Admin Structure & Containers

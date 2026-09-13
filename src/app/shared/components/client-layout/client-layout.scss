@@ -44,7 +44,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--bg-page, #ffffff);
 
   .client-layout--with-bottom-nav & {

@@ -9,7 +9,7 @@
   width: min(100%, 390px);
   min-height: 100svh;
   margin: 0 auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--white);
 }
 
