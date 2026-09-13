@@ -21,6 +21,31 @@
       background: #dbeafe;
     }
   }
+
+  &--disabled {
+    opacity: 0.38;
+    cursor: not-allowed !important;
+    user-select: none;
+
+    * {
+      cursor: not-allowed !important;
+    }
+
+    &:hover {
+      transform: none !important;
+      color: #94a3b8 !important;
+
+      .action-tile__icon {
+        background: #f1f5f9 !important;
+        color: #94a3b8 !important;
+      }
+    }
+
+    .action-tile__icon {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+  }
 }
 
 .action-tile__icon {

@@ -18,6 +18,8 @@ export interface Salon {
   readonly coverUrl: string;
   readonly galleryImages?: readonly string[];
   readonly phone?: string;
+  readonly website?: string;
+  readonly address?: string;
   readonly ownerName?: string;
   readonly coiffeurName?: string;
   readonly specialty?: string;

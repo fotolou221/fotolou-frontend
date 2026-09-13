@@ -9,7 +9,7 @@ import { StatusBadge } from '../../../shared/components/status-badge/status-badg
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader.component';
 import { ErrorStateComponent } from '../../../shared/components/error-state/error-state.component';
 import { SalonService } from '../../../shared/services/salon.service';
-import { Salon } from '../../../shared/models/salon';
+import { Salon, SalonAction } from '../../../shared/models/salon';
 
 import { FavoritesService } from '../../../shared/services/favorites.service';
 
@@ -99,7 +99,7 @@ import { FavoritesService } from '../../../shared/services/favorites.service';
             <!-- Quick Action Tiles Grid -->
             <section class="salon-detail__actions">
               @for (action of salon.actions; track action.label) {
-                <app-action-tile [action]="action" />
+                <app-action-tile [action]="action" (actionClick)="handleActionClick(action)" />
               }
             </section>
 
@@ -142,6 +142,15 @@ import { FavoritesService } from '../../../shared/services/favorites.service';
           </div>
         </div>
       }
+
+      @if (toastMessage()) {
+        <div class="salon-detail__toast" role="status" aria-live="polite">
+          <svg class="salon-detail__toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+          <span>{{ toastMessage() }}</span>
+        </div>
+      }
     </app-client-layout>
   `,
   styleUrl: './salon-detail-page.scss'
@@ -155,6 +164,8 @@ export class SalonDetailPage implements OnInit {
   protected readonly loadedSalon = signal<Salon | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly toastMessage = signal<string | null>(null);
+  private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly currentSalon = computed<Salon | null>(() => {
     const id = this.salonId();
@@ -228,5 +239,48 @@ export class SalonDetailPage implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  protected handleActionClick(action: SalonAction): void {
+    if (action.icon === 'share') {
+      const s = this.currentSalon();
+      const shareData = {
+        title: s?.name ? `${s.name} - Fotolou` : 'Salon sur Fotolou',
+        text: s?.name ? `Découvrez le salon ${s.name} sur Fotolou !` : 'Découvrez ce salon sur Fotolou !',
+        url: window.location.href
+      };
+
+      if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        navigator.share(shareData).catch((err) => {
+          if (err?.name !== 'AbortError') {
+            this.copyLinkToClipboard();
+          }
+        });
+      } else {
+        this.copyLinkToClipboard();
+      }
+    }
+  }
+
+  private copyLinkToClipboard(): void {
+    const url = window.location.href;
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url).then(
+        () => this.showToast('Lien du salon copié dans le presse-papier !'),
+        () => this.showToast(`Lien du salon : ${url}`)
+      );
+    } else {
+      this.showToast(`Lien du salon : ${url}`);
+    }
+  }
+
+  private showToast(message: string): void {
+    this.toastMessage.set(message);
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
+    this.toastTimeout = setTimeout(() => {
+      this.toastMessage.set(null);
+    }, 3200);
   }
 }

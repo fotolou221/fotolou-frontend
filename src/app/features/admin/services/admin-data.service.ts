@@ -227,11 +227,14 @@ export class AdminDataService {
           this.salons.set(salons.map((s: any) => ({
             ...s,
             id: s.slug || s.id?.toString() || 'salon',
+            numericId: typeof s.id === 'number' ? s.id : undefined,
             status: s.status ? s.status.toLowerCase() : 'open',
+            website: s.website || s.address || undefined,
+            address: s.address || s.website || undefined,
             avatarUrl: s.avatarUrl || 'images/salons/king-barber-avatar.png',
             coverUrl: s.coverUrl || 'images/salons/king-barber-cover.png',
             actions: Array.isArray(s.actions) && s.actions.length > 0 ? s.actions : [
-              { label: 'Site web', icon: 'globe', href: '#' },
+              { label: 'Site web', icon: 'globe', href: (s.website || s.address) ? (s.website || s.address) : undefined },
               { label: 'Appeler', icon: 'phone', href: `tel:${s.phone || '+221771234567'}` },
               { label: 'Itinéraire', icon: 'navigation', href: '#' },
               { label: 'Partager', icon: 'share', href: '#' }
@@ -246,6 +249,7 @@ export class AdminDataService {
   // ── Salon CRUD ────────────────────────────────────────────
   addSalon(salon: Salon, ownerInfo?: { firstName?: string; lastName?: string; phone?: string; avatarUrl?: string }): Observable<SalonOperationResult> {
     const slug = salon.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const site = salon.website || (salon as any).address || undefined;
     const payload = {
       name: salon.name,
       slug: slug || 'salon-' + Date.now(),
@@ -259,6 +263,8 @@ export class AdminDataService {
       coiffeurName: salon.ownerName || salon.coiffeurName,
       latitude: salon.latitude || 14.716677,
       longitude: salon.longitude || -17.467686,
+      website: site,
+      address: site,
       peopleWaiting: 0,
       estimatedWaitMinutes: 0,
       active: true
@@ -368,6 +374,8 @@ export class AdminDataService {
       coiffeurName: updates.ownerName || updates.coiffeurName,
       latitude: updates.latitude,
       longitude: updates.longitude,
+      website: updates.website !== undefined ? updates.website : (updates as any).address,
+      address: updates.website !== undefined ? updates.website : (updates as any).address,
       status: updates.status ? updates.status.toUpperCase() : undefined,
       active: true
     };

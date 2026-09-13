@@ -78,6 +78,11 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                           <span class="admin-table__subtext">
                             Propriétaire : {{ salon.ownerName || salon.coiffeurName || 'Non renseigné' }}
                           </span>
+                          @if (salon.website || salon.address) {
+                            <span class="admin-table__subtext" style="color: #2563eb;">
+                              🌐 {{ salon.website || salon.address }}
+                            </span>
+                          }
                         </div>
                       </div>
                     </td>
@@ -160,6 +165,9 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                   <span>{{ salon.district || salon.location }}</span>
                   <span><strong>Propriétaire :</strong> {{ salon.ownerName || 'Coiffeur' }}</span>
                   <span>{{ salon.phone || '+221 77 000 00 00' }}</span>
+                  @if (salon.website || salon.address) {
+                    <span style="color: #2563eb; font-weight: 500;">🌐 {{ salon.website || salon.address }}</span>
+                  }
                 </div>
               </div>
 
@@ -458,12 +466,23 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                 </div>
               </div>
 
-              <div class="admin-form__field">
-                <label>Statut d'ouverture</label>
-                <select [(ngModel)]="formStatus" name="status">
-                  <option value="open">🟢 Ouvert aux clients</option>
-                  <option value="closed">🔴 Fermé temporairement</option>
-                </select>
+              <div class="admin-form__row">
+                <div class="admin-form__field">
+                  <label>Statut d'ouverture</label>
+                  <select [(ngModel)]="formStatus" name="status">
+                    <option value="open">🟢 Ouvert aux clients</option>
+                    <option value="closed">🔴 Fermé temporairement</option>
+                  </select>
+                </div>
+                <div class="admin-form__field">
+                  <label>Site Web / Nom de domaine (Optionnel)</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="formWebsite"
+                    name="website"
+                    placeholder="Ex: dakarbarber.sn ou https://mon-salon.com"
+                  />
+                </div>
               </div>
             </div>
           }
@@ -542,6 +561,7 @@ export class AdminSalonsPage {
   protected formPhone = '';
   protected formCoverUrl = '';
   protected formStatus: 'open' | 'closed' = 'open';
+  protected formWebsite = '';
 
   protected formLatitude: number | null = 14.716677;
   protected formLongitude: number | null = -17.467686;
@@ -768,6 +788,7 @@ export class AdminSalonsPage {
     this.formPhone = '';
     this.formCoverUrl = 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80';
     this.formStatus = 'open';
+    this.formWebsite = '';
     this.formLatitude = 14.716677;
     this.formLongitude = -17.467686;
     this.gpsSuccessMessage.set('');
@@ -793,6 +814,7 @@ export class AdminSalonsPage {
     this.formPhone = salon.phone || '';
     this.formCoverUrl = salon.coverUrl || salon.avatarUrl || '';
     this.formStatus = salon.status;
+    this.formWebsite = salon.website || (salon as any).address || '';
     this.formLatitude = salon.latitude || 14.716677;
     this.formLongitude = salon.longitude || -17.467686;
     this.gpsSuccessMessage.set('');
@@ -811,6 +833,7 @@ export class AdminSalonsPage {
     }
 
     const ownerFullName = this.getOwnerFullName();
+    const cleanWebsite = this.formWebsite.trim();
 
     if (this.editingSalonId()) {
       this.data.updateSalon(this.editingSalonId()!, {
@@ -823,17 +846,22 @@ export class AdminSalonsPage {
         avatarUrl: this.formOwnerAvatarUrl || this.formCoverUrl,
         latitude: this.formLatitude || 14.716677,
         longitude: this.formLongitude || -17.467686,
+        website: cleanWebsite || undefined,
+        address: cleanWebsite || undefined,
         status: this.formStatus
       });
       this.isModalOpen.set(false);
     } else {
       const slug = this.formName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const siteUrl = cleanWebsite ? (/^https?:\/\//i.test(cleanWebsite) ? cleanWebsite : `https://${cleanWebsite}`) : undefined;
       const newSalon: Salon = {
         id: slug || 'salon-' + Date.now(),
         name: this.formName,
         district: this.formDistrict,
         location: this.formLocation,
         phone: this.formPhone || this.formOwnerPhone,
+        website: cleanWebsite || undefined,
+        address: cleanWebsite || undefined,
         ownerName: ownerFullName,
         coverUrl: this.formCoverUrl || 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=800&q=80',
         avatarUrl: this.formOwnerAvatarUrl || this.formCoverUrl || 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=400&q=80',
@@ -842,8 +870,9 @@ export class AdminSalonsPage {
         status: this.formStatus,
         peopleWaiting: 0,
         actions: [
+          { label: 'Site web', icon: 'globe', href: siteUrl },
           { label: 'Appeler', icon: 'phone', href: 'tel:' + (this.formPhone || this.formOwnerPhone || '') },
-          { label: 'Itinéraire', icon: 'navigation', href: `https://www.google.com/maps?q=${this.formLatitude || 14.716677},${this.formLongitude || -17.467686}` },
+          { label: 'Direction', icon: 'navigation', href: `https://www.google.com/maps/dir/?api=1&destination=${this.formLatitude || 14.716677},${this.formLongitude || -17.467686}` },
           { label: 'Partager', icon: 'share', href: '#' }
         ]
       };

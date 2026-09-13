@@ -1,10 +1,20 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { SalonAction } from '../../models/salon';
 
 @Component({
   selector: 'app-action-tile',
   template: `
-    <a class="action-tile" [href]="action.href || '#'">
+    <a
+      class="action-tile"
+      [class.action-tile--disabled]="isDisabled"
+      [href]="isDisabled ? null : (action.href || '#')"
+      [attr.target]="(action.icon === 'globe' || action.icon === 'navigation') && !isDisabled && action.href ? '_blank' : null"
+      [attr.rel]="(action.icon === 'globe' || action.icon === 'navigation') && !isDisabled && action.href ? 'noopener noreferrer' : null"
+      [attr.aria-disabled]="isDisabled"
+      [attr.tabindex]="isDisabled ? -1 : 0"
+      [title]="isDisabled ? 'Ce salon n\\'a pas de site web disponible' : action.label"
+      (click)="onClick($event)"
+    >
       <span class="action-tile__icon" aria-hidden="true">
         @switch (action.icon) {
           @case ('globe') {
@@ -42,4 +52,23 @@ import { SalonAction } from '../../models/salon';
 })
 export class ActionTile {
   @Input({ required: true }) action!: SalonAction;
+  @Output() actionClick = new EventEmitter<SalonAction>();
+
+  get isDisabled(): boolean {
+    return this.action.icon === 'globe' && (!this.action.href || this.action.href === '#' || !this.action.href.trim());
+  }
+
+  protected onClick(event: MouseEvent): void {
+    if (this.isDisabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    if (this.action.icon === 'share') {
+      event.preventDefault();
+      event.stopPropagation();
+      this.actionClick.emit(this.action);
+    }
+  }
 }

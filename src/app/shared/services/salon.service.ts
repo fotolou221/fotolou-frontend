@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map, finalize, throwError } from 'rxjs';
-import { Salon } from '../models/salon';
+import { Salon, SalonAction } from '../models/salon';
 import { TicketOwner } from '../models/ticket-owner';
 import { API_CONFIG } from '../../core/config/api.config';
 import { HttpErrorMessageService } from './http-error-message.service';
@@ -92,14 +92,9 @@ export class SalonService {
           status: s.status ? s.status.toLowerCase() : 'open',
           avatarUrl: s.avatarUrl || 'images/salons/king-barber-avatar.png',
           coverUrl: s.coverUrl || 'images/salons/king-barber-cover.png',
-          actions: Array.isArray(s.actions) && s.actions.length > 0
-            ? s.actions
-            : [
-                { label: 'Site Web', icon: 'globe' as const, href: 'https://kingbarber.sn' },
-                { label: 'Appeler', icon: 'phone' as const, href: `tel:${s.phone || '+221778627052'}` },
-                { label: 'Direction', icon: 'navigation' as const, href: 'https://maps.google.com' },
-                { label: 'Partager', icon: 'share' as const, href: '#' }
-              ]
+          website: s.website || s.address || undefined,
+          address: s.address || s.website || undefined,
+          actions: this.buildSalonActions(s)
         }))
       ),
       tap((data) => {
@@ -133,14 +128,9 @@ export class SalonService {
         status: s.status ? s.status.toLowerCase() : 'open',
         avatarUrl: s.avatarUrl || 'images/salons/king-barber-avatar.png',
         coverUrl: s.coverUrl || 'images/salons/king-barber-cover.png',
-        actions: Array.isArray(s.actions) && s.actions.length > 0
-          ? s.actions
-          : [
-              { label: 'Site Web', icon: 'globe' as const, href: 'https://kingbarber.sn' },
-              { label: 'Appeler', icon: 'phone' as const, href: `tel:${s.phone || '+221778627052'}` },
-              { label: 'Direction', icon: 'navigation' as const, href: 'https://maps.google.com' },
-              { label: 'Partager', icon: 'share' as const, href: '#' }
-            ]
+        website: s.website || s.address || undefined,
+        address: s.address || s.website || undefined,
+        actions: this.buildSalonActions(s)
       })),
       catchError((err) => {
         console.error(`[SalonService] Error fetching salon ${id}:`, err);
@@ -223,5 +213,47 @@ export class SalonService {
       salon.slug === id ||
       (salon.numericId !== undefined && salon.numericId.toString() === id)
     );
+  }
+
+  private buildSalonActions(s: any): SalonAction[] {
+    const rawSite = (s.website || s.address || '').trim();
+    let siteUrl: string | undefined = undefined;
+    if (rawSite && rawSite.length > 3) {
+      siteUrl = /^https?:\/\//i.test(rawSite) ? rawSite : `https://${rawSite}`;
+    }
+
+    const lat = typeof s.latitude === 'number' ? s.latitude : parseFloat(s.latitude);
+    const lng = typeof s.longitude === 'number' ? s.longitude : parseFloat(s.longitude);
+    const hasGps = !isNaN(lat) && !isNaN(lng) && (lat !== 0 || lng !== 0);
+
+    const mapsUrl = hasGps
+      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((s.name || 'Salon') + ' ' + (s.location || s.district || 'Dakar'))}`;
+
+    const rawPhone = (s.phone || '').trim();
+    const phoneUrl = rawPhone ? `tel:${rawPhone.replace(/\s+/g, '')}` : undefined;
+
+    return [
+      {
+        label: 'Site Web',
+        icon: 'globe' as const,
+        href: siteUrl
+      },
+      {
+        label: 'Appeler',
+        icon: 'phone' as const,
+        href: phoneUrl
+      },
+      {
+        label: 'Direction',
+        icon: 'navigation' as const,
+        href: mapsUrl
+      },
+      {
+        label: 'Partager',
+        icon: 'share' as const,
+        href: '#'
+      }
+    ];
   }
 }
