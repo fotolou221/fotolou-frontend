@@ -25,6 +25,7 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
       <app-location-header
         slot="header"
         [showLocation]="false"
+        [showFavorites]="false"
         [hasNotification]="notificationService.coiffeurUnreadCount() > 0"
         (notificationClick)="goToNotifications()"
       />
@@ -97,7 +98,20 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
                 <!-- Client Info -->
                 <div class="queue-card__info">
                   <strong class="queue-card__name">{{ item.ownerName }}</strong>
-                  <span class="queue-card__phone">{{ item.salonName }} &bull; Dakar</span>
+                  <div class="queue-card__meta-line">
+                    <span class="queue-card__time">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="queue-card__time-icon" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      Pris le {{ formatItemCreatedAt(item) }}
+                    </span>
+                    @if (activeTab() === 'history' && formatItemCompletedAt(item)) {
+                      <span class="queue-card__time queue-card__time--completion">
+                        • {{ formatItemCompletedAt(item) }}
+                      </span>
+                    }
+                  </div>
                 </div>
 
                 <!-- Status Tag : Un seul En cours, les autres En attente -->
@@ -409,8 +423,57 @@ export class CoiffeurTicketsPage implements OnInit {
     if (tab === 'active') {
       return [...list].sort(compareTicketQueueOrder);
     }
-    return [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...list].sort((a, b) => {
+      const aTime = new Date(a.servedAt || a.cancelledAt || a.createdAt).getTime();
+      const bTime = new Date(b.servedAt || b.cancelledAt || b.createdAt).getTime();
+      return bTime - aTime;
+    });
   });
+
+  protected formatItemCreatedAt(item: Ticket): string {
+    if (!item.createdAt) return '';
+    const d = new Date(item.createdAt);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('fr-SN', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  protected formatItemCompletedAt(item: Ticket): string | null {
+    if (item.status === 'served' || item.status === 'completed') {
+      if (item.servedAt) {
+        const d = new Date(item.servedAt);
+        if (!isNaN(d.getTime())) {
+          return `Servi le ${d.toLocaleDateString('fr-SN', {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}`;
+        }
+      }
+      return 'Servi';
+    }
+    if (item.status === 'cancelled') {
+      const ts = item.cancelledAt || item.servedAt;
+      if (ts) {
+        const d = new Date(ts);
+        if (!isNaN(d.getTime())) {
+          return `Annulé le ${d.toLocaleDateString('fr-SN', {
+            day: '2-digit',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}`;
+        }
+      }
+      return 'Annulé';
+    }
+    return null;
+  }
 
   ngOnInit(): void {
     // Recharger systématiquement les tickets du salon connecté

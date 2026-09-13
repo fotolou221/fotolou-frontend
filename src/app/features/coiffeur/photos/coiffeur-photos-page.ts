@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, catchError, of } from 'rxjs';
@@ -189,14 +189,34 @@ export class CoiffeurPhotosPage implements OnInit {
     return name.slice(0, 2).toUpperCase();
   });
 
+  constructor() {
+    effect(() => {
+      const salon = this.currentSalon();
+      if (salon) {
+        if (!this.selectedProfileFile() && !this.profilePreview()) {
+          const avatar = salon.avatarUrl || this.auth.currentUser()?.avatarUrl;
+          if (avatar) {
+            this.profilePreview.set(avatar);
+          }
+        }
+        if (!this.selectedSalonFile() && !this.salonPreview()) {
+          if (salon.coverUrl) {
+            this.salonPreview.set(salon.coverUrl);
+          }
+        }
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.salonService.loadSalons();
     // Initialize previews from active session and salon
-    const user = this.auth.currentUser();
-    if (user?.avatarUrl) {
-      this.profilePreview.set(user.avatarUrl);
-    }
     const salon = this.currentSalon();
+    const user = this.auth.currentUser();
+    const initialAvatar = salon?.avatarUrl || user?.avatarUrl;
+    if (initialAvatar) {
+      this.profilePreview.set(initialAvatar);
+    }
     if (salon?.coverUrl) {
       this.salonPreview.set(salon.coverUrl);
     }
@@ -277,14 +297,21 @@ export class CoiffeurPhotosPage implements OnInit {
         }
       }
 
-      // Update salon in backend if coverUrl changed
-      if (salon && finalCoverUrl && finalCoverUrl !== salon.coverUrl) {
+      // 3. Update salon in backend if coverUrl OR avatarUrl changed
+      if (salon && (finalCoverUrl !== salon.coverUrl || finalAvatarUrl !== salon.avatarUrl)) {
         const salonApiId = salon.numericId || salon.id;
+        const patchPayload: Record<string, any> = {
+          id: typeof salonApiId === 'number' ? salonApiId : undefined
+        };
+        if (finalCoverUrl && finalCoverUrl !== salon.coverUrl) {
+          patchPayload['coverUrl'] = finalCoverUrl;
+        }
+        if (finalAvatarUrl !== undefined && finalAvatarUrl !== salon.avatarUrl) {
+          patchPayload['avatarUrl'] = finalAvatarUrl || '';
+        }
+
         await firstValueFrom(
-          this.http.patch(`${API_CONFIG.baseUrl}/salons/${salonApiId}`, {
-            id: typeof salonApiId === 'number' ? salonApiId : undefined,
-            coverUrl: finalCoverUrl
-          }).pipe(
+          this.http.patch(`${API_CONFIG.baseUrl}/salons/${salonApiId}`, patchPayload).pipe(
             catchError((err) => {
               console.warn('[CoiffeurPhotosPage] Salon patch error, continuing:', err);
               return of(null);
@@ -292,10 +319,17 @@ export class CoiffeurPhotosPage implements OnInit {
           )
         );
 
-        // Update salonService signal immediately so other views reflect the new cover
+        // Update salonService signal immediately so other views reflect the new cover & avatar
         this.salonService.salons.update((list) =>
-          list.map((s) => (s.id === salon.id || s.numericId === salon.numericId ? { ...s, coverUrl: finalCoverUrl! } : s))
+          list.map((s) => (s.id === salon.id || s.numericId === salon.numericId ? {
+            ...s,
+            ...(finalCoverUrl ? { coverUrl: finalCoverUrl } : {}),
+            ...(finalAvatarUrl !== undefined ? { avatarUrl: finalAvatarUrl || '' } : {})
+          } : s))
         );
+
+        // Force background refresh of salons cache
+        this.salonService.loadSalons(true);
       }
 
       this.isSaving.set(false);

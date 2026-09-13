@@ -14,7 +14,8 @@ export interface Ticket {
   readonly status: TicketStatus;
   readonly category: TicketTab;
   readonly createdAt: string;
-  readonly servedAt?: string; // Filled when ticket is served or cancelled
+  readonly servedAt?: string;
+  readonly cancelledAt?: string;
   readonly itemCount?: number; // Number of items / services (default 1)
   readonly peopleAhead?: number;
   readonly estimatedWaitMinutes?: number;

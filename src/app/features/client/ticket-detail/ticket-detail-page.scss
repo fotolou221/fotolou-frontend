@@ -56,11 +56,31 @@
   }
 
   p {
-    margin: 0 0 24px;
+    margin: 0 0 8px;
     color: var(--text-secondary, #64748b);
     font-size: 0.88rem;
     font-weight: 400;
   }
+}
+
+.ticket-detail-page__timestamp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--bg-card-hover, rgba(30, 90, 240, 0.06));
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 20px;
+}
+
+.ticket-detail-page__timestamp-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--primary, #1E5AF0);
 }
 
 .ticket-detail-page__status-tag {

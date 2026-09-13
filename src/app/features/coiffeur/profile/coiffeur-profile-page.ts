@@ -24,6 +24,7 @@ import { AuthSessionService } from '../../auth/auth-session.service';
       <app-location-header
         slot="header"
         [showLocation]="false"
+        [showFavorites]="false"
         [hasNotification]="notificationService.coiffeurUnreadCount() > 0"
         (notificationClick)="goToNotifications()"
       />
@@ -231,7 +232,7 @@ export class CoiffeurProfilePage {
 
   protected readonly avatarUrl = computed(() => {
     const user = this.auth.activeUser();
-    return user?.avatarUrl || null;
+    return user?.avatarUrl || this.currentSalon()?.avatarUrl || null;
   });
 
   protected readonly phone = computed(() => {

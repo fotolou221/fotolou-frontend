@@ -17,6 +17,24 @@ import { Ticket } from '../../models/ticket';
         <!-- Salon Info -->
         <strong class="ticket-card__salon-name">{{ ticket.salonName }}</strong>
         <span class="ticket-card__owner">Pour: {{ ticket.ownerName }}</span>
+
+        <!-- Dates & Timestamps -->
+        <div class="ticket-card__meta">
+          @if (formattedCreatedAt) {
+            <span class="ticket-card__meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ticket-card__meta-icon" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Pris le {{ formattedCreatedAt }}</span>
+            </span>
+          }
+          @if (formattedCompletionDate) {
+            <span class="ticket-card__meta-item ticket-card__meta-item--completion">
+              • {{ formattedCompletionDate }}
+            </span>
+          }
+        </div>
       </div>
 
       <div class="ticket-card__right">
@@ -59,5 +77,44 @@ export class TicketCard {
       default:
         return 'EN ATTENTE';
     }
+  }
+
+  protected get formattedCreatedAt(): string {
+    if (!this.ticket?.createdAt) return '';
+    const date = new Date(this.ticket.createdAt);
+    if (isNaN(date.getTime())) return '';
+    return this.formatDateTime(date);
+  }
+
+  protected get formattedCompletionDate(): string | null {
+    if (this.ticket.status === 'served' || this.ticket.status === 'completed') {
+      if (this.ticket.servedAt) {
+        const d = new Date(this.ticket.servedAt);
+        if (!isNaN(d.getTime())) {
+          return `Servi le ${this.formatDateTime(d)}`;
+        }
+      }
+      return 'Servi';
+    }
+    if (this.ticket.status === 'cancelled') {
+      const ts = this.ticket.cancelledAt || this.ticket.servedAt;
+      if (ts) {
+        const d = new Date(ts);
+        if (!isNaN(d.getTime())) {
+          return `Annulé le ${this.formatDateTime(d)}`;
+        }
+      }
+      return 'Annulé';
+    }
+    return null;
+  }
+
+  private formatDateTime(d: Date): string {
+    return d.toLocaleDateString('fr-SN', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 }

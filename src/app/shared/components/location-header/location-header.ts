@@ -50,19 +50,21 @@ import { NotificationService } from '../../services/notification.service';
       <div class="location-header__actions">
         
         <!-- Favorites Button -->
-        <button
-          class="location-header__action-btn location-header__fav-btn"
-          (click)="onFavoritesClick()"
-          type="button"
-          aria-label="Mes Salons Favoris"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          @if (favoritesCount > 0) {
-            <span class="location-header__fav-badge">{{ favoritesCount > 99 ? '99+' : favoritesCount }}</span>
-          }
-        </button>
+        @if (shouldShowFavorites) {
+          <button
+            class="location-header__action-btn location-header__fav-btn"
+            (click)="onFavoritesClick()"
+            type="button"
+            aria-label="Mes Salons Favoris"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            @if (favoritesCount > 0) {
+              <span class="location-header__fav-badge">{{ favoritesCount > 99 ? '99+' : favoritesCount }}</span>
+            }
+          </button>
+        }
 
         <!-- Notification Bell -->
         <button
@@ -94,10 +96,18 @@ export class LocationHeader {
   @Input() showLocation = true;
   @Input() hasNotification = true;
   @Input() notificationCount?: number;
+  @Input() showFavorites?: boolean;
   @Input() showSalonToggle = false;
   @Input() salonOpen = true;
   @Input() salonToggleLoading = false;
   @Input() salonToggleDisabled = false;
+
+  protected get shouldShowFavorites(): boolean {
+    if (this.showFavorites !== undefined) {
+      return this.showFavorites;
+    }
+    return !this.showSalonToggle && !this.router.url.startsWith('/coiffeur');
+  }
 
   @Output() locationClick = new EventEmitter<void>();
   @Output() notificationClick = new EventEmitter<void>();

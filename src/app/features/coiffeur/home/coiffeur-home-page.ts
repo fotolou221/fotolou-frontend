@@ -19,6 +19,7 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
       <app-location-header
         slot="header"
         [showLocation]="false"
+        [showFavorites]="false"
         [hasNotification]="notificationService.coiffeurUnreadCount() > 0"
         (notificationClick)="goToNotifications()"
       />
@@ -103,7 +104,15 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
 
                     <div class="queue-card__info">
                       <strong class="queue-card__name">{{ item.ownerName }}</strong>
-                      <span class="queue-card__phone">{{ item.salonName }} &bull; Dakar</span>
+                      <div class="queue-card__meta-line">
+                        <span class="queue-card__time">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="queue-card__time-icon" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          Pris le {{ formatItemCreatedAt(item) }}
+                        </span>
+                      </div>
                     </div>
 
                     <span
@@ -289,6 +298,18 @@ export class CoiffeurHomePage {
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
+  }
+
+  protected formatItemCreatedAt(item: Ticket): string {
+    if (!item.createdAt) return '';
+    const d = new Date(item.createdAt);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('fr-SN', {
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   protected getClientPhone(item: Ticket): string {

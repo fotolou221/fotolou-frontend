@@ -10,7 +10,13 @@ import { FavoritesService } from '../../services/favorites.service';
   template: `
     <a class="salon-list-card" [routerLink]="['/client/salons', salon.id]">
       <div class="salon-list-card__img-wrap">
-        <img class="salon-list-card__image" [src]="salon.avatarUrl" [alt]="salon.name" loading="lazy" />
+        <img
+          class="salon-list-card__image"
+          [src]="salon.avatarUrl || defaultAvatar"
+          [alt]="salon.name"
+          (error)="onImgError($event)"
+          loading="lazy"
+        />
       </div>
 
       <div class="salon-list-card__body">
@@ -65,6 +71,8 @@ import { FavoritesService } from '../../services/favorites.service';
 export class SalonListCard {
   private readonly favoritesService = inject(FavoritesService);
 
+  readonly defaultAvatar = 'images/salons/king-barber-avatar.png';
+
   @Input({ required: true }) salon!: Salon;
 
   protected isFav(): boolean {
@@ -75,5 +83,12 @@ export class SalonListCard {
     event.preventDefault();
     event.stopPropagation();
     this.favoritesService.toggleFavorite(this.salon);
+  }
+
+  protected onImgError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img && img.src !== this.defaultAvatar) {
+      img.src = this.defaultAvatar;
+    }
   }
 }

@@ -57,7 +57,17 @@ import { AuthSessionService } from '../../auth/auth-session.service';
             </span>
 
             <h1>Ticket pour: {{ displayOwnerName }}</h1>
-            <p>{{ ticket.salonName }} &bull; Dakar</p>
+            <p class="ticket-detail-page__salon-line">{{ ticket.salonName }} &bull; Dakar</p>
+
+            @if (formattedCreatedAt) {
+              <div class="ticket-detail-page__timestamp-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ticket-detail-page__timestamp-icon" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span>Pris le {{ formattedCreatedAt }}</span>
+              </div>
+            }
 
             <!-- Circular Ring Progress -->
             <div class="ticket-detail-page__ring-container">
@@ -161,14 +171,24 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                   }
                 }
               }
-              @if (isHistory && formattedServedAt) {
-                <span class="ticket-detail-page__served-date">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  {{ formattedServedAt }}
-                </span>
+              @if (isHistory) {
+                @if (isServed && formattedServedAt) {
+                  <span class="ticket-detail-page__served-date">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Servi le {{ formattedServedAt }}
+                  </span>
+                } @else if (formattedCancelledAt) {
+                  <span class="ticket-detail-page__served-date ticket-detail-page__served-date--cancelled">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    Annulé le {{ formattedCancelledAt }}
+                  </span>
+                }
               }
             </div>
           </section>
@@ -310,6 +330,33 @@ export class TicketDetailPage implements OnInit {
   protected get isServed(): boolean {
     if (!this.ticket) return false;
     return this.ticket.status === 'served' || this.ticket.status === 'completed';
+  }
+
+  protected get formattedCreatedAt(): string {
+    if (!this.ticket?.createdAt) return '';
+    const date = new Date(this.ticket.createdAt);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('fr-SN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  protected get formattedCancelledAt(): string {
+    const ts = this.ticket?.cancelledAt || this.ticket?.servedAt;
+    if (!ts) return '';
+    const date = new Date(ts);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString('fr-SN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   protected get formattedServedAt(): string {

@@ -132,7 +132,9 @@ export class TicketService {
             currentTicketIsYesterday: t.currentTicketIsYesterday ?? undefined,
             status: st as TicketStatus,
             category: cat,
-            createdAt: t.createdAt || t.createdDate || new Date().toISOString()
+            createdAt: t.createdAt || t.createdDate || new Date().toISOString(),
+            servedAt: t.servedAt || t.servedDate || undefined,
+            cancelledAt: t.cancelledAt || t.cancelledDate || undefined
           };
         })
       ),
@@ -178,7 +180,9 @@ export class TicketService {
           currentTicketIsYesterday: t.currentTicketIsYesterday ?? undefined,
           status: st as TicketStatus,
           category: cat,
-          createdAt: t.createdAt || t.createdDate || new Date().toISOString()
+          createdAt: t.createdAt || t.createdDate || new Date().toISOString(),
+          servedAt: t.servedAt || t.servedDate || undefined,
+          cancelledAt: t.cancelledAt || t.cancelledDate || undefined
         };
       }),
       catchError((err) => {
@@ -312,7 +316,9 @@ export class TicketService {
           currentTicketIsYesterday: saved.currentTicketIsYesterday ?? undefined,
           status: st as TicketStatus,
           category: (saved.category ? saved.category.toLowerCase() : (isHistory ? 'history' : 'active')) as TicketTab,
-          createdAt: saved.createdDate || new Date().toISOString()
+          createdAt: saved.createdAt || saved.createdDate || new Date().toISOString(),
+          servedAt: saved.servedAt || saved.servedDate || undefined,
+          cancelledAt: saved.cancelledAt || saved.cancelledDate || undefined
         };
       }),
       tap((savedTicket) => {
@@ -344,7 +350,7 @@ export class TicketService {
     this.tickets.update((prev) =>
       prev.map((ticket) =>
         ticket.id === id
-          ? { ...ticket, status: 'cancelled', category: 'history', servedAt: now }
+          ? { ...ticket, status: 'cancelled', category: 'history', cancelledAt: now }
           : ticket
       )
     );

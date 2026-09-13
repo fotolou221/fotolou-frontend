@@ -98,6 +98,34 @@
   font-weight: 500;
 }
 
+.ticket-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.ticket-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  color: var(--text-muted, #94a3b8);
+  font-weight: 500;
+
+  &--completion {
+    color: var(--text-secondary, #64748b);
+    font-weight: 600;
+  }
+}
+
+.ticket-card__meta-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
 .ticket-card__right {
   display: flex;
   align-items: center;
