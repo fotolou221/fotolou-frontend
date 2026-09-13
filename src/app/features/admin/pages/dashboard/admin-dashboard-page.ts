@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AdminDataService } from '../../services/admin-data.service';
 import { AdminStatCard } from '../../components/admin-stat-card/admin-stat-card';
@@ -84,7 +84,7 @@ import { AdminBadge } from '../../components/admin-badge/admin-badge';
           <div class="admin-card__header">
             <div class="admin-card__header-title">
               <h3>Affluence en Direct dans les Salons</h3>
-              <span>Surveillance des files d'attente à Dakar</span>
+              <span>Surveillance des 10 salons les plus récents en direct</span>
             </div>
             <a routerLink="/admin/tickets" class="admin-card__link">Voir tous les tickets &rarr;</a>
           </div>
@@ -101,7 +101,7 @@ import { AdminBadge } from '../../components/admin-badge/admin-badge';
                 </tr>
               </thead>
               <tbody>
-                @for (salon of data.salons(); track salon.id) {
+                @for (salon of recentSalons(); track salon.id) {
                   <tr>
                     <td>
                       <div class="admin-table__item-with-img">
@@ -213,6 +213,10 @@ import { AdminBadge } from '../../components/admin-badge/admin-badge';
 })
 export class AdminDashboardPage implements OnInit {
   protected readonly data = inject(AdminDataService);
+
+  protected readonly recentSalons = computed(() => {
+    return this.data.salons().slice(0, 10);
+  });
 
   ngOnInit(): void {
     this.data.loadFromBackend();

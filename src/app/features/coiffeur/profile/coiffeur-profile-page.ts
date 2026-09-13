@@ -6,6 +6,7 @@ import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { TicketService } from '../../../shared/services/ticket.service';
+import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
 
 @Component({
@@ -33,7 +34,11 @@ import { AuthSessionService } from '../../auth/auth-session.service';
         <!-- Avatar & Identity -->
         <section class="profile-page__hero">
           <div class="profile-page__avatar profile-page__avatar--coiffeur" aria-hidden="true">
-            {{ avatarInitials() }}
+            @if (avatarUrl()) {
+              <img [src]="avatarUrl()" [alt]="barberName()" class="profile-page__avatar-img" />
+            } @else {
+              {{ avatarInitials() }}
+            }
           </div>
           <h1 class="profile-page__name">{{ barberName() }}</h1>
           <p class="profile-page__role-tag">Coiffeur Pro &bull; {{ salonName() }}</p>
@@ -197,9 +202,23 @@ export class CoiffeurProfilePage {
   private readonly router = inject(Router);
   protected readonly notificationService = inject(NotificationService);
   private readonly ticketService = inject(TicketService);
+  private readonly salonService = inject(SalonService);
   private readonly auth = inject(AuthSessionService);
 
   protected readonly showLogoutModal = signal(false);
+
+  protected readonly currentSalon = computed(() => {
+    const user = this.auth.currentUser();
+    const salonId = user?.salonId?.toString() || user?.salonSlug;
+    if (salonId) {
+      return (
+        this.salonService.salons().find(
+          (salon) => salon.id === salonId || salon.slug === salonId || salon.numericId?.toString() === salonId
+        ) || null
+      );
+    }
+    return this.salonService.salons()[0] || null;
+  });
 
   protected readonly barberName = computed(() => {
     const user = this.auth.activeUser();
@@ -207,7 +226,12 @@ export class CoiffeurProfilePage {
   });
 
   protected readonly salonName = computed(() => {
-    return 'Mon Salon';
+    return this.currentSalon()?.name || 'Mon Salon';
+  });
+
+  protected readonly avatarUrl = computed(() => {
+    const user = this.auth.activeUser();
+    return user?.avatarUrl || null;
   });
 
   protected readonly phone = computed(() => {

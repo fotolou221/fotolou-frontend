@@ -29,57 +29,57 @@ import { FormsModule } from '@angular/forms';
       </div>
 
       <!-- Navigation Right: Page Buttons -->
-      @if (totalPages() > 1) {
-        <div class="admin-pagination__nav">
-          
-          <!-- Previous Page Button -->
-          <button
-            type="button"
-            class="admin-pagination__btn admin-pagination__btn--arrow"
-            [disabled]="currentPage <= 1"
-            (click)="goToPage(currentPage - 1)"
-            title="Page précédente"
-            aria-label="Page précédente"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
+      <div class="admin-pagination__nav">
+        
+        <!-- Previous Page Button (Arrière) -->
+        <button
+          type="button"
+          class="admin-pagination__btn admin-pagination__btn--nav admin-pagination__btn--prev"
+          [disabled]="currentPage <= 1"
+          (click)="goToPage(currentPage - 1)"
+          title="Page précédente"
+          aria-label="Arrière"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>Arrière</span>
+        </button>
 
-          <!-- Page Numbers -->
-          <div class="admin-pagination__pages">
-            @for (page of visiblePages(); track page) {
-              @if (page === -1) {
-                <span class="admin-pagination__ellipsis">&hellip;</span>
-              } @else {
-                <button
-                  type="button"
-                  class="admin-pagination__btn admin-pagination__btn--number"
-                  [class.active]="page === currentPage"
-                  (click)="goToPage(page)"
-                >
-                  {{ page }}
-                </button>
-              }
+        <!-- Page Numbers -->
+        <div class="admin-pagination__pages">
+          @for (page of visiblePages(); track page) {
+            @if (page === -1) {
+              <span class="admin-pagination__ellipsis">&hellip;</span>
+            } @else {
+              <button
+                type="button"
+                class="admin-pagination__btn admin-pagination__btn--number"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)"
+              >
+                {{ page }}
+              </button>
             }
-          </div>
-
-          <!-- Next Page Button -->
-          <button
-            type="button"
-            class="admin-pagination__btn admin-pagination__btn--arrow"
-            [disabled]="currentPage >= totalPages()"
-            (click)="goToPage(currentPage + 1)"
-            title="Page suivante"
-            aria-label="Page suivante"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-
+          }
         </div>
-      }
+
+        <!-- Next Page Button (Suivant) -->
+        <button
+          type="button"
+          class="admin-pagination__btn admin-pagination__btn--nav admin-pagination__btn--next"
+          [disabled]="currentPage >= totalPages()"
+          (click)="goToPage(currentPage + 1)"
+          title="Page suivante"
+          aria-label="Suivant"
+        >
+          <span>Suivant</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
+      </div>
 
     </div>
   `,

@@ -425,7 +425,20 @@ export class AdminDataService {
   toggleSalonStatus(id: string): void {
     const current = this.salons().find(s => s.id === id);
     const newStatus = current?.status === 'open' ? 'closed' : 'open';
-    this.updateSalon(id, { status: newStatus });
+    this.salons.update(list =>
+      list.map(s => (s.id === id ? { ...s, status: newStatus } : s))
+    );
+
+    this.salonService.toggleSalonStatus(id).pipe(
+      tap(() => {
+        this.loadSalons();
+      }),
+      catchError(() => {
+        // Fallback to updateSalon PATCH
+        this.updateSalon(id, { status: newStatus });
+        return of(null);
+      })
+    ).subscribe();
   }
 
   // ── Coiffeur CRUD ─────────────────────────────────────────

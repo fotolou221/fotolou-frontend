@@ -1,7 +1,12 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, catchError, of } from 'rxjs';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { AuthSessionService } from '../../auth/auth-session.service';
+import { SalonService } from '../../../shared/services/salon.service';
+import { API_CONFIG } from '../../../core/config/api.config';
 
 @Component({
   selector: 'app-coiffeur-photos-page',
@@ -28,6 +33,13 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
           </div>
         }
 
+        @if (saveError()) {
+          <div class="photos-page__error-banner" role="alert">
+            <span>⚠️</span>
+            <p>{{ saveError() }}</p>
+          </div>
+        }
+
         <!-- Section 1: Photo de Profil Coiffeur -->
         <section class="photos-card">
           <h2 class="photos-card__title">Photo de profil coiffeur</h2>
@@ -40,7 +52,7 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
               @if (profilePreview()) {
                 <img [src]="profilePreview()" alt="Aperçu photo de profil" />
               } @else {
-                <span class="photos-card__avatar-placeholder">KB</span>
+                <span class="photos-card__avatar-placeholder">{{ barberInitials() }}</span>
               }
             </div>
 
@@ -56,6 +68,7 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
               <button
                 type="button"
                 class="photos-btn photos-btn--primary"
+                [disabled]="isSaving()"
                 (click)="profileInput.click()"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -69,7 +82,8 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
                 <button
                   type="button"
                   class="photos-btn photos-btn--text"
-                  (click)="profilePreview.set(null)"
+                  [disabled]="isSaving()"
+                  (click)="removeProfilePhoto()"
                 >
                   Supprimer
                 </button>
@@ -103,6 +117,7 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
               <button
                 type="button"
                 class="photos-btn photos-btn--primary"
+                [disabled]="isSaving()"
                 (click)="salonInput.click()"
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -121,9 +136,14 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
           <button
             type="button"
             class="photos-page__save-btn"
+            [disabled]="isSaving()"
             (click)="savePhotos()"
           >
-            Enregistrer les photos
+            @if (isSaving()) {
+              <span>Enregistrement des photos</span><span class="loading-dots" aria-hidden="true"></span>
+            } @else {
+              <span>Enregistrer les photos</span>
+            }
           </button>
         </div>
 
@@ -132,19 +152,61 @@ import { PageHeader } from '../../../shared/components/page-header/page-header';
   `,
   styleUrl: './coiffeur-photos-page.scss'
 })
-export class CoiffeurPhotosPage {
+export class CoiffeurPhotosPage implements OnInit {
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  protected readonly auth = inject(AuthSessionService);
+  protected readonly salonService = inject(SalonService);
 
   protected readonly profilePreview = signal<string | null>(null);
+  protected readonly selectedProfileFile = signal<File | null>(null);
+
   protected readonly salonPreview = signal<string | null>(null);
-  protected readonly showSuccess = signal(false);
+  protected readonly selectedSalonFile = signal<File | null>(null);
+
+  protected readonly isSaving = signal<boolean>(false);
+  protected readonly saveError = signal<string | null>(null);
+  protected readonly showSuccess = signal<boolean>(false);
 
   protected readonly defaultSalonBanner = 'images/salons/king-barber-cover.png';
+
+  protected readonly currentSalon = computed(() => {
+    const user = this.auth.currentUser();
+    const salonId = user?.salonId?.toString() || user?.salonSlug;
+    if (salonId) {
+      return (
+        this.salonService.salons().find(
+          (salon) => salon.id === salonId || salon.slug === salonId || salon.numericId?.toString() === salonId
+        ) || null
+      );
+    }
+    return this.salonService.salons()[0] || null;
+  });
+
+  protected readonly barberInitials = computed(() => {
+    const user = this.auth.activeUser();
+    const name = user?.name || 'Coiffeur';
+    return name.slice(0, 2).toUpperCase();
+  });
+
+  ngOnInit(): void {
+    this.salonService.loadSalons();
+    // Initialize previews from active session and salon
+    const user = this.auth.currentUser();
+    if (user?.avatarUrl) {
+      this.profilePreview.set(user.avatarUrl);
+    }
+    const salon = this.currentSalon();
+    if (salon?.coverUrl) {
+      this.salonPreview.set(salon.coverUrl);
+    }
+  }
 
   protected onProfileFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
+      this.selectedProfileFile.set(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         this.profilePreview.set(e.target?.result as string);
@@ -157,6 +219,7 @@ export class CoiffeurPhotosPage {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
+      this.selectedSalonFile.set(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         this.salonPreview.set(e.target?.result as string);
@@ -165,11 +228,95 @@ export class CoiffeurPhotosPage {
     }
   }
 
-  protected savePhotos(): void {
-    this.showSuccess.set(true);
-    globalThis.setTimeout(() => {
-      this.showSuccess.set(false);
-      this.router.navigate(['/coiffeur/profile']);
-    }, 1500);
+  protected removeProfilePhoto(): void {
+    this.profilePreview.set(null);
+    this.selectedProfileFile.set(null);
+  }
+
+  protected async savePhotos(): Promise<void> {
+    this.isSaving.set(true);
+    this.saveError.set(null);
+
+    try {
+      let finalAvatarUrl = this.profilePreview();
+      let finalCoverUrl = this.salonPreview();
+
+      // 1. Upload profile avatar if a new file was chosen
+      const profileFile = this.selectedProfileFile();
+      if (profileFile) {
+        const formData = new FormData();
+        formData.append('file', profileFile);
+        formData.append('folder', 'avatars');
+
+        const uploadRes = await firstValueFrom(
+          this.http.post<any>(`${API_CONFIG.baseUrl}/storage/upload`, formData)
+        );
+        if (uploadRes && uploadRes.url) {
+          finalAvatarUrl = this.normalizeUrl(uploadRes.url);
+        }
+      }
+
+      // Update user profile in AuthSessionService (updates local signals and calls /api/account/profile)
+      if (finalAvatarUrl !== this.auth.currentUser()?.avatarUrl) {
+        await this.auth.updateProfile({ avatarUrl: finalAvatarUrl || '' });
+      }
+
+      // 2. Upload salon cover if a new file was chosen
+      const salonFile = this.selectedSalonFile();
+      const salon = this.currentSalon();
+      if (salonFile) {
+        const formData = new FormData();
+        formData.append('file', salonFile);
+        formData.append('folder', 'salons');
+
+        const uploadRes = await firstValueFrom(
+          this.http.post<any>(`${API_CONFIG.baseUrl}/storage/upload`, formData)
+        );
+        if (uploadRes && uploadRes.url) {
+          finalCoverUrl = this.normalizeUrl(uploadRes.url);
+        }
+      }
+
+      // Update salon in backend if coverUrl changed
+      if (salon && finalCoverUrl && finalCoverUrl !== salon.coverUrl) {
+        const salonApiId = salon.numericId || salon.id;
+        await firstValueFrom(
+          this.http.patch(`${API_CONFIG.baseUrl}/salons/${salonApiId}`, {
+            id: typeof salonApiId === 'number' ? salonApiId : undefined,
+            coverUrl: finalCoverUrl
+          }).pipe(
+            catchError((err) => {
+              console.warn('[CoiffeurPhotosPage] Salon patch error, continuing:', err);
+              return of(null);
+            })
+          )
+        );
+
+        // Update salonService signal immediately so other views reflect the new cover
+        this.salonService.salons.update((list) =>
+          list.map((s) => (s.id === salon.id || s.numericId === salon.numericId ? { ...s, coverUrl: finalCoverUrl! } : s))
+        );
+      }
+
+      this.isSaving.set(false);
+      this.showSuccess.set(true);
+
+      globalThis.setTimeout(() => {
+        this.showSuccess.set(false);
+        this.router.navigate(['/coiffeur/profile']);
+      }, 1400);
+
+    } catch (err: any) {
+      this.isSaving.set(false);
+      console.error('[CoiffeurPhotosPage] Save photos error:', err);
+      this.saveError.set('Impossible d\'enregistrer les photos. Vérifiez votre connexion internet et réessayez.');
+    }
+  }
+
+  private normalizeUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+    const apiOrigin = API_CONFIG.baseUrl.replace(/\/api\/?$/, '');
+    return apiOrigin + (url.startsWith('/') ? url : '/' + url);
   }
 }
