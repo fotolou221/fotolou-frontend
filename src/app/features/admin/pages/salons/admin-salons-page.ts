@@ -87,28 +87,9 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                       <span class="admin-badge admin-badge--primary">{{ salon.peopleWaiting }} en file</span>
                     </td>
                     <td>
-                      <div class="admin-table__status-cell">
-                        <app-admin-badge [variant]="salon.status === 'open' ? 'success' : 'danger'">
-                          {{ salon.status === 'open' ? 'Ouvert' : 'Fermé' }}
-                        </app-admin-badge>
-                        <button
-                          type="button"
-                          class="admin-table__status-btn"
-                          [class.admin-table__status-btn--close]="salon.status === 'open'"
-                          [class.admin-table__status-btn--open]="salon.status !== 'open'"
-                          (click)="data.toggleSalonStatus(salon.id)"
-                          [title]="salon.status === 'open' ? 'Fermer le salon' : 'Ouvrir le salon'"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            @if (salon.status === 'open') {
-                              <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-                            } @else {
-                              <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
-                            }
-                          </svg>
-                          <span>{{ salon.status === 'open' ? 'Fermer' : 'Ouvrir' }}</span>
-                        </button>
-                      </div>
+                      <app-admin-badge [variant]="salon.status === 'open' ? 'success' : 'danger'">
+                        {{ salon.status === 'open' ? 'Ouvert' : 'Fermé' }}
+                      </app-admin-badge>
                     </td>
                     <td style="text-align: right;">
                       <div class="admin-table__actions">

@@ -192,56 +192,6 @@
   cursor: pointer;
 }
 
-.admin-table__status-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.admin-table__status-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  border: 1px solid transparent;
-  white-space: nowrap;
-
-  svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  &--close {
-    background: #fef2f2;
-    color: #dc2626;
-    border-color: #fecaca;
-
-    &:hover {
-      background: #dc2626;
-      color: #ffffff;
-      border-color: #dc2626;
-    }
-  }
-
-  &--open {
-    background: #f0fdf4;
-    color: #16a34a;
-    border-color: #bbf7d0;
-
-    &:hover {
-      background: #16a34a;
-      color: #ffffff;
-      border-color: #16a34a;
-    }
-  }
-}
-
 .admin-table__actions {
   display: inline-flex;
   align-items: center;
