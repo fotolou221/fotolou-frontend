@@ -61,6 +61,8 @@
   max-width: 1200px;
   margin: 0 auto;
   flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .client-layout__footer {
