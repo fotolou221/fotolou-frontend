@@ -103,11 +103,12 @@ export class SalonService {
       }),
       catchError((err) => {
         console.error('[SalonService] Error fetching salons:', err);
-        const message = this.errorMessages.message(err, 'Impossible de charger les salons. Verifiez votre connexion.');
+        const message = this.errorMessages.message(err, 'Impossible de charger les salons pour le moment.');
         if (!hasData) {
           this.error.set(message);
         } else {
-          this.error.set(message);
+          // Si des salons sont déjà affichés, on préserve l'affichage
+          this.error.set(null);
         }
         return of([]);
       }),

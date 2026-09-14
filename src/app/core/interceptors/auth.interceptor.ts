@@ -1,6 +1,6 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, Observable, of, shareReplay, switchMap, throwError, timeout } from 'rxjs';
+import { catchError, Observable, of, retry, shareReplay, switchMap, throwError, timeout, timer } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 let isRefreshing = false;
@@ -12,6 +12,7 @@ let refreshObservable: Observable<string | null> | null = null;
  * 2. Intercepter les erreurs 401 Unauthorized et rafraîchir silencieusement le token
  *    avec le Refresh Token (45 jours) sans redemander de validation par SMS.
  * 3. Rejouer la requête d'origine avec le nouvel Access Token.
+ * 4. Gérer le timeout et le réessai automatique (retry) lors du réveil du serveur Render.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const isBrowser = typeof window !== 'undefined';
@@ -38,8 +39,27 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   // sur mobile : on ne leur applique pas le timeout court des requêtes API classiques.
   const isFileUpload = authReq.url.includes('/storage/upload') || authReq.url.includes('/files/upload');
   const isApiRequest = authReq.url.startsWith(API_CONFIG.baseUrl) || authReq.url.includes('/api/');
-  const handledRequest =
-    isApiRequest && !isFileUpload ? next(authReq).pipe(timeout(API_CONFIG.timeoutMs)) : next(authReq);
+  const isGetRequest = authReq.method === 'GET';
+
+  let handledRequest: Observable<any> = next(authReq);
+
+  if (isApiRequest && !isFileUpload) {
+    handledRequest = handledRequest.pipe(
+      timeout(API_CONFIG.timeoutMs),
+      retry({
+        count: isGetRequest ? 2 : 0,
+        delay: (err, retryCount) => {
+          const isTransient =
+            err?.name === 'TimeoutError' ||
+            (err instanceof HttpErrorResponse && (err.status === 0 || err.status === 502 || err.status === 503 || err.status === 504));
+          if (!isTransient) {
+            throw err;
+          }
+          return timer(retryCount * 1500);
+        }
+      })
+    );
+  }
 
   return handledRequest.pipe(
     catchError((error: HttpErrorResponse) => {

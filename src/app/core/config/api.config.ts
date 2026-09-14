@@ -16,5 +16,5 @@ export const API_CONFIG = {
     notifications: '/notifications',
     users: '/users'
   },
-  timeoutMs: 10000
+  timeoutMs: 45000
 };

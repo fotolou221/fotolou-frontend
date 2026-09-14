@@ -144,11 +144,12 @@ export class TicketService {
       }),
       catchError((err) => {
         console.error('[TicketService] Error fetching tickets:', err);
-        const message = this.errorMessages.message(err, 'Impossible de charger vos tickets. Verifiez votre connexion.');
+        const message = this.errorMessages.message(err, 'Impossible de charger vos tickets pour le moment.');
         if (!hasData) {
           this.error.set(message);
         } else {
-          this.error.set(message);
+          // Si des tickets sont déjà chargés, on ne détruit pas l'affichage
+          this.error.set(null);
         }
         return of([]);
       }),

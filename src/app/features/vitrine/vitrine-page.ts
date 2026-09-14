@@ -63,8 +63,8 @@ interface FaqItem {
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              <span class="vitrine-header__btn-text-full">Télécharger l'application</span>
-              <span class="vitrine-header__btn-text-short">Télécharger</span>
+              <span class="vitrine-header__btn-text-full">Installer l'application</span>
+              <span class="vitrine-header__btn-text-short">Installer</span>
             </button>
           </div>
 
@@ -951,7 +951,7 @@ export class VitrinePage implements OnInit {
     },
     {
       question: 'Comment installer Fotolou sur mon smartphone ?',
-      answer: 'Sur Android / Chrome : cliquez sur "Télécharger l\'application" pour installer la PWA en un clic. Sur iPhone / Safari : appuyez sur le bouton Partager en bas puis sélectionnez "Sur l\'écran d\'accueil".',
+      answer: 'Sur Android (Chrome recommandé) : cliquez sur "Installer l\'application" pour l\'ajouter en un clic. Si vous utilisez Samsung Internet et que Google Play Protect affiche un avertissement, cliquez sur "Plus de détails" puis "Installer quand même". Sur iPhone (Safari) : appuyez sur le bouton Partager puis "Sur l\'écran d\'accueil".',
       isOpen: false
     },
     {

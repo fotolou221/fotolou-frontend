@@ -25,14 +25,14 @@ const ERROR_KEY_MAP: Record<string, string> = {
 export class HttpErrorMessageService {
   message(error: unknown, fallback = 'Une erreur est survenue. Veuillez réessayer.'): string {
     if (this.isTimeout(error)) {
-      return 'La connexion est trop lente. Vérifiez votre réseau puis réessayez.';
+      return 'Le serveur met du temps à répondre (démarrage en cours). Veuillez patienter quelques secondes puis réessayer.';
     }
 
     if (error instanceof HttpErrorResponse) {
       if (error.status === 0) {
         return this.isOffline()
-          ? 'Vous êtes hors connexion. Vérifiez votre internet puis réessayez.'
-          : "Connexion instable. Fotolou n'arrive pas à joindre le serveur pour le moment.";
+          ? 'Vous êtes hors connexion. Vérifiez votre connexion internet puis réessayez.'
+          : "Le serveur Fotolou redémarre ou met du temps à répondre. Veuillez patienter quelques secondes.";
       }
 
       const backendMessage = this.backendMessage(error);
@@ -68,8 +68,12 @@ export class HttpErrorMessageService {
         return 'Trop de tentatives. Patientez un instant avant de réessayer.';
       }
 
+      if (error.status === 502 || error.status === 503 || error.status === 504) {
+        return "Le serveur est en cours d'initialisation. Veuillez patienter un instant puis réactualiser.";
+      }
+
       if (error.status >= 500) {
-        return 'Le serveur Fotolou rencontre un problème. Réessayez dans quelques instants.';
+        return 'Le serveur Fotolou rencontre un problème temporaire. Réessayez dans quelques instants.';
       }
 
       return fallback;
