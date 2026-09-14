@@ -1,10 +1,18 @@
 :host {
   display: block;
   width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
   box-sizing: border-box;
+}
+
+.salons-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  background: var(--bg-header, #ffffff);
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .salons-page {
@@ -15,14 +23,71 @@
   padding: 16px 14px calc(80px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  overflow-x: hidden;
+  gap: 20px;
+  overflow-x: clip;
   box-sizing: border-box;
 
   @media (min-width: 768px) {
     padding: 24px 20px calc(80px + env(safe-area-inset-bottom, 0px));
-    gap: 28px;
+    gap: 26px;
   }
+}
+
+// ── Hero Intro Hook ──────────────────────────────────────────
+.salons-page__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0 4px;
+}
+
+.salons-page__hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary-light, #eef2ff);
+  color: var(--primary, #1E5AF0);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.salons-page__hero-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.75; }
+}
+
+.salons-page__hero-title {
+  margin: 2px 0 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+
+  @media (min-width: 640px) {
+    font-size: 1.6rem;
+  }
+}
+
+.salons-page__hero-subtitle {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary, #64748b);
+  line-height: 1.45;
+  font-weight: 450;
 }
 
 .salons-page__search-section {
@@ -527,6 +592,24 @@
 
 // ── Dark Theme Overrides ──────────────────────────────────────
 :host-context(body.dark-theme) {
+  .salons-header-sticky {
+    background: #0b132b !important;
+    border-bottom-color: #334155 !important;
+  }
+
+  .salons-page__hero-badge {
+    background: rgba(30, 90, 240, 0.2) !important;
+    color: #60a5fa !important;
+  }
+
+  .salons-page__hero-title {
+    color: #f8fafc !important;
+  }
+
+  .salons-page__hero-subtitle {
+    color: #94a3b8 !important;
+  }
+
   .horizontal-card,
   .grid-card {
     background: #1c2541 !important;

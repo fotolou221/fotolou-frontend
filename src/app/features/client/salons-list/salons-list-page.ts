@@ -25,12 +25,24 @@ import { Salon } from '../../../shared/models/salon';
   ],
   template: `
     <app-client-layout activeNav="home">
-      <!-- Sticky Page Header -->
-      <div slot="header">
+      <!-- Fixed Sticky Page Header -->
+      <div slot="header" class="salons-header-sticky">
         <app-page-header title="Tous les salons" backRoute="/client/home" />
       </div>
 
       <div class="salons-page">
+        <!-- Catchy Hero Intro Section -->
+        <section class="salons-page__hero">
+          <div class="salons-page__hero-badge">
+            <span class="salons-page__hero-dot"></span>
+            <span>Salons Partenaires Certifiés</span>
+          </div>
+          <h1 class="salons-page__hero-title">Trouvez votre salon idéal</h1>
+          <p class="salons-page__hero-subtitle">
+            Découvrez les meilleurs coiffeurs professionnels de Dakar et prenez votre ticket en 1 clic.
+          </p>
+        </section>
+
         <!-- Search Bar -->
         <section class="salons-page__search-section">
           <app-search-bar
