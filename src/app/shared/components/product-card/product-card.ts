@@ -22,28 +22,35 @@ import { CartService } from '../../services/cart.service';
         </span>
       </div>
 
-      <!-- Title -->
-      <a [routerLink]="['/client/boutique/produits', product.id]" class="product-card__title">
-        {{ product.title }}
-      </a>
+      <!-- Title & Price with Compact Cart Icon Button on Right -->
+      <div class="product-card__info-row">
+        <div class="product-card__details">
+          <a [routerLink]="['/client/boutique/produits', product.id]" class="product-card__title">
+            {{ product.title }}
+          </a>
 
-      <!-- Dual Prices: Actual & Strikethrough -->
-      <div class="product-card__price-wrap">
-        <span class="product-card__current-price">{{ formattedPrice }}</span>
-        @if (product.oldPrice) {
-          <span class="product-card__old-price">{{ formattedOldPrice }}</span>
-        }
+          <div class="product-card__price-wrap">
+            <span class="product-card__current-price">{{ formattedPrice }}</span>
+            @if (product.oldPrice) {
+              <span class="product-card__old-price">{{ formattedOldPrice }}</span>
+            }
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="product-card__add-icon-btn"
+          (click)="onAddToCart($event)"
+          title="Ajouter au panier"
+          aria-label="Ajouter au panier"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+        </button>
       </div>
-
-      <!-- Add to Cart CTA Button -->
-      <button type="button" class="product-card__add-btn" (click)="onAddToCart($event)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1"/>
-          <circle cx="20" cy="21" r="1"/>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-        </svg>
-        <span>Ajouter au panier</span>
-      </button>
     </div>
   `,
   styleUrl: './product-card.scss'

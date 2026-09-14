@@ -355,7 +355,7 @@
   max-width: 100%;
   width: 100%;
   overflow: hidden;
-  background: #ffffff !important;
+  background: var(--bg-page, #f8fafc);
   box-sizing: border-box;
 }
 
@@ -363,7 +363,7 @@
   height: 64px;
   min-height: 64px;
   flex-shrink: 0;
-  background: #ffffff !important;
+  background: var(--bg-card, #ffffff);
   border-bottom: 1px solid var(--border-color, #e2e8f0);
   padding: 0 24px;
   display: flex;
@@ -463,6 +463,47 @@
   }
 }
 
+.admin-topbar__theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-page, #f8fafc);
+  color: var(--text-primary, #0f172a);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    color: #f59e0b;
+  }
+
+  &:hover {
+    background: var(--primary-light, #eef2ff);
+    border-color: var(--primary, #1E5AF0);
+    color: var(--primary, #1E5AF0);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 767px) {
+    padding: 7px;
+    border-radius: 10px;
+  }
+}
+
+.admin-topbar__theme-text {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
 .admin-topbar__site-link {
   display: inline-flex;
   align-items: center;
@@ -554,7 +595,7 @@
   width: 100%;
   min-width: 0;
   margin: 0 auto;
-  background: #ffffff !important;
+  background: transparent;
   box-sizing: border-box;
   overflow-y: auto;
   overflow-x: hidden;
@@ -577,5 +618,59 @@
 
   @media (max-width: 639px) {
     padding: 14px 10px 36px;
+  }
+}
+
+// ── Dark Theme Overrides for Admin Layout ──────────────────────
+:host-context(body.dark-theme) {
+  .admin-main {
+    background: #0b132b !important;
+  }
+
+  .admin-topbar {
+    background: #111a36 !important;
+    border-bottom-color: #1e293b !important;
+  }
+
+  .admin-topbar__menu-btn {
+    background: #1c2541;
+    border-color: #334155;
+    color: #f8fafc;
+
+    &:hover {
+      background: #243056;
+      border-color: #60a5fa;
+      color: #60a5fa;
+    }
+  }
+
+  .admin-topbar__theme-btn {
+    background: #1c2541;
+    border-color: #334155;
+    color: #f8fafc;
+
+    svg {
+      color: #fbbf24;
+    }
+
+    &:hover {
+      background: #243056;
+      border-color: #60a5fa;
+      color: #ffffff;
+    }
+  }
+
+  .admin-topbar__admin-chip strong {
+    color: #f8fafc !important;
+  }
+
+  .admin-topbar__admin-chip span {
+    color: #94a3b8 !important;
+  }
+
+  .admin-content {
+    &::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
   }
 }

@@ -59,10 +59,25 @@
   font-size: 0.85rem;
 }
 
+.product-card__info-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.product-card__details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
 .product-card__title {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   color: var(--text-primary, #0f172a);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.35;
   text-decoration: none;
@@ -80,62 +95,59 @@
   display: flex;
   align-items: baseline;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .product-card__current-price {
   color: var(--primary, #1E5AF0);
-  font-size: 1.02rem;
+  font-size: 1rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .product-card__old-price {
   color: var(--text-muted, #94a3b8);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-decoration: line-through;
+  white-space: nowrap;
 }
 
-.product-card__add-btn {
+.product-card__add-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 100%;
-  min-height: 42px;
-  border: none;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
   border-radius: 12px;
-  padding: 0 12px;
+  border: none;
   background: var(--secondary, #f59e0b) !important;
   color: #0f172a !important;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.32);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.28);
   transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-  margin-top: auto;
-
-  span {
-    white-space: nowrap;
-    color: #0f172a !important;
-  }
+  flex-shrink: 0;
 
   svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    color: #0f172a !important;
+    width: 18px;
+    height: 18px;
     stroke: #0f172a !important;
+    color: #0f172a !important;
+    transition: transform 0.15s ease;
   }
 
   &:hover {
     background: var(--secondary-hover, #d97706) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+    transform: scale(1.06);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.42);
+
+    svg {
+      transform: scale(1.1);
+    }
   }
 
   &:active {
-    transform: translateY(0);
+    transform: scale(0.95);
   }
 }

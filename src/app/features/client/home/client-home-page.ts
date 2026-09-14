@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { LocationHeader } from '../../../shared/components/location-header/location-header';
 import { SearchBar } from '../../../shared/components/search-bar/search-bar';
@@ -14,6 +14,7 @@ import { AuthSessionService } from '../../auth/auth-session.service';
 @Component({
   selector: 'app-client-home-page',
   imports: [
+    RouterLink,
     ClientLayout,
     LocationHeader,
     SearchBar,
@@ -72,9 +73,12 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                 </span>
                 <h2 class="client-home__section-title">Salons recommandés</h2>
               </div>
-              @if (allSalons().length > 0) {
-                <span class="client-home__salons-count">{{ allSalons().length }} disponibles</span>
-              }
+              <a routerLink="/client/salons" class="client-home__see-all-link">
+                <span>Voir tous</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </a>
             </div>
           </section>
         </header>

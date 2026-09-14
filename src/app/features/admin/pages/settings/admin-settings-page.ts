@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminDataService, PlatformSettings } from '../../services/admin-data.service';
 import { AdminConfirmService } from '../../services/admin-confirm.service';
+import { ThemeService } from '../../../../shared/services/theme.service';
 
 @Component({
   selector: 'app-admin-settings-page',
@@ -99,6 +100,46 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
           </div>
         </div>
 
+        <!-- Card 3: Thème & Apparence -->
+        <div class="admin-card">
+          <div class="admin-card__title">
+            <h3>Apparence &amp; Thème</h3>
+            <p>Personnalisez l'affichage de l'interface d'administration et de l'application.</p>
+          </div>
+
+          <div class="admin-theme-selector">
+            <button
+              type="button"
+              class="admin-theme-btn"
+              [class.admin-theme-btn--active]="themeService.theme() === 'light'"
+              (click)="themeService.setTheme('light')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              <span>Mode Clair</span>
+            </button>
+
+            <button
+              type="button"
+              class="admin-theme-btn"
+              [class.admin-theme-btn--active]="themeService.theme() === 'dark'"
+              (click)="themeService.setTheme('dark')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <span>Mode Sombre</span>
+            </button>
+
+            <button
+              type="button"
+              class="admin-theme-btn"
+              [class.admin-theme-btn--active]="themeService.theme() === 'system'"
+              (click)="themeService.setTheme('system')"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <span>Système (Auto)</span>
+            </button>
+          </div>
+        </div>
+
       </div>
 
     </div>
@@ -108,6 +149,7 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
 export class AdminSettingsPage {
   private readonly data = inject(AdminDataService);
   private readonly confirmService = inject(AdminConfirmService);
+  protected readonly themeService = inject(ThemeService);
 
   protected form: PlatformSettings = { ...this.data.settings() };
   protected readonly savedToast = signal<boolean>(false);

@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginPage } from './features/auth/pages/login/login-page';
 import { OtpPage } from './features/auth/pages/otp/otp-page';
 import { ClientHomePage } from './features/client/home/client-home-page';
+import { SalonsListPage } from './features/client/salons-list/salons-list-page';
 import { SalonDetailPage } from './features/client/salon-detail/salon-detail-page';
 import { TicketOwnerPage } from './features/client/ticket/ticket-owner-page';
 import { TicketDetailPage } from './features/client/ticket-detail/ticket-detail-page';
@@ -55,6 +56,7 @@ export const routes: Routes = [
 
   // ── Client Routes (Protected) ─────────────────────────────
   { path: 'client/home', component: ClientHomePage, canActivate: [clientAuthGuard] },
+  { path: 'client/salons', component: SalonsListPage, canActivate: [clientAuthGuard] },
   { path: 'client/salons/:id', component: SalonDetailPage, canActivate: [clientAuthGuard] },
   { path: 'client/salons/:id/ticket', component: TicketOwnerPage, canActivate: [clientAuthGuard] },
   { path: 'client/tickets', component: MyTicketsPage, canActivate: [clientAuthGuard] },

@@ -171,16 +171,34 @@
   letter-spacing: -0.015em;
 }
 
-.client-home__salons-count {
+.client-home__see-all-link {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
-  background: #f1f5f9;
+  gap: 4px;
+  padding: 4px 10px;
+  background: var(--primary-light, #eef2ff);
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #475569;
-  letter-spacing: -0.01em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary, #1E5AF0);
+  text-decoration: none;
+  transition: all 0.15s ease;
+
+  svg {
+    width: 13px;
+    height: 13px;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover {
+    background: var(--primary, #1E5AF0);
+    color: #ffffff;
+    transform: translateX(2px);
+
+    svg {
+      transform: translateX(2px);
+    }
+  }
 }
 
 // ── Independently Scrollable Salons Area ───────────────────────
@@ -279,5 +297,15 @@
     background: #1c2541 !important;
     border-color: #334155 !important;
     color: #cbd5e1 !important;
+  }
+
+  .client-home__see-all-link {
+    background: rgba(30, 90, 240, 0.2) !important;
+    color: #60a5fa !important;
+
+    &:hover {
+      background: var(--primary, #1E5AF0) !important;
+      color: #ffffff !important;
+    }
   }
 }
