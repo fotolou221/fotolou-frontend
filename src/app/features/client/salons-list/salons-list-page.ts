@@ -31,16 +31,10 @@ import { Salon } from '../../../shared/models/salon';
       </div>
 
       <div class="salons-page">
-        <!-- Catchy Hero Intro Section -->
+        <!-- Intro Hero Section -->
         <section class="salons-page__hero">
-          <div class="salons-page__hero-badge">
-            <span class="salons-page__hero-dot"></span>
-            <span>Salons Partenaires Certifiés</span>
-          </div>
-          <h1 class="salons-page__hero-title">Trouvez votre salon idéal</h1>
-          <p class="salons-page__hero-subtitle">
-            Découvrez les meilleurs coiffeurs professionnels de Dakar et prenez votre ticket en 1 clic.
-          </p>
+          <h1 class="salons-page__hero-title">Nos Salons</h1>
+          <p class="salons-page__hero-subtitle">Prenez votre ticket en 1 clic.</p>
         </section>
 
         <!-- Search Bar -->
@@ -72,12 +66,11 @@ import { Salon } from '../../../shared/models/salon';
             />
           } @else {
 
-            <!-- Section 1: Salons à la une / Horizontaux (Visible when no specific query or when items match) -->
+            <!-- Section 1: Salons recommandés (Horizontaux) -->
             @if (featuredSalons().length > 0) {
               <section class="salons-page__featured-section">
                 <div class="salons-page__section-header">
                   <div class="salons-page__title-group">
-                    <span class="salons-page__badge-icon">⭐</span>
                     <h2 class="salons-page__section-title">Salons recommandés</h2>
                   </div>
                   <span class="salons-page__section-pill">{{ featuredSalons().length }}</span>
@@ -147,9 +140,8 @@ import { Salon } from '../../../shared/models/salon';
             <section class="salons-page__grid-section">
               <div class="salons-page__section-header">
                 <div class="salons-page__title-group">
-                  <span class="salons-page__badge-icon">📍</span>
                   <h2 class="salons-page__section-title">
-                    {{ searchQuery() ? 'Résultats trouvés' : 'Tous les salons partenaires' }}
+                    {{ searchQuery() ? 'Résultats trouvés' : 'Tous les salons' }}
                   </h2>
                 </div>
                 <span class="salons-page__section-pill">{{ filteredSalons().length }} disponibles</span>

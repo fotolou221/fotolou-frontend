@@ -37,57 +37,29 @@
 .salons-page__hero {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 2px 0 4px;
-}
-
-.salons-page__hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  width: fit-content;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--primary-light, #eef2ff);
-  color: var(--primary, #1E5AF0);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.salons-page__hero-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.25);
-  animation: pulse-dot 2s infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.25); opacity: 0.75; }
+  gap: 3px;
+  padding: 2px 0;
 }
 
 .salons-page__hero-title {
-  margin: 2px 0 0;
-  font-size: 1.35rem;
-  font-weight: 900;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 850;
   color: var(--text-primary, #0f172a);
   letter-spacing: -0.02em;
-  line-height: 1.25;
+  line-height: 1.2;
 
   @media (min-width: 640px) {
-    font-size: 1.6rem;
+    font-size: 1.45rem;
   }
 }
 
 .salons-page__hero-subtitle {
   margin: 0;
-  font-size: 0.84rem;
+  font-size: 0.8125rem;
   color: var(--text-secondary, #64748b);
-  line-height: 1.45;
-  font-weight: 450;
+  line-height: 1.35;
+  font-weight: 500;
 }
 
 .salons-page__search-section {
@@ -131,11 +103,6 @@
   align-items: center;
   gap: 7px;
   min-width: 0;
-}
-
-.salons-page__badge-icon {
-  font-size: 1rem;
-  flex-shrink: 0;
 }
 
 .salons-page__section-title {
@@ -595,11 +562,6 @@
   .salons-header-sticky {
     background: #0b132b !important;
     border-bottom-color: #334155 !important;
-  }
-
-  .salons-page__hero-badge {
-    background: rgba(30, 90, 240, 0.2) !important;
-    color: #60a5fa !important;
   }
 
   .salons-page__hero-title {
