@@ -91,6 +91,27 @@
   &--waiting {
     border: 1px solid #eef2f6;
   }
+
+  &--clickable {
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.18s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      border-color: rgba(30, 90, 240, 0.35);
+
+      .queue-card__chevron {
+        color: var(--primary, #1E5AF0);
+        transform: translateX(3px);
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
 }
 
 .coiffeur-toast {
@@ -269,6 +290,21 @@
   &--cancelled {
     background: var(--danger-light, #fee2e2);
     color: var(--danger, #dc2626);
+  }
+}
+
+.queue-card__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #94a3b8);
+  margin-left: 4px;
+  flex-shrink: 0;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), color 0.18s ease;
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 }
 

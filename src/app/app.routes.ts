@@ -84,6 +84,7 @@ export const routes: Routes = [
   // ── Coiffeur Routes (Protected) ───────────────────────────
   { path: 'coiffeur/home', component: CoiffeurHomePage, canActivate: [coiffeurAuthGuard] },
   { path: 'coiffeur/tickets', component: CoiffeurTicketsPage, canActivate: [coiffeurAuthGuard] },
+  { path: 'coiffeur/tickets/:id', component: TicketDetailPage, canActivate: [coiffeurAuthGuard] },
   { path: 'coiffeur/notifications', component: CoiffeurNotificationsPage, canActivate: [coiffeurAuthGuard] },
   { path: 'coiffeur/profile', component: CoiffeurProfilePage, canActivate: [coiffeurAuthGuard] },
   { path: 'coiffeur/settings', component: SettingsPage, canActivate: [coiffeurAuthGuard] },

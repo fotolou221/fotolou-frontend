@@ -24,12 +24,12 @@ import { AuthSessionService } from '../../auth/auth-session.service';
     RouterLink
   ],
   template: `
-    <app-client-layout [showBottomNav]="false" [hasCustomFooter]="true">
+    <app-client-layout [showBottomNav]="false" [hasCustomFooter]="true" [role]="isCoiffeur ? 'coiffeur' : 'client'">
       <!-- Fixed Top Header -->
       <app-page-header
         slot="header"
         title="Détail du Ticket"
-        backRoute="/client/tickets"
+        [backRoute]="backRoute"
       />
 
       <!-- Main Content -->
@@ -96,7 +96,7 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                 />
               </svg>
               <div class="ticket-detail-page__number-display">
-                <span>Votre ticket</span>
+                <span>{{ isCoiffeur ? 'Ticket N°' : 'Votre ticket' }}</span>
                 <strong>{{ ticket.ticketNumber || '-' }}</strong>
                 @if (isMyTicketFromYesterday) {
                   <span class="ticket-detail-page__yesterday-badge ticket-detail-page__yesterday-badge--mine" title="Votre ticket a été pris hier">
@@ -164,7 +164,9 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                   <p>Ce ticket a été <strong>annulé</strong>.</p>
                 }
                 @default {
-                  @if (targetSmsPhone) {
+                  @if (isCoiffeur) {
+                    <p>Client : <strong>{{ ticket.ownerName }}</strong> - Téléphone : <strong>{{ targetSmsPhone || 'Non renseigné' }}</strong></p>
+                  } @else if (targetSmsPhone) {
                     <p>Un SMS sera envoyé à <strong>{{ targetSmsPhone }}</strong> dès que votre tour approchera.</p>
                   } @else {
                     <p>Un SMS vous sera envoyé dès que votre tour approchera.</p>
@@ -198,7 +200,15 @@ import { AuthSessionService } from '../../auth/auth-session.service';
       <!-- Fixed Bottom Action Bar -->
       @if (ticket && !loading()) {
         <div slot="footer" class="ticket-detail-page__fixed-footer">
-          @if (isHistory) {
+          @if (isCoiffeur) {
+            <a routerLink="/coiffeur/tickets" class="ticket-detail-page__new-ticket-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"/>
+                <polyline points="12 19 5 12 12 5"/>
+              </svg>
+              <span>Retour à l'historique</span>
+            </a>
+          } @else if (isHistory) {
             <a routerLink="/client/home" class="ticket-detail-page__new-ticket-btn">
               <span>Prendre un nouveau ticket</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -475,9 +485,20 @@ export class TicketDetailPage implements OnInit {
     return this.isHistory ? 'closed' : 'open';
   }
 
+  protected get isCoiffeur(): boolean {
+    return this.auth.activeUser()?.role === 'coiffeur' || this.router.url.startsWith('/coiffeur');
+  }
+
+  protected get backRoute(): string {
+    return this.isCoiffeur ? '/coiffeur/tickets' : '/client/tickets';
+  }
+
   protected get displayOwnerName(): string {
     if (!this.ticket) return '';
     const ownerName = this.ticket.ownerName?.trim() || 'Client';
+    if (this.isCoiffeur) {
+      return ownerName;
+    }
     const profileName = this.currentProfileName();
     const ownerType = (this.ticket.ownerType || '').toString().toUpperCase();
 
@@ -491,10 +512,8 @@ export class TicketDetailPage implements OnInit {
   protected get targetSmsPhone(): string | null {
     const raw =
       this.ticket?.ownerPhone?.trim() ||
-      this.auth.currentUser()?.phone?.trim() ||
-      this.auth.activeUser()?.phone?.trim() ||
       (this.ticket?.user?.login && !this.ticket.user.login.includes('@') ? this.ticket.user.login.trim() : null) ||
-      null;
+      (!this.isCoiffeur ? (this.auth.currentUser()?.phone?.trim() || this.auth.activeUser()?.phone?.trim() || null) : null);
 
     if (!raw) return null;
     return this.auth.formatPhone(raw);
@@ -504,7 +523,7 @@ export class TicketDetailPage implements OnInit {
     if (!this.ticket) return;
     this.showCancelModal.set(false);
     this.ticketService.cancelTicket(this.ticket.id).subscribe(() => {
-      this.router.navigate(['/client/tickets']);
+      this.router.navigate([this.backRoute]);
     });
   }
 

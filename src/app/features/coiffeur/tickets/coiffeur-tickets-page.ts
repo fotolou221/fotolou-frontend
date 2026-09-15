@@ -85,6 +85,8 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
               class="queue-card"
               [class.queue-card--current]="isCurrentClient(item, idx)"
               [class.queue-card--waiting]="!isCurrentClient(item, idx) && activeTab() === 'active'"
+              [class.queue-card--clickable]="activeTab() === 'history'"
+              (click)="onTicketClick(item)"
             >
               <div class="queue-card__top">
                 <!-- Position Box / Avatar -->
@@ -141,6 +143,14 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
                 >
                   {{ getStatusText(item, isCurrentClient(item, idx)) }}
                 </span>
+
+                @if (activeTab() === 'history') {
+                  <span class="queue-card__chevron" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </span>
+                }
               </div>
 
               <!-- Action Bar with Icons Only (Active tab) -->
@@ -689,6 +699,12 @@ export class CoiffeurTicketsPage implements OnInit {
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
+  }
+
+  protected onTicketClick(item: Ticket): void {
+    if (this.activeTab() === 'history') {
+      this.router.navigate(['/coiffeur/tickets', item.id]);
+    }
   }
 
   protected onAvatarError(item: Ticket): void {
