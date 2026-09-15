@@ -233,8 +233,20 @@
 }
 
 .queue-card__phone {
-  color: var(--text-secondary, #64748b);
-  font-size: 0.80rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--primary, #1e5af0);
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-top: 1px;
+}
+
+.queue-card__phone-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--primary, #1e5af0);
 }
 
 .queue-card__meta-line {

@@ -117,6 +117,14 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
                 <!-- Client Info -->
                 <div class="queue-card__info">
                   <strong class="queue-card__name">{{ item.ownerName }}</strong>
+                  @if (getClientPhone(item)) {
+                    <span class="queue-card__phone">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="queue-card__phone-icon" aria-hidden="true">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                      </svg>
+                      {{ getClientPhone(item) }}
+                    </span>
+                  }
                   <div class="queue-card__meta-line">
                     <span class="queue-card__time">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="queue-card__time-icon" aria-hidden="true">
@@ -551,15 +559,7 @@ export class CoiffeurTicketsPage implements OnInit {
   protected getClientPhone(item: Ticket): string {
     const raw = item.ownerPhone || (item.user && !item.user.login?.includes('@') ? item.user.login : '');
     if (!raw) return '';
-    const digits = raw.replace(/\D/g, '');
-    if (!digits) return '';
-    if (digits.startsWith('221') && digits.length > 9) {
-      return `+${digits}`;
-    }
-    if (digits.length === 9) {
-      return `+221${digits}`;
-    }
-    return raw.trim();
+    return this.auth.formatPhone(raw);
   }
 
   protected callClient(item: Ticket): void {
