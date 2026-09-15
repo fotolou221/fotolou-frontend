@@ -87,12 +87,29 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
               [class.queue-card--waiting]="!isCurrentClient(item, idx) && activeTab() === 'active'"
             >
               <div class="queue-card__top">
-                <!-- Position Box -->
-                <div
-                  class="queue-card__pos-box"
-                  [class.queue-card__pos-box--current]="isCurrentClient(item, idx)"
-                >
-                  #{{ item.ticketNumber }}
+                <!-- Position Box / Avatar -->
+                <div class="queue-card__avatar-wrap">
+                  @if (item.ownerAvatarUrl) {
+                    <img
+                      [src]="item.ownerAvatarUrl"
+                      [alt]="item.ownerName"
+                      class="queue-card__avatar-img"
+                      (error)="onAvatarError(item)"
+                    />
+                    <span
+                      class="queue-card__avatar-num"
+                      [class.queue-card__avatar-num--current]="isCurrentClient(item, idx)"
+                    >
+                      #{{ item.ticketNumber }}
+                    </span>
+                  } @else {
+                    <div
+                      class="queue-card__pos-box"
+                      [class.queue-card__pos-box--current]="isCurrentClient(item, idx)"
+                    >
+                      #{{ item.ticketNumber }}
+                    </div>
+                  }
                 </div>
 
                 <!-- Client Info -->
@@ -672,5 +689,9 @@ export class CoiffeurTicketsPage implements OnInit {
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
+  }
+
+  protected onAvatarError(item: Ticket): void {
+    (item as any).ownerAvatarUrl = undefined;
   }
 }

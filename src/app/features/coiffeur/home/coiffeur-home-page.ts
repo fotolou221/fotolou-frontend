@@ -95,11 +95,28 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
                   (click)="goToQueue()"
                 >
                   <div class="queue-card__top">
-                    <div
-                      class="queue-card__pos-box"
-                      [class.queue-card__pos-box--current]="isCurrentClient(item)"
-                    >
-                      #{{ item.ticketNumber }}
+                    <div class="queue-card__avatar-wrap">
+                      @if (item.ownerAvatarUrl) {
+                        <img
+                          [src]="item.ownerAvatarUrl"
+                          [alt]="item.ownerName"
+                          class="queue-card__avatar-img"
+                          (error)="onAvatarError(item)"
+                        />
+                        <span
+                          class="queue-card__avatar-num"
+                          [class.queue-card__avatar-num--current]="isCurrentClient(item)"
+                        >
+                          #{{ item.ticketNumber }}
+                        </span>
+                      } @else {
+                        <div
+                          class="queue-card__pos-box"
+                          [class.queue-card__pos-box--current]="isCurrentClient(item)"
+                        >
+                          #{{ item.ticketNumber }}
+                        </div>
+                      }
                     </div>
 
                     <div class="queue-card__info">
@@ -352,5 +369,9 @@ export class CoiffeurHomePage {
       normalized === 'barbier fotolou' ||
       (!!salonName && (normalized === salonName || normalized === `${salonName} propriétaire` || normalized === `${salonName} proprietaire`))
     );
+  }
+
+  protected onAvatarError(item: Ticket): void {
+    (item as any).ownerAvatarUrl = undefined;
   }
 }

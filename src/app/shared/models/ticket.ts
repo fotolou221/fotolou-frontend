@@ -8,6 +8,7 @@ export interface Ticket {
   readonly ownerName: string;
   readonly ownerPhone?: string;
   readonly ownerType?: 'SELF' | 'RELATIVE' | 'CUSTOM' | 'self' | 'relative' | 'custom' | string;
+  readonly ownerAvatarUrl?: string;
   readonly ticketNumber: number;
   readonly currentTicketNumber?: number;
   readonly currentTicketIsYesterday?: boolean;
@@ -22,6 +23,8 @@ export interface Ticket {
   readonly user?: {
     readonly id?: number | string;
     readonly login?: string;
+    readonly imageUrl?: string;
+    readonly avatarUrl?: string;
   };
 }
 

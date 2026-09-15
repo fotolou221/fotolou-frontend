@@ -1,6 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { LocationHeader } from '../../../shared/components/location-header/location-header';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
@@ -9,6 +11,7 @@ import { TicketService } from '../../../shared/services/ticket.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
 import { HttpErrorMessageService } from '../../../shared/services/http-error-message.service';
+import { API_CONFIG } from '../../../core/config/api.config';
 
 @Component({
   selector: 'app-client-profile-page',
@@ -29,9 +32,65 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
 
         <!-- Avatar & Identity -->
         <section class="profile-page__hero">
-          <div class="profile-page__avatar" aria-hidden="true">
-            {{ avatarInitial }}
+          <div class="profile-page__avatar-wrap">
+            <div
+              class="profile-page__avatar"
+              (click)="fileInput.click()"
+              title="Changer votre photo de profil"
+              role="button"
+              tabindex="0"
+              (keydown.enter)="fileInput.click()"
+            >
+              @if (avatarUrl()) {
+                <img [src]="avatarUrl()!" alt="Photo de profil" class="profile-page__avatar-img" />
+              } @else {
+                <span class="profile-page__avatar-initial">{{ avatarInitial }}</span>
+              }
+
+              @if (uploadingPhoto()) {
+                <div class="profile-page__avatar-loading" aria-label="Téléversement en cours">
+                  <span class="profile-page__avatar-spinner" aria-hidden="true"></span>
+                </div>
+              }
+            </div>
+
+            <button
+              type="button"
+              class="profile-page__avatar-edit-btn"
+              (click)="fileInput.click()"
+              [disabled]="uploadingPhoto()"
+              title="Changer la photo de profil"
+              aria-label="Changer la photo de profil"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            </button>
+
+            <input
+              #fileInput
+              type="file"
+              accept="image/*"
+              (change)="onPhotoSelected($event)"
+              hidden
+            />
           </div>
+
+          @if (avatarUrl()) {
+            <button
+              type="button"
+              class="profile-page__avatar-remove-btn"
+              (click)="removePhoto()"
+              [disabled]="uploadingPhoto()"
+            >
+              Supprimer la photo
+            </button>
+          }
+
+          @if (photoSuccess()) {
+            <p class="profile-page__inline-success" role="status">{{ photoSuccess() }}</p>
+          }
 
           <!-- Name: click to edit -->
           @if (editingName()) {
@@ -231,6 +290,7 @@ import { HttpErrorMessageService } from '../../../shared/services/http-error-mes
 })
 export class ClientProfilePage implements OnInit {
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
   private readonly ticketService = inject(TicketService);
   protected readonly notificationService = inject(NotificationService);
   private readonly auth = inject(AuthSessionService);
@@ -241,6 +301,11 @@ export class ClientProfilePage implements OnInit {
   protected readonly saving = signal(false);
   protected readonly profileError = signal<string | null>(null);
   protected phone = '';
+
+  // ── Profile Photo Signals ────────────────────────────────
+  protected readonly avatarUrl = signal<string | null>(null);
+  protected readonly uploadingPhoto = signal(false);
+  protected readonly photoSuccess = signal<string | null>(null);
 
   // ── Inline Name Edit ─────────────────────────────────────
   protected readonly editingName = signal(false);
@@ -255,7 +320,78 @@ export class ClientProfilePage implements OnInit {
       this.displayName.set('Client Fotolou');
       this.phone = user?.phone || '';
     }
+    this.avatarUrl.set(user?.avatarUrl || null);
     this.ticketService.loadTickets();
+  }
+
+  protected async onPhotoSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    // 1. Instant local preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.avatarUrl.set(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // 2. Upload file
+    this.uploadingPhoto.set(true);
+    this.profileError.set(null);
+    this.photoSuccess.set(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'avatars');
+
+      let finalUrl = this.avatarUrl();
+      try {
+        const uploadRes = await firstValueFrom(
+          this.http.post<any>(`${API_CONFIG.baseUrl}/storage/upload`, formData)
+        );
+        if (uploadRes && uploadRes.url) {
+          finalUrl = this.normalizeUrl(uploadRes.url);
+          this.avatarUrl.set(finalUrl);
+        }
+      } catch (uploadErr) {
+        console.warn('[ClientProfilePage] Upload storage backend non joignable, conservation aperçu local:', uploadErr);
+      }
+
+      await this.auth.updateProfile({ avatarUrl: finalUrl || '' });
+      this.photoSuccess.set('Photo de profil mise à jour avec succès !');
+      globalThis.setTimeout(() => this.photoSuccess.set(null), 3000);
+
+      // Rafraîchir les tickets pour que l'avatar s'affiche instantanément partout
+      this.ticketService.loadTickets(true);
+    } catch (err) {
+      console.warn('Erreur téléversement avatar client:', err);
+      this.profileError.set(this.errorMessages.message(err, 'Impossible de mettre à jour la photo. Vérifiez votre connexion.'));
+    } finally {
+      this.uploadingPhoto.set(false);
+      input.value = '';
+    }
+  }
+
+  protected async removePhoto(): Promise<void> {
+    this.avatarUrl.set(null);
+    this.photoSuccess.set(null);
+    try {
+      await this.auth.updateProfile({ avatarUrl: '' });
+      this.photoSuccess.set('Photo supprimée avec succès.');
+      globalThis.setTimeout(() => this.photoSuccess.set(null), 3000);
+      this.ticketService.loadTickets(true);
+    } catch (err) {
+      this.profileError.set(this.errorMessages.message(err, 'Impossible de supprimer la photo.'));
+    }
+  }
+
+  private normalizeUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url) || url.startsWith('data:')) return url;
+    const apiOrigin = API_CONFIG.baseUrl.replace(/\/api\/?$/, '');
+    return apiOrigin + (url.startsWith('/') ? url : '/' + url);
   }
 
   protected startEdit(): void {
