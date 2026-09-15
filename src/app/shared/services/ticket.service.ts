@@ -127,7 +127,7 @@ export class TicketService {
             salonName: t.salonName || t.salon?.name || 'King Barber',
             ownerName: this.resolveOwnerName(t.ownerName || t.customerName || 'Moi', t),
             ownerPhone: t.ownerPhone || t.phone || t.customerPhone || (t.user && !t.user.login?.includes('@') ? t.user.login : undefined) || undefined,
-            ownerAvatarUrl: t.ownerAvatarUrl || t.avatarUrl || t.user?.imageUrl || t.user?.avatarUrl || (t.ownerType === 'SELF' ? this.auth.currentUser()?.avatarUrl : undefined) || undefined,
+            ownerAvatarUrl: this.resolveOwnerAvatar(t),
             ticketNumber: t.ticketNumber || t.dailySequenceNumber || 1,
             currentTicketNumber: this.normalizeCurrentTicketNumber(t.currentTicketNumber || t.currentQueueNumber),
             currentTicketIsYesterday: t.currentTicketIsYesterday ?? undefined,
@@ -177,7 +177,7 @@ export class TicketService {
           salonName: t.salonName || t.salon?.name || 'King Barber',
           ownerName: this.resolveOwnerName(t.ownerName || t.customerName || 'Moi', t),
           ownerPhone: t.ownerPhone || t.phone || t.customerPhone || (t.user && !t.user.login?.includes('@') ? t.user.login : undefined) || undefined,
-          ownerAvatarUrl: t.ownerAvatarUrl || t.avatarUrl || t.user?.imageUrl || t.user?.avatarUrl || (t.ownerType === 'SELF' ? this.auth.currentUser()?.avatarUrl : undefined) || undefined,
+          ownerAvatarUrl: this.resolveOwnerAvatar(t),
           ticketNumber: t.ticketNumber || t.dailySequenceNumber || 1,
           currentTicketNumber: this.normalizeCurrentTicketNumber(t.currentTicketNumber || t.currentQueueNumber),
           currentTicketIsYesterday: t.currentTicketIsYesterday ?? undefined,
@@ -219,7 +219,7 @@ export class TicketService {
           salonName: saved.salon?.name || salonName,
           ownerName: this.resolveOwnerName(saved.ownerName || ownerName || 'Moi', saved),
           ownerPhone: saved.ownerPhone || (saved.user && !saved.user.login?.includes('@') ? saved.user.login : undefined) || undefined,
-          ownerAvatarUrl: saved.ownerAvatarUrl || this.auth.currentUser()?.avatarUrl || undefined,
+          ownerAvatarUrl: this.resolveOwnerAvatar(saved),
           ticketNumber: saved.ticketNumber || (activeCount + 1),
           currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
           status: st,
@@ -276,7 +276,7 @@ export class TicketService {
               salonName: saved.salon?.name || salonName,
               ownerName: this.resolveOwnerName(saved.ownerName || beneficiaries[idx]?.name || 'Moi', saved),
               ownerPhone: saved.ownerPhone || beneficiaries[idx]?.phone,
-              ownerAvatarUrl: saved.ownerAvatarUrl || (beneficiaries[idx]?.type === 'SELF' ? this.auth.currentUser()?.avatarUrl : undefined) || undefined,
+              ownerAvatarUrl: this.resolveOwnerAvatar({ ...saved, ownerType: beneficiaries[idx]?.type }),
               ticketNumber: saved.ticketNumber || (activeCount + idx + 1),
               currentTicketNumber: this.normalizeCurrentTicketNumber(saved.currentTicketNumber || saved.currentQueueNumber),
               currentTicketIsYesterday: saved.currentTicketIsYesterday ?? undefined,
@@ -419,6 +419,27 @@ export class TicketService {
     }
 
     return fallback;
+  }
+
+  private resolveOwnerAvatar(t: any): string | undefined {
+    // 1. Photo directe reçue du backend sur le ticket ou sur l'utilisateur client associé
+    const directAvatar = t?.ownerAvatarUrl || t?.avatarUrl || t?.user?.imageUrl || t?.user?.avatarUrl;
+    if (directAvatar && typeof directAvatar === 'string' && directAvatar.trim().length > 0) {
+      return directAvatar.trim();
+    }
+
+    // 2. Fallback sur la photo du profil connecté UNIQUEMENT si l'utilisateur est un CLIENT et qu'il s'agit de son propre ticket
+    //    Si l'utilisateur est un COIFFEUR ou ADMIN, on ne doit JAMAIS afficher la photo du coiffeur sur le ticket d'un client !
+    const currentUser = this.auth.currentUser();
+    if (currentUser && currentUser.role === 'client' && currentUser.avatarUrl) {
+      const ownerType = (t?.ownerType || '').toString().toUpperCase();
+      const rawName = typeof t?.ownerName === 'string' ? t.ownerName : '';
+      if (ownerType === 'SELF' || this.looksLikeSelfOwner(rawName)) {
+        return currentUser.avatarUrl;
+      }
+    }
+
+    return undefined;
   }
 
   private currentProfileName(): string {
