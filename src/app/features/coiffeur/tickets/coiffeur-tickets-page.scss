@@ -236,17 +236,17 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--primary, #1e5af0);
-  font-size: 0.82rem;
-  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+  font-weight: 600;
   margin-top: 1px;
 }
 
 .queue-card__phone-icon {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
-  color: var(--primary, #1e5af0);
+  color: var(--text-muted, #94a3b8);
 }
 
 .queue-card__meta-line {
