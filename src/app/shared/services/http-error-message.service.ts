@@ -24,15 +24,19 @@ const ERROR_KEY_MAP: Record<string, string> = {
 @Injectable({ providedIn: 'root' })
 export class HttpErrorMessageService {
   message(error: unknown, fallback = 'Une erreur est survenue. Veuillez réessayer.'): string {
+    if (this.isOffline()) {
+      return 'Vous êtes hors ligne. Vérifiez votre connexion Wi-Fi ou vos données mobiles puis réessayez.';
+    }
+
     if (this.isTimeout(error)) {
-      return 'Le serveur met du temps à répondre (démarrage en cours). Veuillez patienter quelques secondes puis réessayer.';
+      return 'Connexion lente ou instable. Vérifiez votre réseau internet puis réessayez.';
     }
 
     if (error instanceof HttpErrorResponse) {
       if (error.status === 0) {
         return this.isOffline()
-          ? 'Vous êtes hors connexion. Vérifiez votre connexion internet puis réessayez.'
-          : "Le serveur Fotolou redémarre ou met du temps à répondre. Veuillez patienter quelques secondes.";
+          ? 'Vous êtes hors ligne. Vérifiez votre connexion Wi-Fi ou vos données mobiles puis réessayez.'
+          : 'Connexion lente ou interrompue. Vérifiez votre réseau internet puis réessayez.';
       }
 
       const backendMessage = this.backendMessage(error);
@@ -68,8 +72,12 @@ export class HttpErrorMessageService {
         return 'Trop de tentatives. Patientez un instant avant de réessayer.';
       }
 
-      if (error.status === 502 || error.status === 503 || error.status === 504) {
-        return "Le serveur est en cours d'initialisation. Veuillez patienter un instant puis réactualiser.";
+      if (error.status === 504) {
+        return 'Le réseau met trop de temps à répondre (connexion lente). Vérifiez votre connexion internet puis réessayez.';
+      }
+
+      if (error.status === 502 || error.status === 503) {
+        return 'Le service est temporairement inaccessible. Vérifiez votre connexion ou réessayez dans un instant.';
       }
 
       if (error.status >= 500) {
@@ -88,8 +96,63 @@ export class HttpErrorMessageService {
     return fallback;
   }
 
+  title(error: unknown, fallback = 'Une erreur est survenue'): string {
+    if (this.isOffline()) {
+      return 'Pas de connexion internet';
+    }
+    if (this.isTimeout(error)) {
+      return 'Connexion lente ou instable';
+    }
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 0) {
+        return this.isOffline() ? 'Pas de connexion internet' : 'Connexion lente ou instable';
+      }
+      if (error.status === 504) {
+        return 'Connexion lente ou instable';
+      }
+      if (error.status === 502 || error.status === 503) {
+        return 'Service momentanément indisponible';
+      }
+      if (error.status === 401) {
+        return 'Session expirée';
+      }
+      if (error.status === 403) {
+        return 'Accès refusé';
+      }
+      if (error.status === 404) {
+        return 'Introuvable';
+      }
+      if (error.status >= 500) {
+        return 'Erreur du serveur';
+      }
+    }
+    return fallback;
+  }
+
   isConnectionIssue(error: unknown): boolean {
-    return this.isTimeout(error) || (error instanceof HttpErrorResponse && error.status === 0);
+    if (this.isOffline()) return true;
+    if (this.isTimeout(error)) return true;
+    if (error instanceof HttpErrorResponse) {
+      return error.status === 0 || error.status === 504;
+    }
+    if (error instanceof Error) {
+      const name = error.name || '';
+      const msg = (error.message || '').toLowerCase();
+      if (
+        name === 'TimeoutError' ||
+        msg.includes('network') ||
+        msg.includes('connexion') ||
+        msg.includes('offline') ||
+        msg.includes('timeout')
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  isOffline(): boolean {
+    return typeof navigator !== 'undefined' && navigator.onLine === false;
   }
 
   private backendMessage(error: HttpErrorResponse): string | null {
@@ -174,9 +237,5 @@ export class HttpErrorMessageService {
 
   private isTimeout(error: unknown): boolean {
     return error instanceof Error && error.name === 'TimeoutError';
-  }
-
-  private isOffline(): boolean {
-    return typeof navigator !== 'undefined' && navigator.onLine === false;
   }
 }
