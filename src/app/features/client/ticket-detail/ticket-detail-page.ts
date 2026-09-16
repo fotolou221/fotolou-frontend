@@ -98,13 +98,13 @@ import { AuthSessionService } from '../../auth/auth-session.service';
               <div class="ticket-detail-page__number-display">
                 <span>{{ isCoiffeur ? 'Ticket N°' : 'Votre ticket' }}</span>
                 <strong>{{ ticket.ticketNumber || '-' }}</strong>
-                @if (isMyTicketFromYesterday) {
-                  <span class="ticket-detail-page__yesterday-badge ticket-detail-page__yesterday-badge--mine" title="Votre ticket a été pris hier">
+                @if (!isHistory && isMyTicketFromPreviousDay) {
+                  <span class="ticket-detail-page__yesterday-badge ticket-detail-page__yesterday-badge--mine" title="Votre ticket a été pris un jour précédent, pas aujourd'hui.">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12 6 12 12 16 14"/>
                     </svg>
-                    <span>Pris hier</span>
+                    <span>Jour précédent</span>
                   </span>
                 }
               </div>
@@ -117,13 +117,13 @@ import { AuthSessionService } from '../../auth/auth-session.service';
               <app-stat-card label="NUMERO EN COURS">
                 <div class="ticket-detail-page__current-num-wrap">
                   <span class="ticket-detail-page__current-num">{{ queueNumberDisplay }}</span>
-                  @if (isCurrentTicketFromYesterday) {
-                    <span class="ticket-detail-page__yesterday-badge" title="Ce ticket a été pris hier lors de la journée précédente">
+                  @if (isCurrentTicketFromPreviousDay) {
+                    <span class="ticket-detail-page__yesterday-badge" title="Ce ticket a été pris avant le vôtre : la file suit l'ordre d'arrivée, pas le numéro du jour.">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"/>
                         <polyline points="12 6 12 12 16 14"/>
                       </svg>
-                      <span>Hier</span>
+                      <span>Pris avant vous</span>
                     </span>
                   }
                 </div>
@@ -445,7 +445,12 @@ export class TicketDetailPage implements OnInit {
     return `${this.currentQueueNumber}`;
   }
 
-  protected get isCurrentTicketFromYesterday(): boolean {
+  /**
+   * Vrai si le ticket actuellement appelé (NUMERO EN COURS) a été pris un jour
+   * précédent (pas forcément "hier" : peut être plus ancien, la file suit
+   * l'ordre d'arrivée et pas le numéro du jour).
+   */
+  protected get isCurrentTicketFromPreviousDay(): boolean {
     if (!this.ticket) return false;
     if (this.ticket.currentTicketIsYesterday !== undefined) {
       return !!this.ticket.currentTicketIsYesterday;
@@ -456,7 +461,8 @@ export class TicketDetailPage implements OnInit {
     return false;
   }
 
-  protected get isMyTicketFromYesterday(): boolean {
+  /** Vrai si le ticket du client a été pris un jour précédent (pas aujourd'hui). */
+  protected get isMyTicketFromPreviousDay(): boolean {
     if (!this.ticket?.createdAt) return false;
     return this.isDateBeforeToday(this.ticket.createdAt);
   }
