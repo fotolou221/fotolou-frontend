@@ -405,6 +405,15 @@ export class TicketDetailPage implements OnInit {
     }
   }
 
+  /**
+   * Couleur de l'anneau de progression, dynamique selon le nombre de
+   * personnes devant le client (mis à jour en temps réel via le flux
+   * temps réel) :
+   * - En attente, 2+ personnes devant : bleu.
+   * - En attente, plus qu'1 personne devant : bascule vers un ton proche
+   *   du vert pour signaler que le tour approche.
+   * - À son tour : vert plein (comme aujourd'hui).
+   */
   protected get ringColor(): string {
     if (!this.ticket) return '#1E5AF0';
     switch (this.ticket.status) {
@@ -416,6 +425,7 @@ export class TicketDetailPage implements OnInit {
       case 'your_turn':
         return '#16a34a';
       case 'waiting':
+        return this.ticket.peopleAhead === 1 ? '#0d9488' : '#1E5AF0';
       default:
         return '#1E5AF0';
     }
