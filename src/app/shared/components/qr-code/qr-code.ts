@@ -83,6 +83,19 @@ export class QrCode implements OnChanges, OnDestroy {
     this.instance = null;
   }
 
+  /**
+   * Résolution réelle (px) à laquelle dessiner le canvas pour un affichage net sur
+   * les écrans HiDPI/Retina : un canvas dessiné pixel pour pixel à `size` (CSS px)
+   * paraît flou dès que le ratio de pixels de l'appareil dépasse 1, car le navigateur
+   * doit alors suréchantillonner un bitmap trop petit. On dessine donc plus grand
+   * (jusqu'à 3x) puis on laisse le CSS (`max-width: 100%; height: auto`) redimensionner
+   * le canvas à sa taille d'affichage voulue.
+   */
+  private renderPixelSize(displayPx: number): number {
+    const dpr = typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1;
+    return Math.round(displayPx * Math.min(Math.max(dpr, 1), 3));
+  }
+
   private buildOptions(squarePx: number): Partial<QrStylingOptions> {
     return {
       type: 'canvas',
@@ -116,7 +129,7 @@ export class QrCode implements OnChanges, OnDestroy {
       if (token !== this.renderToken) return;
 
       const QRCodeStylingCtor = mod.default;
-      const options = this.buildOptions(this.size);
+      const options = this.buildOptions(this.renderPixelSize(this.size));
 
       if (!this.instance) {
         this.instance = new QRCodeStylingCtor(options);

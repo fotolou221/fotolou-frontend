@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, ViewChild } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
@@ -88,19 +88,11 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
                   </svg>
                   <span>Agrandir</span>
                 </button>
-                <button type="button" class="qr-card__action" (click)="downloadQr()">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  <span>Télécharger</span>
-                </button>
               </div>
             </div>
 
-            <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" aria-label="Agrandir le QR code du salon">
-              <app-qr-code #compactQr [value]="salonTicketUrl()" [size]="132" [downloadFileName]="qrFileName()" />
+            <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" (contextmenu)="$event.preventDefault()" aria-label="Agrandir le QR code du salon">
+              <app-qr-code [value]="salonTicketUrl()" [size]="132" />
             </button>
           </section>
         }
@@ -252,12 +244,9 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
 
-          <app-qr-code
-            [value]="salonTicketUrl()"
-            [size]="232"
-            [showDownloadButtons]="true"
-            [downloadFileName]="qrFileName()"
-          />
+          <div class="qr-overlay__qr" (contextmenu)="$event.preventDefault()">
+            <app-qr-code [value]="salonTicketUrl()" [size]="232" />
+          </div>
 
           <h3 class="qr-overlay__salon-name">{{ salonName() }}</h3>
           <p class="qr-overlay__hint">Scannez ce code pour prendre un ticket rapidement</p>
@@ -279,8 +268,6 @@ export class CoiffeurHomePage {
   protected readonly searchQuery = signal('');
   protected readonly avatarBroken = signal(false);
   protected readonly expandQr = signal(false);
-
-  @ViewChild('compactQr') private compactQrRef?: QrCode;
 
   protected readonly currentSalon = computed(() => {
     const user = this.authSession.currentUser();
@@ -304,11 +291,6 @@ export class CoiffeurHomePage {
     const salon = this.currentSalon();
     const ref = salon?.slug || salon?.id;
     return ref ? buildSalonTicketUrl(ref) : '';
-  });
-
-  protected readonly qrFileName = computed(() => {
-    const base = (this.currentSalon()?.slug || this.currentSalon()?.id || 'salon').toString();
-    return `fotolou-${base}-qrcode`;
   });
 
   protected readonly avatarUrl = computed(() => {
@@ -416,10 +398,6 @@ export class CoiffeurHomePage {
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
-  }
-
-  protected downloadQr(): void {
-    void this.compactQrRef?.download('png');
   }
 
   protected formatItemCreatedAt(item: Ticket): string {

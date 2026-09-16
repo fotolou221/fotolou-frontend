@@ -220,6 +220,8 @@
   cursor: pointer;
   line-height: 0;
   transition: transform 0.15s ease;
+  -webkit-user-select: none;
+  user-select: none;
 
   &:active {
     transform: scale(0.96);
@@ -227,6 +229,11 @@
 
   app-qr-code {
     pointer-events: none;
+  }
+
+  canvas,
+  img {
+    -webkit-user-drag: none;
   }
 }
 
@@ -348,6 +355,16 @@
   &:hover {
     background: #e2e8f0;
     color: #0f172a;
+  }
+}
+
+.qr-overlay__qr {
+  -webkit-user-select: none;
+  user-select: none;
+
+  canvas,
+  img {
+    -webkit-user-drag: none;
   }
 }
 
