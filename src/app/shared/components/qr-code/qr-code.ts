@@ -56,6 +56,13 @@ export class QrCode implements OnChanges, OnDestroy {
   @Input() showDownloadButtons = false;
   /** Nom de fichier (sans extension) utilisé au téléchargement. */
   @Input() downloadFileName = 'fotolou-qrcode';
+  /**
+   * Résolution (px) du fichier exporté, indépendante de la taille d'aperçu à l'écran
+   * (`size`). Un QR affiché en petit (ex: 96px dans une carte compacte) doit quand
+   * même se télécharger net et imprimable : on régénère toujours l'export à cette
+   * résolution plutôt que de rasteriser le petit aperçu.
+   */
+  @Input() downloadSize = 1024;
 
   @ViewChild('qrHost', { static: true }) private hostRef!: ElementRef<HTMLDivElement>;
 
@@ -76,16 +83,16 @@ export class QrCode implements OnChanges, OnDestroy {
     this.instance = null;
   }
 
-  private buildOptions(): Partial<QrStylingOptions> {
+  private buildOptions(squarePx: number): Partial<QrStylingOptions> {
     return {
       type: 'canvas',
-      width: this.size,
-      height: this.size,
+      width: squarePx,
+      height: squarePx,
       data: this.value.trim(),
-      margin: 6,
+      margin: Math.round(squarePx * 0.06),
       qrOptions: { errorCorrectionLevel: 'H' },
       image: 'images/logoFotolou-blue-small.png',
-      imageOptions: { imageSize: 0.42, margin: 4, hideBackgroundDots: true, crossOrigin: 'anonymous' },
+      imageOptions: { imageSize: 0.42, margin: Math.round(squarePx * 0.04), hideBackgroundDots: true, crossOrigin: 'anonymous' },
       dotsOptions: { type: 'rounded', color: this.accentColor },
       cornersSquareOptions: { type: 'extra-rounded', color: this.accentColor },
       cornersDotOptions: { type: 'dot', color: this.accentColor },
@@ -109,7 +116,7 @@ export class QrCode implements OnChanges, OnDestroy {
       if (token !== this.renderToken) return;
 
       const QRCodeStylingCtor = mod.default;
-      const options = this.buildOptions();
+      const options = this.buildOptions(this.size);
 
       if (!this.instance) {
         this.instance = new QRCodeStylingCtor(options);
@@ -127,10 +134,19 @@ export class QrCode implements OnChanges, OnDestroy {
     }
   }
 
+  /**
+   * Toujours exporté à `downloadSize` (haute résolution), indépendamment de la
+   * taille d'aperçu affichée à l'écran par ce composant.
+   */
   async download(format: QrDownloadFormat = 'png'): Promise<void> {
-    if (!this.instance || !this.ready()) return;
+    const value = this.value?.trim();
+    if (!value) return;
+
     try {
-      await this.instance.download({ name: this.downloadFileName, extension: format });
+      const mod = await import('qr-code-styling');
+      const QRCodeStylingCtor = mod.default;
+      const exportInstance = new QRCodeStylingCtor(this.buildOptions(this.downloadSize));
+      await exportInstance.download({ name: this.downloadFileName, extension: format });
     } catch (err) {
       console.error('[QrCode] Erreur de téléchargement:', err);
       this.errorMsg.set('Le téléchargement a échoué. Réessayez.');

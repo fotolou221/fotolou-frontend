@@ -760,6 +760,16 @@
 
   .qr-card {
     flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .qr-card__body {
+    align-items: center;
+  }
+
+  .qr-card__actions {
+    justify-content: center;
   }
 
   .coiffeur-home__title {

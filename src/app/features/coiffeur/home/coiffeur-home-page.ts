@@ -76,10 +76,6 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
         <!-- Carte QR code du salon : accès rapide pour les clients -->
         @if (salonTicketUrl()) {
           <section class="qr-card" aria-label="QR code du salon">
-            <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" aria-label="Agrandir le QR code du salon">
-              <app-qr-code #compactQr [value]="salonTicketUrl()" [size]="96" [downloadFileName]="qrFileName()" />
-            </button>
-
             <div class="qr-card__body">
               <span class="qr-card__eyebrow">Ticket rapide</span>
               <h2 class="qr-card__title">Scannez pour prendre un ticket</h2>
@@ -102,6 +98,10 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
                 </button>
               </div>
             </div>
+
+            <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" aria-label="Agrandir le QR code du salon">
+              <app-qr-code #compactQr [value]="salonTicketUrl()" [size]="132" [downloadFileName]="qrFileName()" />
+            </button>
           </section>
         }
 
