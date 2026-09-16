@@ -11,17 +11,43 @@
   background: var(--bg-primary, #ffffff);
 }
 
-.coiffeur-home__greeting {
+.coiffeur-home__hero {
   margin-bottom: -2px;
 }
 
-.coiffeur-home__greeting-header {
+.coiffeur-home__hero-top {
   display: flex;
   width: 100%;
   min-width: 0;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
+}
+
+.coiffeur-home__avatar {
+  display: grid;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary, #1e5af0), #0d3eb8);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 800;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(30, 90, 240, 0.28);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.coiffeur-home__identity {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .coiffeur-home__title {
@@ -33,7 +59,7 @@
   margin: 0;
   overflow: hidden;
   color: var(--text-primary, #0f172a);
-  font-size: 1.4rem;
+  font-size: 1.22rem;
   font-weight: 800;
   line-height: 1.2;
   letter-spacing: 0;
@@ -173,6 +199,186 @@
   color: #b91c1c;
   font-size: 0.82rem;
   font-weight: 750;
+}
+
+/* ── Carte QR code du salon ──────────────────────────────── */
+.qr-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(30, 90, 240, 0.14);
+  border-radius: 20px;
+  padding: 14px;
+  background: linear-gradient(135deg, #eef2ff 0%, #f7f9ff 60%);
+}
+
+.qr-card__qr-btn {
+  flex: none;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+  transition: transform 0.15s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  app-qr-code {
+    pointer-events: none;
+  }
+}
+
+.qr-card__body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qr-card__eyebrow {
+  color: var(--primary, #1e5af0);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.qr-card__title {
+  margin: 0;
+  color: var(--text-primary, #0f172a);
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.qr-card__desc {
+  margin: 2px 0 8px;
+  color: var(--text-secondary, #64748b);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.qr-card__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.qr-card__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  border: 1.5px solid rgba(30, 90, 240, 0.3);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: var(--primary, #1e5af0);
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 800;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+
+  svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  &:hover {
+    background: var(--primary, #1e5af0);
+    color: #ffffff;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+/* ── QR code en plein écran ──────────────────────────────── */
+.qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  animation: qrOverlayFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.qr-overlay__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 320px;
+  border-radius: 24px;
+  padding: 28px 24px 24px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: qrOverlayScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.qr-overlay__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: none;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  cursor: pointer;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+  }
+}
+
+.qr-overlay__salon-name {
+  margin: 16px 0 2px;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.qr-overlay__hint {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+@keyframes qrOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes qrOverlayScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .coiffeur-home__search {
@@ -548,8 +754,12 @@
 }
 
 @media (max-width: 430px) {
-  .coiffeur-home__greeting-header {
+  .coiffeur-home__hero-top {
     align-items: center;
+  }
+
+  .qr-card {
+    flex-wrap: wrap;
   }
 
   .coiffeur-home__title {
@@ -662,5 +872,29 @@
       color: #ffffff;
       border-color: #0f172a;
     }
+  }
+
+  .qr-card {
+    border-color: rgba(96, 165, 250, 0.25);
+    background: linear-gradient(135deg, rgba(30, 90, 240, 0.16) 0%, #172348 60%);
+  }
+
+  .qr-card__title {
+    color: #ffffff;
+  }
+
+  .qr-card__action {
+    border-color: rgba(96, 165, 250, 0.35);
+    background: #1c2541;
+    color: #93c5fd;
+
+    &:hover {
+      background: var(--primary, #1e5af0);
+      color: #ffffff;
+    }
+  }
+
+  .qr-overlay__salon-name {
+    color: #0f172a; // Carte QR toujours claire : lisibilité maximale pour le scan
   }
 }

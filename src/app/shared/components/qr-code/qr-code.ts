@@ -1,0 +1,139 @@
+import { Component, ElementRef, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild, signal } from '@angular/core';
+import type { Options as QrStylingOptions } from 'qr-code-styling';
+
+export type QrDownloadFormat = 'png' | 'svg' | 'webp';
+
+/**
+ * QR code de marque Fotolou (points arrondis, couleur d'accent, logo au centre),
+ * rendu 100% côté client. La librairie `qr-code-styling` est chargée en import
+ * dynamique pour ne pas alourdir le bundle principal des pages qui ne l'utilisent pas.
+ */
+@Component({
+  selector: 'app-qr-code',
+  imports: [],
+  template: `
+    <div class="qr-code" [style.width.px]="size" [style.height.px]="size">
+      <div #qrHost class="qr-code__canvas" [class.qr-code__canvas--ready]="ready()"></div>
+      @if (!ready() && !errorMsg()) {
+        <div class="qr-code__skeleton" aria-hidden="true"></div>
+      }
+      @if (errorMsg()) {
+        <div class="qr-code__error" role="alert">{{ errorMsg() }}</div>
+      }
+    </div>
+
+    @if (showDownloadButtons) {
+      <div class="qr-code__actions">
+        <button type="button" class="qr-code__action-btn" [disabled]="!ready()" (click)="download('png')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>PNG</span>
+        </button>
+        <button type="button" class="qr-code__action-btn" [disabled]="!ready()" (click)="download('svg')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>SVG</span>
+        </button>
+      </div>
+    }
+  `,
+  styleUrl: './qr-code.scss'
+})
+export class QrCode implements OnChanges, OnDestroy {
+  /** Donnée encodée dans le QR (typiquement une URL). */
+  @Input({ required: true }) value = '';
+  /** Taille du carré (px). */
+  @Input() size = 220;
+  /** Couleur d'accent des modules / coins du QR. */
+  @Input() accentColor = '#1E5AF0';
+  /** Affiche des boutons de téléchargement intégrés (PNG / SVG). */
+  @Input() showDownloadButtons = false;
+  /** Nom de fichier (sans extension) utilisé au téléchargement. */
+  @Input() downloadFileName = 'fotolou-qrcode';
+
+  @ViewChild('qrHost', { static: true }) private hostRef!: ElementRef<HTMLDivElement>;
+
+  protected readonly ready = signal(false);
+  protected readonly errorMsg = signal<string | null>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private instance: any | null = null;
+  private renderToken = 0;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['value'] || changes['size'] || changes['accentColor']) {
+      void this.render();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.instance = null;
+  }
+
+  private buildOptions(): Partial<QrStylingOptions> {
+    return {
+      type: 'canvas',
+      width: this.size,
+      height: this.size,
+      data: this.value.trim(),
+      margin: 6,
+      qrOptions: { errorCorrectionLevel: 'H' },
+      image: 'images/logoFotolou-blue-small.png',
+      imageOptions: { imageSize: 0.42, margin: 4, hideBackgroundDots: true, crossOrigin: 'anonymous' },
+      dotsOptions: { type: 'rounded', color: this.accentColor },
+      cornersSquareOptions: { type: 'extra-rounded', color: this.accentColor },
+      cornersDotOptions: { type: 'dot', color: this.accentColor },
+      backgroundOptions: { color: '#ffffff' }
+    };
+  }
+
+  private async render(): Promise<void> {
+    const value = this.value?.trim();
+    if (!value) {
+      this.ready.set(false);
+      return;
+    }
+
+    const token = ++this.renderToken;
+    this.errorMsg.set(null);
+
+    try {
+      const mod = await import('qr-code-styling');
+      // Une nouvelle valeur a été demandée pendant le chargement : on abandonne ce rendu obsolète.
+      if (token !== this.renderToken) return;
+
+      const QRCodeStylingCtor = mod.default;
+      const options = this.buildOptions();
+
+      if (!this.instance) {
+        this.instance = new QRCodeStylingCtor(options);
+        this.hostRef.nativeElement.innerHTML = '';
+        this.instance.append(this.hostRef.nativeElement);
+      } else {
+        this.instance.update(options);
+      }
+      this.ready.set(true);
+    } catch (err) {
+      if (token !== this.renderToken) return;
+      console.error('[QrCode] Erreur de génération du QR code:', err);
+      this.errorMsg.set('Impossible de générer le QR code.');
+      this.ready.set(false);
+    }
+  }
+
+  async download(format: QrDownloadFormat = 'png'): Promise<void> {
+    if (!this.instance || !this.ready()) return;
+    try {
+      await this.instance.download({ name: this.downloadFileName, extension: format });
+    } catch (err) {
+      console.error('[QrCode] Erreur de téléchargement:', err);
+      this.errorMsg.set('Le téléchargement a échoué. Réessayez.');
+    }
+  }
+}

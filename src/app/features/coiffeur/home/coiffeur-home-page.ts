@@ -1,19 +1,21 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { LocationHeader } from '../../../shared/components/location-header/location-header';
 import { SearchBar } from '../../../shared/components/search-bar/search-bar';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { QrCode } from '../../../shared/components/qr-code/qr-code';
 import { TicketService } from '../../../shared/services/ticket.service';
 import { NotificationService } from '../../../shared/services/notification.service';
 import { SalonService } from '../../../shared/services/salon.service';
 import { AuthSessionService } from '../../auth/auth-session.service';
 import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
+import { buildSalonTicketUrl } from '../../../core/config/app-origin';
 
 @Component({
   selector: 'app-coiffeur-home-page',
-  imports: [ClientLayout, LocationHeader, SearchBar, EmptyStateComponent],
+  imports: [ClientLayout, LocationHeader, SearchBar, EmptyStateComponent, QrCode],
   template: `
     <app-client-layout activeNav="home" role="coiffeur" [hasHeaderSlot]="true">
       <app-location-header
@@ -25,12 +27,25 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
       />
 
       <main class="coiffeur-home">
-        <section class="coiffeur-home__greeting" aria-label="Accueil coiffeur">
-          <div class="coiffeur-home__greeting-header">
-            <h1 class="coiffeur-home__title">
-              Bonjour, <span class="coiffeur-home__user-name">{{ greetingName() }}</span>
-              <span class="coiffeur-home__wave" aria-hidden="true">👋</span>
-            </h1>
+        <!-- Hero : photo du coiffeur, identité, statut du salon -->
+        <section class="coiffeur-home__hero" aria-label="Profil coiffeur">
+          <div class="coiffeur-home__hero-top">
+            <div class="coiffeur-home__avatar">
+              @if (avatarUrl() && !avatarBroken()) {
+                <img [src]="avatarUrl()" [alt]="greetingName()" (error)="avatarBroken.set(true)" />
+              } @else {
+                <span>{{ avatarInitials() }}</span>
+              }
+            </div>
+
+            <div class="coiffeur-home__identity">
+              <h1 class="coiffeur-home__title">
+                Bonjour, <span class="coiffeur-home__user-name">{{ greetingName() }}</span>
+                <span class="coiffeur-home__wave" aria-hidden="true">👋</span>
+              </h1>
+              <p class="coiffeur-home__subtitle">{{ salonName() }}</p>
+            </div>
+
             <button
               type="button"
               class="coiffeur-home__salon-toggle"
@@ -52,11 +67,42 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
               </span>
             </button>
           </div>
-          <p class="coiffeur-home__subtitle">{{ salonName() }}</p>
         </section>
 
         @if (queueError()) {
           <p class="coiffeur-home__queue-error" role="alert">{{ queueError() }}</p>
+        }
+
+        <!-- Carte QR code du salon : accès rapide pour les clients -->
+        @if (salonTicketUrl()) {
+          <section class="qr-card" aria-label="QR code du salon">
+            <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" aria-label="Agrandir le QR code du salon">
+              <app-qr-code #compactQr [value]="salonTicketUrl()" [size]="96" [downloadFileName]="qrFileName()" />
+            </button>
+
+            <div class="qr-card__body">
+              <span class="qr-card__eyebrow">Ticket rapide</span>
+              <h2 class="qr-card__title">Scannez pour prendre un ticket</h2>
+              <p class="qr-card__desc">Vos clients scannent ce code et rejoignent la file instantanément.</p>
+
+              <div class="qr-card__actions">
+                <button type="button" class="qr-card__action" (click)="expandQr.set(true)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/>
+                  </svg>
+                  <span>Agrandir</span>
+                </button>
+                <button type="button" class="qr-card__action" (click)="downloadQr()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <span>Télécharger</span>
+                </button>
+              </div>
+            </div>
+          </section>
         }
 
         <section class="coiffeur-home__search">
@@ -197,6 +243,27 @@ import { Ticket, compareTicketQueueOrder } from '../../../shared/models/ticket';
         </section>
       </main>
     </app-client-layout>
+
+    <!-- QR code en grand : à montrer directement à un client pour un scan facile -->
+    @if (expandQr() && salonTicketUrl()) {
+      <div class="qr-overlay" role="dialog" aria-modal="true" aria-label="QR code du salon en grand" (click)="expandQr.set(false)">
+        <div class="qr-overlay__card" (click)="$event.stopPropagation()">
+          <button type="button" class="qr-overlay__close" (click)="expandQr.set(false)" aria-label="Fermer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+
+          <app-qr-code
+            [value]="salonTicketUrl()"
+            [size]="232"
+            [showDownloadButtons]="true"
+            [downloadFileName]="qrFileName()"
+          />
+
+          <h3 class="qr-overlay__salon-name">{{ salonName() }}</h3>
+          <p class="qr-overlay__hint">Scannez ce code pour prendre un ticket rapidement</p>
+        </div>
+      </div>
+    }
   `,
   styleUrl: './coiffeur-home-page.scss'
 })
@@ -210,6 +277,10 @@ export class CoiffeurHomePage {
   protected readonly queueBusy = signal(false);
   protected readonly queueError = signal<string | null>(null);
   protected readonly searchQuery = signal('');
+  protected readonly avatarBroken = signal(false);
+  protected readonly expandQr = signal(false);
+
+  @ViewChild('compactQr') private compactQrRef?: QrCode;
 
   protected readonly currentSalon = computed(() => {
     const user = this.authSession.currentUser();
@@ -227,6 +298,28 @@ export class CoiffeurHomePage {
   protected readonly isQueueOpen = computed(() => this.currentSalon()?.status !== 'closed');
 
   protected readonly salonName = computed(() => this.currentSalon()?.name || 'Mon salon');
+
+  /** Lien de prise de ticket rapide encodé dans le QR (ordre d'arrivée, sans détour par la recherche). */
+  protected readonly salonTicketUrl = computed(() => {
+    const salon = this.currentSalon();
+    const ref = salon?.slug || salon?.id;
+    return ref ? buildSalonTicketUrl(ref) : '';
+  });
+
+  protected readonly qrFileName = computed(() => {
+    const base = (this.currentSalon()?.slug || this.currentSalon()?.id || 'salon').toString();
+    return `fotolou-${base}-qrcode`;
+  });
+
+  protected readonly avatarUrl = computed(() => {
+    const user = this.authSession.currentUser();
+    return user?.avatarUrl || this.currentSalon()?.avatarUrl || null;
+  });
+
+  protected readonly avatarInitials = computed(() => {
+    const name = this.greetingName();
+    return name.slice(0, 2).toUpperCase();
+  });
 
   protected readonly greetingName = computed(() => {
     const ownerName = this.ownerFirstName(this.currentSalon()?.ownerName || this.currentSalon()?.coiffeurName);
@@ -323,6 +416,10 @@ export class CoiffeurHomePage {
 
   protected goToNotifications(): void {
     this.router.navigate(['/coiffeur/notifications']);
+  }
+
+  protected downloadQr(): void {
+    void this.compactQrRef?.download('png');
   }
 
   protected formatItemCreatedAt(item: Ticket): string {

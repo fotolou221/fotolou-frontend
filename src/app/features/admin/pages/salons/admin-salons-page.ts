@@ -6,12 +6,14 @@ import { AdminModal } from '../../components/admin-modal/admin-modal';
 import { AdminImageUploader } from '../../components/admin-image-uploader/admin-image-uploader';
 import { AdminPagination } from '../../components/admin-pagination/admin-pagination';
 import { AdminViewToggle, AdminViewMode } from '../../components/admin-view-toggle/admin-view-toggle';
+import { QrCode } from '../../../../shared/components/qr-code/qr-code';
 import { Salon } from '../../../../shared/models/salon';
 import { AdminConfirmService } from '../../services/admin-confirm.service';
+import { buildSalonTicketUrl } from '../../../../core/config/app-origin';
 
 @Component({
   selector: 'app-admin-salons-page',
-  imports: [FormsModule, AdminBadge, AdminModal, AdminImageUploader, AdminPagination, AdminViewToggle],
+  imports: [FormsModule, AdminBadge, AdminModal, AdminImageUploader, AdminPagination, AdminViewToggle, QrCode],
   template: `
     <div class="admin-page">
       
@@ -112,6 +114,13 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
                           }
                         </button>
+                        <button type="button" class="admin-icon-btn" (click)="openQrModal(salon)" title="QR code du salon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/>
+                            <path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/>
+                            <path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>
+                          </svg>
+                        </button>
                         <button type="button" class="admin-icon-btn" (click)="openEditModal(salon)" title="Modifier">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                         </button>
@@ -181,6 +190,13 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
                 </button>
 
                 <div class="admin-grid-card__actions">
+                  <button type="button" class="admin-icon-btn" (click)="openQrModal(salon)" title="QR code du salon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/>
+                      <path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/>
+                      <path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/>
+                    </svg>
+                  </button>
                   <button type="button" class="admin-icon-btn" (click)="openEditModal(salon)" title="Modifier">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
                   </button>
@@ -526,6 +542,41 @@ import { AdminConfirmService } from '../../services/admin-confirm.service';
         </div>
       </app-admin-modal>
 
+      <!-- QR Code du salon : aperçu + téléchargement multi-formats -->
+      <app-admin-modal
+        [title]="'QR Code — ' + (qrModalSalon()?.name || '')"
+        [isOpen]="isQrModalOpen()"
+        [showFooter]="false"
+        (close)="closeQrModal()"
+      >
+        @if (qrModalSalon()) {
+          <div class="qr-modal">
+            <app-qr-code
+              [value]="qrModalValue()"
+              [size]="220"
+              [showDownloadButtons]="true"
+              [downloadFileName]="qrModalFileName()"
+            />
+
+            <p class="qr-modal__hint">
+              Affichez ce QR code à l'entrée du salon : vos clients le scannent avec l'appareil photo
+              de leur téléphone pour prendre un ticket instantanément, sans rien installer.
+            </p>
+
+            <div class="qr-modal__link-row">
+              <input type="text" readonly [value]="qrModalValue()" (click)="$any($event.target).select()" />
+              <button type="button" class="admin-btn admin-btn--outline" (click)="copyQrLink()">
+                @if (linkCopied()) {
+                  <span>Copié ✓</span>
+                } @else {
+                  <span>Copier le lien</span>
+                }
+              </button>
+            </div>
+          </div>
+        }
+      </app-admin-modal>
+
     </div>
   `,
   styleUrl: './admin-salons-page.scss'
@@ -543,6 +594,21 @@ export class AdminSalonsPage {
 
   protected readonly isModalOpen = signal<boolean>(false);
   protected readonly editingSalonId = signal<string | null>(null);
+
+  // ── QR Code du salon ───────────────────────────────────────
+  protected readonly isQrModalOpen = signal<boolean>(false);
+  protected readonly qrModalSalon = signal<Salon | null>(null);
+  protected readonly linkCopied = signal<boolean>(false);
+
+  protected readonly qrModalValue = computed(() => {
+    const salon = this.qrModalSalon();
+    return salon ? buildSalonTicketUrl(salon.slug || salon.id) : '';
+  });
+
+  protected readonly qrModalFileName = computed(() => {
+    const salon = this.qrModalSalon();
+    return `fotolou-${(salon?.slug || salon?.id || 'salon')}-qrcode`;
+  });
   protected readonly currentStep = signal<number>(1);
   protected readonly isSaving = signal<boolean>(false);
   protected readonly fieldErrors = signal<Record<string, string>>({});
@@ -902,6 +968,29 @@ export class AdminSalonsPage {
         }
       });
       return;
+    }
+  }
+
+  protected openQrModal(salon: Salon): void {
+    this.linkCopied.set(false);
+    this.qrModalSalon.set(salon);
+    this.isQrModalOpen.set(true);
+  }
+
+  protected closeQrModal(): void {
+    this.isQrModalOpen.set(false);
+    this.qrModalSalon.set(null);
+  }
+
+  protected async copyQrLink(): Promise<void> {
+    const link = this.qrModalValue();
+    if (!link) return;
+    try {
+      await navigator.clipboard.writeText(link);
+      this.linkCopied.set(true);
+      setTimeout(() => this.linkCopied.set(false), 2000);
+    } catch (err) {
+      console.warn('[AdminSalonsPage] Clipboard copy failed:', err);
     }
   }
 

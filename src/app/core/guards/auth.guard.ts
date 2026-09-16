@@ -29,7 +29,7 @@ export const guestOnlyAuthGuard: CanActivateFn = () => {
  * Ensures the user has an active session and token, and is not a Coiffeur.
  * Unauthenticated users are redirected to login with return redirect.
  */
-export const clientAuthGuard: CanActivateFn = () => {
+export const clientAuthGuard: CanActivateFn = (route, state) => {
   const auth = inject(AuthSessionService);
   const router = inject(Router);
 
@@ -37,7 +37,7 @@ export const clientAuthGuard: CanActivateFn = () => {
   const user = auth.currentUser();
 
   if (!token || !user || user.id === 'guest') {
-    return router.createUrlTree(['/auth/login'], { queryParams: { redirect: '/client/home' } });
+    return router.createUrlTree(['/auth/login'], { queryParams: { redirect: state.url || '/client/home' } });
   }
 
   if (user && user.role === 'coiffeur') {

@@ -106,11 +106,16 @@ export class LoginPage implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private loginRole: UserRole = 'client';
+  /** Cible à rejoindre après connexion (ex: ticket d'un salon scanné par QR code). */
+  private redirectUrl: string | null = null;
 
   ngOnInit(): void {
     const targetRole = this.route.snapshot.queryParamMap.get('role');
     this.loginRole = targetRole === 'coiffeur' ? 'coiffeur' : 'client';
     this.auth.selectRole(this.loginRole);
+
+    const redirect = this.route.snapshot.queryParamMap.get('redirect');
+    this.redirectUrl = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
   }
 
   protected readonly phoneNumber = signal('');
@@ -156,7 +161,9 @@ export class LoginPage implements OnInit {
 
     try {
       await this.auth.startPhoneLogin(this.cleanDigits(), this.loginRole);
-      void this.router.navigateByUrl('/auth/code');
+      void this.router.navigate(['/auth/code'], {
+        queryParams: this.redirectUrl ? { redirect: this.redirectUrl } : {}
+      });
     } catch (e: any) {
       this.errorMessage.set(e?.message || "Impossible d'envoyer le code SMS. Vérifiez votre connexion.");
     } finally {
@@ -166,6 +173,6 @@ export class LoginPage implements OnInit {
 
   protected continueWithSocial(provider: SocialProvider): void {
     const user = this.auth.completeSocialLogin(provider);
-    void this.router.navigateByUrl(user.homeRoute, { replaceUrl: true });
+    void this.router.navigateByUrl(this.redirectUrl || user.homeRoute, { replaceUrl: true });
   }
 }

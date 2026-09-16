@@ -1,5 +1,5 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ClientLayout } from '../../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../../shared/components/page-header/page-header';
 import { AuthActionButton } from '../../components/auth-action-button/auth-action-button';
@@ -72,6 +72,9 @@ export class OtpPage implements OnInit {
   protected readonly auth = inject(AuthSessionService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  /** Cible à rejoindre après vérification (ex: ticket d'un salon scanné par QR code). */
+  private redirectUrl: string | null = null;
 
   protected readonly errorMessage = signal('');
   protected readonly remainingSeconds = signal(45);
@@ -98,7 +101,11 @@ export class OtpPage implements OnInit {
   ngOnInit(): void {
     if (!this.auth.pendingPhone()) {
       void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+      return;
     }
+
+    const redirect = this.route.snapshot.queryParamMap.get('redirect');
+    this.redirectUrl = redirect && redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : null;
   }
 
   protected onCodeChanged(code: string): void {
@@ -137,7 +144,7 @@ export class OtpPage implements OnInit {
         return;
       }
 
-      void this.router.navigateByUrl(this.auth.getHomeRoute(), { replaceUrl: true });
+      void this.router.navigateByUrl(this.redirectUrl || this.auth.getHomeRoute(), { replaceUrl: true });
     } catch (err) {
       this.errorMessage.set(err instanceof Error ? err.message : 'Erreur de validation du code. Reessayez.');
     } finally {
