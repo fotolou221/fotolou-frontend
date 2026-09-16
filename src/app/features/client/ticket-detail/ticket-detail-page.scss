@@ -150,6 +150,7 @@
 }
 
 .ticket-detail-page__current-num-wrap {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -177,6 +178,9 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 
   svg {
     width: 12px;
@@ -184,11 +188,49 @@
     stroke: currentColor;
     flex-shrink: 0;
   }
+}
 
-  &--mine {
-    margin-top: 4px;
-    font-size: 0.625rem;
-    padding: 2px 7px;
+.ticket-detail-page__yesterday-badge-info-icon {
+  opacity: 0.75;
+}
+
+.ticket-detail-page__badge-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 5;
+  width: max-content;
+  max-width: 240px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #1e293b;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+  animation: ticket-badge-popover-in 0.12s ease-out;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 16px;
+    border: 6px solid transparent;
+    border-bottom-color: #1e293b;
+  }
+}
+
+@keyframes ticket-badge-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -363,6 +405,16 @@
     background: rgba(245, 158, 11, 0.22);
     color: #fcd34d;
     border-color: rgba(245, 158, 11, 0.4);
+  }
+
+  .ticket-detail-page__badge-popover {
+    background: #f8fafc;
+    color: #0f172a;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+
+    &::before {
+      border-bottom-color: #f8fafc;
+    }
   }
 }
 

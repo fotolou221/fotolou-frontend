@@ -1,4 +1,4 @@
-import { Component, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, effect, HostListener, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
@@ -98,15 +98,6 @@ import { AuthSessionService } from '../../auth/auth-session.service';
               <div class="ticket-detail-page__number-display">
                 <span>{{ isCoiffeur ? 'Ticket N°' : 'Votre ticket' }}</span>
                 <strong>{{ ticket.ticketNumber || '-' }}</strong>
-                @if (!isHistory && isMyTicketFromPreviousDay) {
-                  <span class="ticket-detail-page__yesterday-badge ticket-detail-page__yesterday-badge--mine" title="Votre ticket a été pris un jour précédent, pas aujourd'hui.">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span>Jour précédent</span>
-                  </span>
-                }
               </div>
             </div>
           </section>
@@ -118,13 +109,29 @@ import { AuthSessionService } from '../../auth/auth-session.service';
                 <div class="ticket-detail-page__current-num-wrap">
                   <span class="ticket-detail-page__current-num">{{ queueNumberDisplay }}</span>
                   @if (isCurrentTicketFromPreviousDay) {
-                    <span class="ticket-detail-page__yesterday-badge" title="Ce ticket a été pris avant le vôtre : la file suit l'ordre d'arrivée, pas le numéro du jour.">
+                    <button
+                      type="button"
+                      class="ticket-detail-page__yesterday-badge"
+                      [attr.aria-expanded]="queueBadgeInfoOpen()"
+                      aria-describedby="queue-badge-info"
+                      (click)="toggleQueueBadgeInfo($event)"
+                    >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"/>
                         <polyline points="12 6 12 12 16 14"/>
                       </svg>
                       <span>Pris avant vous</span>
-                    </span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="ticket-detail-page__yesterday-badge-info-icon">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                      </svg>
+                    </button>
+                    @if (queueBadgeInfoOpen()) {
+                      <div id="queue-badge-info" class="ticket-detail-page__badge-popover" role="status" (click)="$event.stopPropagation()">
+                        Ce ticket a été pris avant le vôtre : la file suit l'ordre d'arrivée, pas le numéro du jour.
+                      </div>
+                    }
                   }
                 </div>
               </app-stat-card>
@@ -256,6 +263,7 @@ export class TicketDetailPage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly showCancelModal = signal(false);
+  protected readonly queueBadgeInfoOpen = signal(false);
 
   private initialRank = 1;
 
@@ -461,12 +469,6 @@ export class TicketDetailPage implements OnInit {
     return false;
   }
 
-  /** Vrai si le ticket du client a été pris un jour précédent (pas aujourd'hui). */
-  protected get isMyTicketFromPreviousDay(): boolean {
-    if (!this.ticket?.createdAt) return false;
-    return this.isDateBeforeToday(this.ticket.createdAt);
-  }
-
   private isDateBeforeToday(dateValue: string | Date): boolean {
     const d = new Date(dateValue);
     if (isNaN(d.getTime())) return false;
@@ -523,6 +525,22 @@ export class TicketDetailPage implements OnInit {
 
     if (!raw) return null;
     return this.auth.formatPhone(raw);
+  }
+
+  /**
+   * Bascule l'explication du badge "Pris avant vous" — remplace le tooltip natif
+   * (invisible sur mobile/tactile) par une bulle accessible au tap.
+   */
+  protected toggleQueueBadgeInfo(event: Event): void {
+    event.stopPropagation();
+    this.queueBadgeInfoOpen.update((open) => !open);
+  }
+
+  @HostListener('document:click')
+  protected closeQueueBadgeInfo(): void {
+    if (this.queueBadgeInfoOpen()) {
+      this.queueBadgeInfoOpen.set(false);
+    }
   }
 
   protected confirmLeaveQueue(): void {
