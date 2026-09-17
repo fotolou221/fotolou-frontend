@@ -138,6 +138,7 @@ export class QrCode implements OnChanges, OnDestroy {
       } else {
         this.instance.update(options);
       }
+      this.applyDisplaySize();
       this.ready.set(true);
     } catch (err) {
       if (token !== this.renderToken) return;
@@ -145,6 +146,22 @@ export class QrCode implements OnChanges, OnDestroy {
       this.errorMsg.set('Impossible de générer le QR code.');
       this.ready.set(false);
     }
+  }
+
+  /**
+   * Fixe explicitement la taille CSS affichée du canvas/svg (en px) à `size`,
+   * indépendamment de sa résolution de dessin interne (plus grande pour le rendu
+   * HiDPI). On ne compte pas sur `max-width: 100%` pour réduire un canvas plus
+   * grand que son conteneur : ce rétrécissement automatique dépend de règles
+   * flexbox (min-width auto sur les éléments remplacés) qui s'appliquent
+   * différemment selon les moteurs de rendu et peuvent laisser le canvas déborder
+   * (observé sur Safari/iOS). Fixer la taille CSS directement est fiable partout.
+   */
+  private applyDisplaySize(): void {
+    const el = this.hostRef.nativeElement.querySelector('canvas, svg') as HTMLElement | null;
+    if (!el) return;
+    el.style.width = `${this.size}px`;
+    el.style.height = `${this.size}px`;
   }
 
   /**

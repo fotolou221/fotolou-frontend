@@ -29,6 +29,12 @@
   canvas,
   svg {
     display: block;
+    /* Sans ce min-width/min-height, un canvas dessiné plus grand que sa taille
+       d'affichage (rendu HiDPI net) déborde de son conteneur flex : les éléments
+       remplacés (canvas/img/svg) ont un min-width/min-height "auto" par défaut
+       en flexbox, qui vaut leur taille intrinsèque et prime sur max-width. */
+    min-width: 0;
+    min-height: 0;
     max-width: 100%;
     height: auto;
     border-radius: 8px;
