@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ClientLayout } from '../../../shared/components/client-layout/client-layout';
 import { LocationHeader } from '../../../shared/components/location-header/location-header';
-import { SearchBar } from '../../../shared/components/search-bar/search-bar';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { QrCode } from '../../../shared/components/qr-code/qr-code';
 import { TicketService } from '../../../shared/services/ticket.service';
@@ -15,7 +14,7 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
 
 @Component({
   selector: 'app-coiffeur-home-page',
-  imports: [ClientLayout, LocationHeader, SearchBar, EmptyStateComponent, QrCode],
+  imports: [ClientLayout, LocationHeader, EmptyStateComponent, QrCode],
   template: `
     <app-client-layout activeNav="home" role="coiffeur" [hasHeaderSlot]="true">
       <app-location-header
@@ -26,7 +25,8 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
         (notificationClick)="goToNotifications()"
       />
 
-      <main class="coiffeur-home">
+      <!-- Bloc fixe (hero + QR) : reste visible pendant que seule la liste des clients défile -->
+      <div slot="header" class="coiffeur-home__pinned">
         <!-- Hero : photo du coiffeur, identité, statut du salon -->
         <section class="coiffeur-home__hero" aria-label="Profil coiffeur">
           <div class="coiffeur-home__hero-top">
@@ -94,16 +94,22 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
               <app-qr-code [value]="salonTicketUrl()" [size]="128" />
             </button>
           </section>
+        } @else if (salonService.loading()) {
+          <!-- Squelette : occupe la même place que la carte QR pour qu'elle apparaisse
+               en même temps que la liste des clients, au lieu de surgir après coup. -->
+          <section class="qr-card qr-card--skeleton" aria-hidden="true">
+            <div class="qr-card__body">
+              <span class="qr-card__skeleton-line qr-card__skeleton-line--eyebrow"></span>
+              <span class="qr-card__skeleton-line qr-card__skeleton-line--title"></span>
+              <span class="qr-card__skeleton-line qr-card__skeleton-line--title-short"></span>
+              <span class="qr-card__skeleton-pill"></span>
+            </div>
+            <span class="qr-card__skeleton-qr"></span>
+          </section>
         }
+      </div>
 
-        <section class="coiffeur-home__search">
-          <app-search-bar
-            [value]="searchQuery()"
-            (valueChange)="onSearchChange($event)"
-            placeholder="Rechercher un client ou un ticket"
-          />
-        </section>
-
+      <main class="coiffeur-home">
         <section class="coiffeur-home__clients" aria-label="Liste des clients">
           <div class="coiffeur-home__section-title">
             <div>
@@ -124,7 +130,7 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
             </div>
           } @else {
             <div class="coiffeur-home__client-list">
-              @for (item of filteredClients(); track item.id) {
+              @for (item of activeTickets(); track item.id) {
                 <div
                   class="queue-card"
                   [class.queue-card--current]="isCurrentClient(item)"
@@ -224,9 +230,9 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
                 </div>
               } @empty {
                 <app-empty-state
-                  [icon]="searchQuery() ? 'search' : 'ticket'"
-                  [title]="searchQuery() ? 'Aucun client trouvé' : 'Aucun client en attente'"
-                  [description]="searchQuery() ? 'Essayez un autre nom ou numéro de ticket.' : 'Les clients apparaîtront ici en temps réel.'"
+                  icon="ticket"
+                  title="Aucun client en attente"
+                  description="Les clients apparaîtront ici en temps réel."
                 />
               }
             </div>
@@ -264,7 +270,6 @@ export class CoiffeurHomePage {
 
   protected readonly queueBusy = signal(false);
   protected readonly queueError = signal<string | null>(null);
-  protected readonly searchQuery = signal('');
   protected readonly avatarBroken = signal(false);
   protected readonly expandQr = signal(false);
 
@@ -324,40 +329,11 @@ export class CoiffeurHomePage {
     this.activeTickets().find((ticket) => ticket.status === 'your_turn') || this.activeTickets()[0] || null
   );
 
-  protected readonly filteredClients = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const list = this.activeTickets();
-    if (!query) {
-      return list;
-    }
-
-    return list.filter((ticket) => {
-      const ticketNumber = `#${ticket.ticketNumber}`.toLowerCase();
-      return (
-        ticket.ownerName.toLowerCase().includes(query) ||
-        ticket.salonName.toLowerCase().includes(query) ||
-        ticketNumber.includes(query) ||
-        ticket.ticketNumber.toString().includes(query)
-      );
-    });
-  });
-
-  protected readonly clientsCountLabel = computed(() => {
-    const total = this.activeTickets().length;
-    const visible = this.filteredClients().length;
-    if (this.searchQuery()) {
-      return `${visible} résultat(s) sur ${total}`;
-    }
-    return `${total} client(s)`;
-  });
+  protected readonly clientsCountLabel = computed(() => `${this.activeTickets().length} client(s)`);
 
   constructor() {
     this.salonService.loadSalons();
     this.ticketService.loadTickets();
-  }
-
-  protected onSearchChange(value: string): void {
-    this.searchQuery.set(value);
   }
 
   protected reloadTickets(): void {

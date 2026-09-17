@@ -11,6 +11,16 @@
   background: var(--bg-primary, #ffffff);
 }
 
+/* Bloc fixe (hero + QR) rendu dans le header sticky : reste visible pendant
+   que seule la liste des clients défile en dessous. */
+.coiffeur-home__pinned {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 16px 16px;
+  background: var(--bg-primary, #ffffff);
+}
+
 .coiffeur-home__hero {
   margin-bottom: -2px;
 }
@@ -296,6 +306,63 @@
   }
 }
 
+/* ── Squelette de la carte QR (le temps que le salon charge) ── */
+.qr-card--skeleton {
+  pointer-events: none;
+}
+
+.qr-card__skeleton-line,
+.qr-card__skeleton-pill,
+.qr-card__skeleton-qr {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #dbe3fb 25%, #eef2ff 37%, #dbe3fb 63%);
+  background-size: 400% 100%;
+  animation: qr-card-shimmer 1.4s ease infinite;
+}
+
+.qr-card__skeleton-line {
+  height: 10px;
+
+  &--eyebrow {
+    width: 70px;
+    height: 8px;
+    margin-bottom: 8px;
+  }
+
+  &--title {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  &--title-short {
+    width: 65%;
+    margin-bottom: 14px;
+  }
+}
+
+.qr-card__skeleton-pill {
+  width: 84px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.qr-card__skeleton-qr {
+  flex: none;
+  width: 128px;
+  height: 128px;
+  border-radius: 20px;
+}
+
+@keyframes qr-card-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
 /* ── QR code en plein écran ──────────────────────────────── */
 .qr-overlay {
   position: fixed;
@@ -388,10 +455,6 @@
     opacity: 1;
     transform: scale(1) translateY(0);
   }
-}
-
-.coiffeur-home__search {
-  margin-bottom: -2px;
 }
 
 .coiffeur-home__clients {
@@ -795,7 +858,8 @@
 }
 
 @media (max-width: 380px) {
-  .coiffeur-home {
+  .coiffeur-home,
+  .coiffeur-home__pinned {
     padding-inline: 12px;
   }
 
@@ -824,7 +888,8 @@
 }
 
 @media (min-width: 720px) {
-  .coiffeur-home {
+  .coiffeur-home,
+  .coiffeur-home__pinned {
     max-width: 760px;
     margin: 0 auto;
     padding-inline: 24px;
@@ -832,7 +897,8 @@
 }
 
 :host-context(body.dark-theme) {
-  .coiffeur-home {
+  .coiffeur-home,
+  .coiffeur-home__pinned {
     background: var(--bg-primary, #10182d);
   }
 
@@ -900,6 +966,13 @@
 
   .qr-card__title {
     color: #ffffff;
+  }
+
+  .qr-card__skeleton-line,
+  .qr-card__skeleton-pill,
+  .qr-card__skeleton-qr {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 37%, #1e293b 63%);
+    background-size: 400% 100%;
   }
 
   .qr-card__action {
