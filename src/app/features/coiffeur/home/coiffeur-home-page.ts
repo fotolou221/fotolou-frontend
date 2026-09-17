@@ -107,18 +107,19 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
             <span class="qr-card__skeleton-qr"></span>
           </section>
         }
+
+        <!-- Fixée avec le bloc du haut : seule la liste des clients défile en dessous. -->
+        <div class="coiffeur-home__section-title">
+          <div>
+            <h2>Clients dans la file</h2>
+            <span>{{ clientsCountLabel() }}</span>
+          </div>
+          <button type="button" class="coiffeur-home__manage-btn" (click)="goToQueue()">Gérer</button>
+        </div>
       </div>
 
       <main class="coiffeur-home">
         <section class="coiffeur-home__clients" aria-label="Liste des clients">
-          <div class="coiffeur-home__section-title">
-            <div>
-              <h2>Clients dans la file</h2>
-              <span>{{ clientsCountLabel() }}</span>
-            </div>
-            <button type="button" class="coiffeur-home__manage-btn" (click)="goToQueue()">Gérer</button>
-          </div>
-
           @if (ticketService.loading() && activeTickets().length === 0) {
             <div class="coiffeur-home__loading">
               <span>Chargement des clients</span><span class="loading-dots" aria-hidden="true"></span>
