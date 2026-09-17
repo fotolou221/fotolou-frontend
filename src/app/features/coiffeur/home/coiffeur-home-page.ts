@@ -79,7 +79,6 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
             <div class="qr-card__body">
               <span class="qr-card__eyebrow">Ticket rapide</span>
               <h2 class="qr-card__title">Scannez pour prendre un ticket</h2>
-              <p class="qr-card__desc">Vos clients scannent ce code et rejoignent la file instantanément.</p>
 
               <div class="qr-card__actions">
                 <button type="button" class="qr-card__action" (click)="expandQr.set(true)">
@@ -92,7 +91,7 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
             </div>
 
             <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" (contextmenu)="$event.preventDefault()" aria-label="Agrandir le QR code du salon">
-              <app-qr-code [value]="salonTicketUrl()" [size]="132" />
+              <app-qr-code [value]="salonTicketUrl()" [size]="108" />
             </button>
           </section>
         }

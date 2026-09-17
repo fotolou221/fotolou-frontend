@@ -254,19 +254,11 @@
 }
 
 .qr-card__title {
-  margin: 0;
+  margin: 0 0 10px;
   color: var(--text-primary, #0f172a);
-  font-size: 0.98rem;
+  font-size: 0.92rem;
   font-weight: 800;
-  line-height: 1.25;
-}
-
-.qr-card__desc {
-  margin: 2px 0 8px;
-  color: var(--text-secondary, #64748b);
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .qr-card__actions {
@@ -775,20 +767,6 @@
     align-items: center;
   }
 
-  .qr-card {
-    flex-wrap: wrap;
-    justify-content: center;
-    text-align: center;
-  }
-
-  .qr-card__body {
-    align-items: center;
-  }
-
-  .qr-card__actions {
-    justify-content: center;
-  }
-
   .coiffeur-home__title {
     gap: 5px;
     font-size: 1.16rem;
@@ -819,6 +797,20 @@
 @media (max-width: 380px) {
   .coiffeur-home {
     padding-inline: 12px;
+  }
+
+  .qr-card {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .qr-card__title {
+    font-size: 0.86rem;
+  }
+
+  .qr-card__action {
+    padding: 0 10px;
+    font-size: 0.7rem;
   }
 
   .queue-card__top {
