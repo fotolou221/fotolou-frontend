@@ -91,7 +91,7 @@ import { buildSalonTicketUrl } from '../../../core/config/app-origin';
             </div>
 
             <button type="button" class="qr-card__qr-btn" (click)="expandQr.set(true)" (contextmenu)="$event.preventDefault()" aria-label="Agrandir le QR code du salon">
-              <app-qr-code [value]="salonTicketUrl()" [size]="108" />
+              <app-qr-code [value]="salonTicketUrl()" [size]="128" />
             </button>
           </section>
         }
